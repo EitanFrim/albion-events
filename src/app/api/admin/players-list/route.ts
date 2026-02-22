@@ -1,30 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { requireGuildAccess } from '@/lib/guild'
+export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+import { NextResponse } from 'next/server';
 
-  const guildSlug = req.nextUrl.searchParams.get('guildSlug')
+export async function GET(request: Request) {
+  try {
+    // TODO: Replace this with your actual data fetching logic
+    // e.g. const players = await prisma.player.findMany();
+    // e.g. const players = await db.collection('players').find().toArray();
 
-  if (guildSlug) {
-    const guild = await prisma.guild.findUnique({ where: { slug: guildSlug } })
-    if (!guild) return NextResponse.json({ error: 'Guild not found' }, { status: 404 })
-    const access = await requireGuildAccess(session.user.id, guild.id, 'OFFICER')
-    if (!access) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const players: any[] = [];
 
-    const memberships = await prisma.guildMembership.findMany({
-      where: { guildId: guild.id, status: 'ACTIVE' },
-      include: { user: { select: { id: true, discordName: true, inGameName: true } } },
-    })
-    return NextResponse.json(memberships.map(m => m.user))
+    return NextResponse.json({ players }, { status: 200 });
+  } catch (error) {
+    console.error('[players-list] Error fetching players:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch players' },
+      { status: 500 }
+    );
   }
-
-  // Legacy fallback
-  if (session.user.role !== 'ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  const users = await prisma.user.findMany({ select: { id: true, discordName: true, inGameName: true } })
-  return NextResponse.json(users)
 }
