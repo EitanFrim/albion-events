@@ -47,7 +47,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
   if (!event) notFound()
   if (event.status === 'DRAFT' && !isAdmin) notFound()
 
-  // Fetch guild roles (new model) with category for color lookup
+  // Fetch guild roles with category for color lookup
   let roleColorMap: Record<string, string> = {}
   try {
     const guildRoles = await (prisma as any).guildRole2.findMany({ include: { category: true } })
@@ -56,7 +56,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
     )
   } catch {}
 
-  // Fetch withdrawal status for all assigned users so we can mark them on the board
+  // Fetch withdrawal status for all assigned users
   const allAssignedUserIds = event.parties.flatMap(p =>
     p.roleSlots.flatMap(s => s.assignments.map(a => a.userId))
   )
@@ -68,6 +68,13 @@ export default async function EventPage({ params }: { params: { id: string } }) 
         })).map(s => s.userId)
       : []
   )
+
+  // Fetch all signups for the public signup list
+  const allSignups = await prisma.signup.findMany({
+    where: { eventId: params.id, status: 'ACTIVE' },
+    include: { user: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
 
   let mySignup = null
   if (session?.user.id) {
@@ -160,13 +167,10 @@ export default async function EventPage({ params }: { params: { id: string } }) 
               const fill = party.roleSlots.reduce((a, s) => a + s.assignments.length, 0)
               return (
                 <div key={party.id} className="flex-shrink-0 w-52 rounded-xl border border-border bg-bg-surface">
-                  {/* Party header */}
                   <div className="px-3 py-2.5 border-b border-border-subtle flex items-center justify-between rounded-t-xl bg-bg-elevated">
                     <span className="font-display font-600 text-text-primary text-xs tracking-wide truncate">{party.name}</span>
                     <span className="text-xs font-mono text-text-muted ml-2 flex-shrink-0">{fill}/{cap}</span>
                   </div>
-
-                  {/* Roles — diagonal */}
                   <div className="p-2 space-y-0.5">
                     {party.roleSlots.map((slot, slotIndex) => {
                       const color = getRoleColor(slot.roleName)
@@ -174,7 +178,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                       const isFilled = slot.assignments.length >= slot.capacity
                       return (
                         <div key={slot.id} style={{ marginLeft: `${indent}px` }}>
-                          {/* Role label */}
                           <div
                             className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
                             style={{ backgroundColor: color + '18', borderLeft: `2px solid ${color}` }}
@@ -188,7 +191,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                               <RoleNoteButton rawNote={(slot as any).notes} roleName={slot.roleName} color={color} />
                             )}
                           </div>
-                          {/* Assigned players — show withdrawn ones with warning */}
                           {slot.assignments.map(a => {
                             const hasWithdrawn = withdrawnUserIds.has(a.userId)
                             return (
@@ -241,7 +243,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
               isLocked={false}
             />
           ) : event.status === 'LOCKED' && session && mySignup ? (
-            // Locked but player has a signup — show form so they can still withdraw
             <SignupForm
               eventId={params.id}
               parties={event.parties}
@@ -268,6 +269,69 @@ export default async function EventPage({ params }: { params: { id: string } }) 
           )}
         </div>
       </div>
+
+      {/* Signed up players list — visible to everyone */}
+      {allSignups.length > 0 && (
+        <div className="mt-10">
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="font-display font-600 text-text-primary text-lg">Signed Up</h2>
+            <span className="text-xs font-mono text-text-muted bg-bg-elevated px-2 py-0.5 rounded-full border border-border-subtle">
+              {allSignups.length} player{allSignups.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {allSignups.map((signup) => (
+              <div
+                key={signup.id}
+                className={`flex items-start gap-3 p-3 rounded-xl border bg-bg-surface ${
+                  signup.user.id === session?.user.id
+                    ? 'border-accent/30 bg-accent/5'
+                    : 'border-border-subtle'
+                }`}
+              >
+                {/* Avatar */}
+                {signup.user.avatarUrl ? (
+                  <img src={signup.user.avatarUrl} className="w-8 h-8 rounded-full flex-shrink-0 mt-0.5" alt="" />
+                ) : (
+                  <span className="w-8 h-8 rounded-full bg-bg-elevated border border-border flex items-center justify-center text-text-muted text-sm flex-shrink-0 mt-0.5">
+                    {signup.user.discordName[0]?.toUpperCase()}
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-text-primary truncate">
+                      {signup.user.inGameName || signup.user.discordName}
+                    </span>
+                    {signup.user.id === session?.user.id && (
+                      <span className="text-xs text-accent font-mono flex-shrink-0">you</span>
+                    )}
+                  </div>
+                  {/* Preferred roles */}
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {signup.preferredRoles.map((role) => {
+                      const color = getRoleColor(role)
+                      return (
+                        <span
+                          key={role}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono border"
+                          style={{ backgroundColor: color + '18', color, borderColor: color + '44' }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                          {role}
+                        </span>
+                      )
+                    })}
+                  </div>
+                  {signup.note && (
+                    <p className="text-text-muted text-xs mt-1 italic truncate">"{signup.note}"</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
