@@ -10,11 +10,11 @@ export default async function OnboardingPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { inGameName: true, status: true },
+    select: { inGameName: true },
   })
 
-  // Already active — no need to be here
-  if (user?.status === 'ACTIVE') redirect('/')
+  // Already set in-game name — redirect home
+  if (user?.inGameName) redirect('/')
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -34,7 +34,7 @@ export default async function OnboardingPage() {
         <OnboardingForm
           hasInGameName={!!user?.inGameName}
           currentInGameName={user?.inGameName ?? ''}
-          status={user?.status ?? 'PENDING'}
+          status="ACTIVE"
         />
       </div>
     </div>
