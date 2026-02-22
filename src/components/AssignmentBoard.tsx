@@ -20,6 +20,11 @@ interface Props {
 
 function displayName(user: UserRef) { return user.inGameName || user.discordName }
 
+function safeSpecs(specializations: Record<string, string[]>, userId: string): string[] {
+  const val = specializations[userId]
+  return Array.isArray(val) ? val : []
+}
+
 export function AssignmentBoard({ event, parties: initialParties, signups: initialSignups, guildSlug }: Props) {
   const [parties, setParties] = useState<Party[]>(initialParties)
   const [signups, setSignups] = useState<Signup[]>(initialSignups)
@@ -28,7 +33,7 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
   const [error, setError] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [roleColorMap, setRoleColorMap] = useState<Record<string, string>>({})
-  const [specializations, setSpecializations] = useState<Record<string, string[]>>({}) // userId → roleName[]
+  const [specializations, setSpecializations] = useState<Record<string, string[]>>({})
 
   const isReadonly = event.status === 'COMPLETED'
 
@@ -47,13 +52,21 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
     const qs = guildSlug ? `?guildSlug=${guildSlug}` : ''
     fetch(`/api/specialists${qs}`)
       .then(r => r.json())
-      .then(setSpecializations)
+      .then(data => {
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          // Ensure all values are arrays
+          const safe: Record<string, string[]> = {}
+          for (const [key, val] of Object.entries(data)) {
+            safe[key] = Array.isArray(val) ? val : []
+          }
+          setSpecializations(safe)
+        }
+      })
       .catch(() => {})
   }, [])
 
   const [lastSynced, setLastSynced] = useState<Date | null>(null)
 
-  // Live-sync signups: refresh on focus + every 20s to catch withdrawals/re-signups
   useEffect(() => {
     if (isReadonly) return
     async function refreshSignups() {
@@ -62,7 +75,7 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
         if (res.ok) { setSignups(await res.json()); setLastSynced(new Date()) }
       } catch {}
     }
-    refreshSignups() // initial fetch
+    refreshSignups()
     window.addEventListener('focus', refreshSignups)
     const interval = setInterval(refreshSignups, 20_000)
     return () => { window.removeEventListener('focus', refreshSignups); clearInterval(interval) }
@@ -74,13 +87,9 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
 
   const assignedUserIds = new Set(parties.flatMap(p => p.roleSlots.flatMap(s => s.assignments.map(a => a.userId))))
 
-  // Split into active and withdrawn
   const activeSignups = signups.filter(s => s.status === 'ACTIVE')
   const withdrawnSignups = signups.filter(s => s.status === 'WITHDRAWN')
-
-  // Withdrawn who still have an assignment (need attention)
   const withdrawnAssigned = withdrawnSignups.filter(s => assignedUserIds.has(s.userId))
-
   const waitlist = activeSignups.filter(s => !assignedUserIds.has(s.userId))
   const assigned = activeSignups.filter(s => assignedUserIds.has(s.userId))
 
@@ -195,7 +204,9 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                       const color = getRoleColor(slot.roleName)
                       const indent = (slotIndex % 8) * 3
                       const isPreferred = activeSelected?.preferredRoles.includes(slot.roleName) ?? false
-                      const isSpec = activeSelected ? (specializations[activeSelected.userId] ?? []).some(s => s.toLowerCase() === slot.roleName.toLowerCase()) : false
+                      const isSpec = activeSelected
+                        ? safeSpecs(specializations, activeSelected.userId).some(s => s.toLowerCase() === slot.roleName.toLowerCase())
+                        : false
 
                       return (
                         <div key={slot.id} style={{ marginLeft: `${indent}px` }}>
@@ -217,7 +228,6 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                               const canAssignHere = activeSelected && !assignment && !isReadonly
 
                               if (assignment) {
-                                // Check if this assigned user has withdrawn
                                 const isWithdrawn = withdrawnSignups.some(s => s.userId === assignment.userId)
                                 return (
                                   <div key={i}
@@ -297,7 +307,7 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
             </p>
           )}
 
-          {/* Withdrawn + still assigned — needs attention */}
+          {/* Withdrawn + still assigned */}
           {withdrawnAssigned.length > 0 && (
             <div>
               <p className="text-xs font-mono text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -342,7 +352,7 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
               {filteredWaitlist.length === 0 && <p className="text-xs text-text-muted italic px-1">All active players assigned ✓</p>}
               {filteredWaitlist.map(signup => {
                 const isSelected = selectedUserId === signup.userId
-                const playerSpecs = specializations[signup.userId] ?? []
+                const playerSpecs = safeSpecs(specializations, signup.userId)
                 return (
                   <button key={signup.userId} onClick={() => setSelectedUserId(isSelected ? null : signup.userId)}
                     disabled={isReadonly}
@@ -353,9 +363,8 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                         {isSelected && <span className="text-xs text-accent">selected</span>}
                       </div>
                     </div>
-                    {/* Preferred roles */}
                     <div className="flex flex-wrap gap-1">
-                      {signup.preferredRoles.map((role, ri) => {
+                      {signup.preferredRoles.map((role) => {
                         const color = getRoleColor(role)
                         const isSpec = playerSpecs.some(s => s.toLowerCase() === role.toLowerCase())
                         return (
@@ -367,7 +376,6 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                         )
                       })}
                     </div>
-                    {/* Specializations not in preferred roles */}
                     {playerSpecs.filter(s => !signup.preferredRoles.some(r => r.toLowerCase() === s.toLowerCase())).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {playerSpecs
