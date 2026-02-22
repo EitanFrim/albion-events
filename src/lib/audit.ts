@@ -7,6 +7,6 @@ export async function auditLog(
   details?: Record<string, unknown>
 ) {
   await prisma.auditLog.create({
-    data: { eventId, userId, action, details: details ?? {} },
+    data: { eventId, userId, action, details: (details ?? {}) as any },
   })
 }
