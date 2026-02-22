@@ -85,11 +85,12 @@ export default async function GuildEventPage({ params }: Props) {
     })
   }
 
-  // For officer export
-  const allSignups = isOfficerPlus ? await prisma.signup.findMany({
+  // Fetch all active signups (visible to everyone)
+  const allSignups = await prisma.signup.findMany({
     where: { eventId: params.id, status: 'ACTIVE' },
-    include: { user: { select: { id: true, discordName: true, inGameName: true } } },
-  }) : []
+    include: { user: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
 
   const sc = statusConfig[event.status]
   const totalSlots = event.parties.reduce((a, p) => a + p.roleSlots.reduce((b, s) => b + s.capacity, 0), 0)
@@ -276,6 +277,74 @@ export default async function GuildEventPage({ params }: Props) {
               <p className="text-text-muted text-sm">Content not yet published</p>
             </div>
           )}
+
+          {/* Signed up players list */}
+          <div className="card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display font-600 text-text-primary text-sm">Signed Up</h3>
+              <span className="text-xs font-mono text-text-muted bg-bg-elevated px-2 py-0.5 rounded-full border border-border-subtle">
+                {allSignups.length}
+              </span>
+            </div>
+
+            {allSignups.length === 0 ? (
+              <p className="text-text-muted text-xs italic">No players signed up yet.</p>
+            ) : (
+              <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+                {allSignups.map((signup, index) => (
+                  <div
+                    key={signup.id}
+                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors ${
+                      signup.user.id === session?.user.id
+                        ? 'bg-accent/8 border border-accent/20'
+                        : 'hover:bg-bg-elevated/50'
+                    }`}
+                  >
+                    {/* Order number */}
+                    <span className="text-xs font-mono text-text-muted/50 w-4 text-right flex-shrink-0">
+                      {index + 1}
+                    </span>
+
+                    {/* Avatar */}
+                    {signup.user.avatarUrl ? (
+                      <img src={signup.user.avatarUrl} className="w-6 h-6 rounded-full flex-shrink-0" alt="" />
+                    ) : (
+                      <span className="w-6 h-6 rounded-full bg-bg-elevated border border-border flex items-center justify-center text-text-muted text-xs flex-shrink-0">
+                        {signup.user.discordName[0]?.toUpperCase()}
+                      </span>
+                    )}
+
+                    {/* Name + roles */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-text-primary truncate">
+                          {signup.user.inGameName || signup.user.discordName}
+                        </span>
+                        {signup.user.id === session?.user.id && (
+                          <span className="text-xs text-accent font-mono flex-shrink-0">you</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {signup.preferredRoles.map((role) => {
+                          const color = getRoleColor(role)
+                          return (
+                            <span
+                              key={role}
+                              className="inline-flex items-center gap-0.5 px-1 py-0 rounded text-xs font-mono leading-tight"
+                              style={{ backgroundColor: color + '18', color, fontSize: '0.65rem' }}
+                            >
+                              <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                              {role}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
