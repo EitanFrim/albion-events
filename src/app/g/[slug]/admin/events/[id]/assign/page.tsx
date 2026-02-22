@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { AssignmentBoard } from '@/components/AssignmentBoard'
 import { DeleteEventButton } from '@/components/DeleteEventButton'
 import { CompleteEventButton } from '@/components/CompleteEventButton'
+import { UnlockEventButton } from '@/components/UnlockEventButton'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
@@ -68,6 +69,7 @@ export default async function GuildAssignmentBoardPage({ params }: Props) {
             {format(new Date(event.startTime), 'MMM d, yyyy · HH:mm')} UTC · {event.status}
           </p>
         </div>
+        {event.status === 'LOCKED' && <UnlockEventButton eventId={params.id} />}
         {event.status !== 'COMPLETED' && <CompleteEventButton eventId={params.id} guildSlug={params.slug} />}
         <DeleteEventButton eventId={params.id} eventTitle={event.title} guildSlug={params.slug} />
       </div>
