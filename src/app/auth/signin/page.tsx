@@ -1,6 +1,7 @@
+'use client'
 export const dynamic = 'force-dynamic';
 
-'use client'
+
 
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
