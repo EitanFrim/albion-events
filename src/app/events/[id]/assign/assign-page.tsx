@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { authOptions } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -7,7 +9,6 @@ import { CompleteEventButton } from '@/components/CompleteEventButton'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-export const dynamic = 'force-dynamic'
 
 export default async function AssignmentBoardPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
