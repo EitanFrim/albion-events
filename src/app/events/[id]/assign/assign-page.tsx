@@ -8,6 +8,7 @@ import { DeleteEventButton } from '@/components/DeleteEventButton'
 import { CompleteEventButton } from '@/components/CompleteEventButton'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { getServerSession } from 'next-auth'
 
 
 export default async function AssignmentBoardPage({ params }: { params: { id: string } }) {
