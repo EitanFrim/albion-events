@@ -37,7 +37,9 @@ export function RoleSpecialistsPanel({ roleId, roleName, color, guildSlug }: Pro
       .then(r => r.json()).then(setSpecs).catch(() => {})
     const plUrl = guildSlug ? `/api/admin/players-list?guildSlug=${guildSlug}` : '/api/admin/players-list'
     fetch(plUrl)
-      .then(r => r.json()).then(setAllPlayers).catch(() => {})
+      .then(r => r.json())
+      .then(data => setAllPlayers(Array.isArray(data) ? data : (data.players ?? [])))
+      .catch(() => {})
   }, [open, roleId])
 
   useEffect(() => {
