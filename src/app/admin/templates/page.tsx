@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getFirstGuildSlug } from '@/lib/adminRedirect'
 import { redirect } from 'next/navigation'
 
