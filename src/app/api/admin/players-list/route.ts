@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
       players = await prisma.user.findMany({
         where: {
-          guildMemberships: { some: { guildId: guild.id } },
+          memberships: { some: { guildId: guild.id } },
         },
         select: {
           id: true,
