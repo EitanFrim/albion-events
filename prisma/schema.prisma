@@ -95,8 +95,9 @@ model GuildMembership {
   guildId      String       @map("guild_id")
   role         MemberRole   @default(PLAYER)
   status       MemberStatus @default(PENDING)
-  balance      Int          @default(0)
-  verifiedById String?      @map("verified_by_id")
+  balance           Int          @default(0)
+  lastSeenBalanceAt DateTime     @default(now()) @map("last_seen_balance_at")
+  verifiedById      String?      @map("verified_by_id")
   verifiedAt   DateTime?    @map("verified_at")
   joinedAt     DateTime     @default(now()) @map("joined_at")
 
