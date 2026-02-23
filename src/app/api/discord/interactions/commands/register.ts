@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { ephemeralMessage, modalResponse } from '@/lib/discord'
+import { verifyAlbionName, REGION_LABELS } from '@/lib/albion'
 
 interface DiscordInteraction {
   guild_id?: string
   member?: {
+    nick?: string | null
     user: {
       id: string
       username: string
+      global_name?: string | null
       avatar: string | null
     }
     roles: string[]
@@ -97,9 +100,33 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
     }
   }
 
-  // If user has no in-game name, show modal to collect it first
-  // Encode the assigned role in the modal custom_id so we know it on submit
-  if (!user.inGameName) {
+  // Get the player's Discord server nickname (fallback to display name → username)
+  const nickname = interaction.member.nick
+    ?? interaction.member.user.global_name
+    ?? discordUser.username
+
+  // If the guild has a server region, verify the nickname against Albion API
+  if (guild.serverRegion) {
+    const result = await verifyAlbionName(nickname, guild.serverRegion)
+
+    if (!result.valid) {
+      const regionLabel = REGION_LABELS[guild.serverRegion] ?? guild.serverRegion
+      return NextResponse.json(
+        ephemeralMessage(
+          `Your server nickname **"${nickname}"** was not found as a player in Albion Online (${regionLabel} server).\n\n` +
+          `Please change your Discord server nickname to your **exact Albion Online in-game name**, then click **Register** again.`
+        )
+      )
+    }
+
+    // Save the verified in-game name (with correct casing from API)
+    const finalName = result.exactName ?? nickname
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { inGameName: finalName },
+    })
+  } else if (!user.inGameName) {
+    // No server region configured — fall back to modal to collect IGN
     return NextResponse.json(
       modalResponse(`register_ign_modal:${assignedRole}`, 'Set Your In-Game Name', [
         {
