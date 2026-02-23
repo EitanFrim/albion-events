@@ -275,7 +275,7 @@ export function GuildSettingsPanel({ guild }: Props) {
             </div>
             {process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID && (
               <a
-                href={`https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID}&scope=bot+applications.commands&permissions=0`}
+                href={`https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID}&scope=bot+applications.commands&permissions=8`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary text-sm inline-block"
