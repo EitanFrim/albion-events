@@ -33,6 +33,14 @@ export function TemplatesManager({ initialTemplates, initialCategories, initialR
     setCreating(false)
   }
 
+  function duplicateBuild(tpl: Template) {
+    const copy: Template = JSON.parse(JSON.stringify(tpl))
+    copy.id = ''
+    copy.name = `${tpl.name} (Copy)`
+    setEditing(copy)
+    setCreating(true)
+  }
+
   function handleSaved(saved: Template, wasCreating: boolean) {
     setTemplates(prev => wasCreating ? [...prev, saved] : prev.map(t => t.id === saved.id ? saved : t))
     setCreating(false)
@@ -165,6 +173,7 @@ export function TemplatesManager({ initialTemplates, initialCategories, initialR
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
+              <button onClick={() => duplicateBuild(tpl)} className="btn-ghost text-xs" title="Duplicate build">Duplicate</button>
               <button onClick={() => startEdit(tpl)} className="btn-ghost text-xs">Edit</button>
               <button onClick={() => deleteTemplate(tpl.id)} className="btn-danger text-xs">Delete</button>
             </div>
@@ -319,6 +328,15 @@ function TemplateEditor({ template, roles, categories, onChange, onSaved, onCanc
     onChange({ ...template, data: { parties: template.data.parties.filter((_, i) => i !== pi) } })
   }
 
+  function duplicateParty(pi: number) {
+    const source = template.data.parties[pi]
+    const copy: TemplateParty = JSON.parse(JSON.stringify(source))
+    copy.name = `${source.name} (Copy)`
+    const parties = [...template.data.parties]
+    parties.splice(pi + 1, 0, copy)
+    onChange({ ...template, data: { parties } })
+  }
+
   function addSlot(pi: number, roleName: string) {
     const p = [...template.data.parties]
     p[pi] = { ...p[pi], slots: [...p[pi].slots, { roleName, capacity: 1 }] }
@@ -386,6 +404,7 @@ function TemplateEditor({ template, roles, categories, onChange, onSaved, onCanc
               <input type="text" value={party.name} onChange={e => updatePartyName(pi, e.target.value)}
                 className="bg-transparent text-text-primary font-display font-600 text-sm focus:outline-none flex-1" />
               <span className="text-xs font-mono text-text-muted">{party.slots.reduce((a, s) => a + s.capacity, 0)} slots</span>
+              <button onClick={() => duplicateParty(pi)} className="btn-ghost text-xs py-0.5 px-2" title="Duplicate party">Duplicate</button>
               {template.data.parties.length > 1 && (
                 <button onClick={() => removeParty(pi)} className="btn-danger text-xs py-0.5 px-2">Remove</button>
               )}
