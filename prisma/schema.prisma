@@ -63,9 +63,12 @@ model Guild {
   slug        String   @unique
   description String?
   logoUrl     String?  @map("logo_url")
-  inviteCode  String   @unique @map("invite_code")
-  ownerId     String   @map("owner_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+  inviteCode          String   @unique @map("invite_code")
+  ownerId             String   @map("owner_id")
+  discordGuildId      String?  @unique @map("discord_guild_id")
+  discordMemberRoleId String?  @map("discord_member_role_id")
+  discordBotInstalled Boolean  @default(false) @map("discord_bot_installed")
+  createdAt           DateTime @default(now()) @map("created_at")
 
   owner      User              @relation("GuildOwner", fields: [ownerId], references: [id])
   members    GuildMembership[]

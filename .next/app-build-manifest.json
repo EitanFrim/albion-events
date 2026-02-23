@@ -1,5 +1,10 @@
 {
   "pages": {
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -11,25 +16,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/g/[slug]/layout.js"
     ],
-    "/g/[slug]/events/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/g/[slug]/events/[id]/page.js"
-    ],
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
-    ],
     "/g/[slug]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/g/[slug]/page.js"
-    ],
-    "/guilds/new/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/guilds/new/page.js"
     ],
     "/not-found": [
       "static/chunks/webpack.js",

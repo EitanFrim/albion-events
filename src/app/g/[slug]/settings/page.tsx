@@ -28,7 +28,7 @@ export default async function GuildSettingsPage({ params }: Props) {
         <h1 className="font-display text-2xl font-800 text-text-primary tracking-tight">Guild Settings</h1>
       </div>
       <GuildSettingsPanel
-        guild={{ id: guild.id, name: guild.name, slug: guild.slug, inviteCode: guild.inviteCode, description: guild.description, logoUrl: guild.logoUrl }}
+        guild={{ id: guild.id, name: guild.name, slug: guild.slug, inviteCode: guild.inviteCode, description: guild.description, logoUrl: guild.logoUrl, discordGuildId: guild.discordGuildId, discordMemberRoleId: guild.discordMemberRoleId, discordBotInstalled: guild.discordBotInstalled }}
       />
     </div>
   )

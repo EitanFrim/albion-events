@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
-  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null }
+  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordBotInstalled: boolean }
 }
 
 export function GuildSettingsPanel({ guild }: Props) {
@@ -24,6 +24,8 @@ export function GuildSettingsPanel({ guild }: Props) {
   const [logoSaving, setLogoSaving] = useState(false)
   const [logoError, setLogoError] = useState('')
   const [logoSaved, setLogoSaved] = useState(false)
+  const [discordLinked, setDiscordLinked] = useState(guild.discordBotInstalled)
+  const [unlinking, setUnlinking] = useState(false)
 
   async function saveLogo(url: string) {
     setLogoSaving(true); setLogoError(''); setLogoSaved(false)
@@ -217,6 +219,72 @@ export function GuildSettingsPanel({ guild }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Discord bot integration */}
+      <div className="card p-5 space-y-4">
+        <div>
+          <h2 className="font-display font-600 text-text-primary mb-1">Discord Bot</h2>
+          <p className="text-text-secondary text-sm">
+            Connect a Discord bot so players can self-register with <code className="text-accent">/register</code> in your Discord server.
+          </p>
+        </div>
+
+        {discordLinked ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span className="text-emerald-400 font-medium">Connected</span>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">Discord Server ID</span>
+                <span className="text-text-secondary font-mono text-xs">{guild.discordGuildId ?? '—'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">Member Role ID</span>
+                <span className="text-text-secondary font-mono text-xs">{guild.discordMemberRoleId ?? 'Not set'}</span>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                if (!confirm('Unlink Discord server? Players will no longer be able to use /register.')) return
+                setUnlinking(true)
+                try {
+                  const res = await fetch(`/api/guilds/${guild.slug}/discord`, { method: 'DELETE' })
+                  if (res.ok) { setDiscordLinked(false); router.refresh() }
+                  else alert('Failed to unlink Discord.')
+                } finally { setUnlinking(false) }
+              }}
+              disabled={unlinking}
+              className="btn-ghost text-xs text-red-400/70 hover:text-red-400"
+            >
+              {unlinking ? 'Unlinking…' : 'Unlink Discord Server'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-2 h-2 rounded-full bg-text-muted flex-shrink-0" />
+              <span className="text-text-muted">Not connected</span>
+            </div>
+            <div className="space-y-2 text-xs text-text-secondary">
+              <p>1. Click &quot;Install Bot&quot; to add the bot to your Discord server.</p>
+              <p>2. Run <code className="text-accent">/setup</code> in your Discord server to link it to this guild.</p>
+              <p>3. Run <code className="text-accent">/setup member-role:@YourRole</code> to set the registration role.</p>
+            </div>
+            {process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID && (
+              <a
+                href={`https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID}&scope=applications.commands`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary text-sm inline-block"
+              >
+                Install Bot
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Danger zone */}
