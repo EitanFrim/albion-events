@@ -161,7 +161,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
               <div key={member.id} className={`card p-4 flex flex-wrap items-center gap-4 ${
                 member.status === 'PENDING' ? 'border-amber-900/30 bg-amber-950/10' : ''
               }`}>
-                {/* Avatar + names */}
+                {/* Avatar + names + balance */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {member.user.avatarUrl ? (
                     <img src={member.user.avatarUrl} alt="" className="w-9 h-9 rounded-full flex-shrink-0 border border-border" />
@@ -170,7 +170,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                       <span className="text-text-muted text-xs font-mono">{member.user.discordName[0]?.toUpperCase()}</span>
                     </div>
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-text-primary truncate">{member.user.discordName}</span>
                       <span className={`text-xs font-mono ${rc.color}`}>{rc.label}</span>
@@ -181,14 +181,12 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                       <span className="text-xs text-red-400/70 italic">No in-game name set</span>
                     )}
                   </div>
-                </div>
-
-                {/* Balance */}
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-sm font-mono ${member.balance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
-                    {member.balance.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-text-muted">silver</span>
+                  <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
+                    <span className={`text-sm font-mono ${member.balance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                      {member.balance.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-text-muted">silver</span>
+                  </div>
                 </div>
 
                 {/* Status badge */}
