@@ -33,12 +33,25 @@ interface Props {
   guildSlug: string
 }
 
+// Format a number string with commas: "1234567" → "1,234,567"
+function formatWithCommas(value: string): string {
+  const num = value.replace(/[^0-9]/g, '')
+  if (!num) return ''
+  return parseInt(num, 10).toLocaleString()
+}
+
+// Parse a formatted string back to raw digits: "1,234,567" → "1234567"
+function parseFormatted(value: string): string {
+  return value.replace(/[^0-9]/g, '')
+}
+
 export function LootSplitForm({ guildSlug }: Props) {
-  // Form inputs
+  // Form inputs (stored as raw digit strings)
   const [contentName, setContentName] = useState('')
   const [soldAmount, setSoldAmount] = useState('')
+  const [silverBags, setSilverBags] = useState('')
   const [repairCost, setRepairCost] = useState('')
-  const [guildTax, setGuildTax] = useState('')
+  const [guildTaxPct, setGuildTaxPct] = useState('')
 
   // Player roster
   const [players, setPlayers] = useState<SplitPlayer[]>([])
@@ -47,7 +60,7 @@ export function LootSplitForm({ guildSlug }: Props) {
   const [allMembers, setAllMembers] = useState<GuildMember[]>([])
   const [membersLoading, setMembersLoading] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
-  const [showImportPanel, setShowImportPanel] = useState(false)
+  const [showAddPanel, setShowAddPanel] = useState(false)
 
   // Submission
   const [submitting, setSubmitting] = useState(false)
@@ -72,11 +85,14 @@ export function LootSplitForm({ guildSlug }: Props) {
   // Live calculation
   const calculation = useMemo(() => {
     const sold = parseInt(soldAmount, 10) || 0
+    const bags = parseInt(silverBags, 10) || 0
     const repair = parseInt(repairCost, 10) || 0
-    const tax = parseInt(guildTax, 10) || 0
+    const taxPct = Math.min(100, Math.max(0, parseFloat(guildTaxPct) || 0))
 
-    const net = sold - repair
-    const afterTax = net - tax
+    const totalSold = sold + bags
+    const net = totalSold - repair
+    const taxAmount = Math.floor(net * taxPct / 100)
+    const afterTax = net - taxAmount
     const totalShares = players.reduce((sum, p) => sum + p.cut, 0)
 
     const perPlayer = players.map(p => ({
@@ -88,8 +104,8 @@ export function LootSplitForm({ guildSlug }: Props) {
 
     const totalDistributed = perPlayer.reduce((sum, p) => sum + p.calculatedAmount, 0)
 
-    return { sold, repair, tax, net, afterTax, totalShares, perPlayer, totalDistributed }
-  }, [soldAmount, repairCost, guildTax, players])
+    return { sold, bags, totalSold, repair, taxPct, taxAmount, net, afterTax, totalShares, perPlayer, totalDistributed }
+  }, [soldAmount, silverBags, repairCost, guildTaxPct, players])
 
   // Available members (not yet added)
   const filteredAvailableMembers = useMemo(() => {
@@ -126,19 +142,6 @@ export function LootSplitForm({ guildSlug }: Props) {
     ))
   }
 
-  function addAllActiveMembers() {
-    const existing = new Set(players.map(p => p.membershipId))
-    const toAdd = allMembers
-      .filter(m => !existing.has(m.id))
-      .map(m => ({
-        membershipId: m.id,
-        displayName: m.user.inGameName ?? m.user.discordName,
-        avatarUrl: m.user.avatarUrl,
-        cut: 100,
-      }))
-    setPlayers(prev => [...prev, ...toAdd])
-  }
-
   async function handleSubmit() {
     setError(null)
 
@@ -149,9 +152,9 @@ export function LootSplitForm({ guildSlug }: Props) {
 
     const payload = {
       contentName: contentName.trim(),
-      soldAmount: parseInt(soldAmount, 10),
-      repairCost: parseInt(repairCost, 10) || 0,
-      guildTax: parseInt(guildTax, 10) || 0,
+      soldAmount: calculation.totalSold,
+      repairCost: calculation.repair,
+      guildTax: calculation.taxAmount,
       players: calculation.perPlayer
         .filter(p => p.calculatedAmount > 0)
         .map(p => ({
@@ -182,11 +185,20 @@ export function LootSplitForm({ guildSlug }: Props) {
   function handleReset() {
     setContentName('')
     setSoldAmount('')
+    setSilverBags('')
     setRepairCost('')
-    setGuildTax('')
+    setGuildTaxPct('')
     setPlayers([])
     setResults(null)
     setError(null)
+  }
+
+  // Formatted number input handler
+  function handleFormattedInput(setter: (v: string) => void) {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = parseFormatted(e.target.value)
+      setter(raw)
+    }
   }
 
   // Success state
@@ -247,10 +259,21 @@ export function LootSplitForm({ guildSlug }: Props) {
           <div>
             <label className="label">Sold Amount</label>
             <input
-              type="number"
-              min="0"
-              value={soldAmount}
-              onChange={e => setSoldAmount(e.target.value)}
+              type="text"
+              inputMode="numeric"
+              value={formatWithCommas(soldAmount)}
+              onChange={handleFormattedInput(setSoldAmount)}
+              placeholder="0"
+              className="input text-sm"
+            />
+          </div>
+          <div>
+            <label className="label">Silver Bags</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formatWithCommas(silverBags)}
+              onChange={handleFormattedInput(setSilverBags)}
               placeholder="0"
               className="input text-sm"
             />
@@ -258,24 +281,29 @@ export function LootSplitForm({ guildSlug }: Props) {
           <div>
             <label className="label">Repair Cost</label>
             <input
-              type="number"
-              min="0"
-              value={repairCost}
-              onChange={e => setRepairCost(e.target.value)}
+              type="text"
+              inputMode="numeric"
+              value={formatWithCommas(repairCost)}
+              onChange={handleFormattedInput(setRepairCost)}
               placeholder="0"
               className="input text-sm"
             />
           </div>
           <div>
-            <label className="label">Guild Tax</label>
-            <input
-              type="number"
-              min="0"
-              value={guildTax}
-              onChange={e => setGuildTax(e.target.value)}
-              placeholder="0"
-              className="input text-sm"
-            />
+            <label className="label">Guild Tax (%)</label>
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value={guildTaxPct}
+                onChange={e => setGuildTaxPct(e.target.value)}
+                placeholder="0"
+                className="input text-sm pr-8"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">%</span>
+            </div>
           </div>
         </div>
       </div>
@@ -283,10 +311,18 @@ export function LootSplitForm({ guildSlug }: Props) {
       {/* Calculation Summary */}
       <div className="card px-5 py-3 flex flex-wrap gap-x-6 gap-y-2 items-center text-sm">
         <div>
+          <span className="text-text-muted">Total Sold: </span>
+          <span className="font-mono font-medium text-text-primary">{calculation.totalSold.toLocaleString()}</span>
+        </div>
+        <div>
           <span className="text-text-muted">Net: </span>
           <span className={`font-mono font-medium ${calculation.net < 0 ? 'text-red-400' : 'text-text-primary'}`}>
             {calculation.net.toLocaleString()}
           </span>
+        </div>
+        <div>
+          <span className="text-text-muted">Tax ({calculation.taxPct}%): </span>
+          <span className="font-mono font-medium text-text-primary">{calculation.taxAmount.toLocaleString()}</span>
         </div>
         <div>
           <span className="text-text-muted">After Tax: </span>
@@ -297,10 +333,6 @@ export function LootSplitForm({ guildSlug }: Props) {
         <div>
           <span className="text-text-muted">Players: </span>
           <span className="font-mono font-medium text-text-primary">{players.length}</span>
-        </div>
-        <div>
-          <span className="text-text-muted">Total Shares: </span>
-          <span className="font-mono font-medium text-text-primary">{calculation.totalShares}%</span>
         </div>
         {calculation.totalDistributed > 0 && (
           <div className="ml-auto">
@@ -321,22 +353,17 @@ export function LootSplitForm({ guildSlug }: Props) {
               </span>
             )}
           </h2>
-          <div className="flex gap-2">
-            <button onClick={addAllActiveMembers} className="btn-ghost text-xs" disabled={membersLoading}>
-              Add All
-            </button>
-            <button
-              onClick={() => setShowImportPanel(!showImportPanel)}
-              className="btn-secondary text-xs"
-              disabled={membersLoading}
-            >
-              {membersLoading ? 'Loading\u2026' : showImportPanel ? 'Close' : 'Import from Guild'}
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAddPanel(!showAddPanel)}
+            className="btn-secondary text-xs"
+            disabled={membersLoading}
+          >
+            {membersLoading ? 'Loading\u2026' : showAddPanel ? 'Close' : 'Add Player'}
+          </button>
         </div>
 
-        {/* Import panel */}
-        {showImportPanel && (
+        {/* Add player panel */}
+        {showAddPanel && (
           <div className="bg-bg-elevated rounded-lg border border-border p-3 space-y-2">
             <input
               type="text"
@@ -378,7 +405,7 @@ export function LootSplitForm({ guildSlug }: Props) {
         {/* Player rows */}
         {players.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border-subtle p-6 text-center">
-            <p className="text-text-muted text-sm">No players added yet. Use &quot;Import from Guild&quot; or &quot;Add All&quot;.</p>
+            <p className="text-text-muted text-sm">No players added yet. Click &quot;Add Player&quot; to search and add guild members.</p>
           </div>
         ) : (
           <div className="space-y-2">
