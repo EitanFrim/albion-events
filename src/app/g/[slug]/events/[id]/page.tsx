@@ -96,6 +96,7 @@ export default async function GuildEventPage({ params }: Props) {
         status: true,
         silverAmount: true,
         reviewNote: true,
+        reviewedBy: { select: { discordName: true, inGameName: true } },
       },
     })
   }

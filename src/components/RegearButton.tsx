@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 type RegearStatusType = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -10,6 +10,7 @@ interface ExistingRegear {
   status: RegearStatusType
   silverAmount: number | null
   reviewNote: string | null
+  reviewedBy: { discordName: string; inGameName: string | null } | null
 }
 
 interface Props {
@@ -25,8 +26,24 @@ export function RegearButton({ eventId, existingRegear }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [existingScreenshot, setExistingScreenshot] = useState<string | null>(null)
+  const [loadingScreenshot, setLoadingScreenshot] = useState(false)
 
   const isResubmit = existingRegear?.status === 'REJECTED'
+  const reviewerName = existingRegear?.reviewedBy?.inGameName || existingRegear?.reviewedBy?.discordName
+
+  // Load existing screenshot when opening resubmit modal
+  useEffect(() => {
+    if (modalOpen && isResubmit && existingRegear && !existingScreenshot) {
+      setLoadingScreenshot(true)
+      fetch(`/api/events/${eventId}/regears/${existingRegear.id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.screenshotData) setExistingScreenshot(data.screenshotData)
+        })
+        .finally(() => setLoadingScreenshot(false))
+    }
+  }, [modalOpen, isResubmit, existingRegear, existingScreenshot, eventId])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -41,13 +58,19 @@ export function RegearButton({ eventId, existingRegear }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!file) { setError('Please attach a screenshot'); return }
+    // For new submissions, file is required. For resubmit, it's optional (keep existing).
+    if (!file && !isResubmit) { setError('Please attach a screenshot'); return }
     setLoading(true)
     setError('')
     try {
       const fd = new FormData()
-      fd.append('screenshot', file)
+      if (file) {
+        fd.append('screenshot', file)
+      }
       fd.append('note', note)
+      if (isResubmit && !file) {
+        fd.append('keepExisting', 'true')
+      }
       const res = await fetch(`/api/events/${eventId}/regears`, { method: 'POST', body: fd })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -63,6 +86,7 @@ export function RegearButton({ eventId, existingRegear }: Props) {
 
   function renderModal() {
     if (!modalOpen) return null
+    const hasScreenshot = file || (isResubmit && existingScreenshot)
     return (
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -75,15 +99,35 @@ export function RegearButton({ eventId, existingRegear }: Props) {
             </h3>
             <p className="text-text-secondary text-sm mt-1">
               {isResubmit
-                ? 'Upload a new screenshot and resubmit your request.'
+                ? 'Update your screenshot or note and resubmit.'
                 : 'Upload a screenshot showing your death or gear loss.'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* File upload */}
+            {/* Screenshot section */}
             <div>
               <label className="label">Screenshot</label>
+
+              {/* Show current preview (new file takes priority over existing) */}
+              {previewUrl ? (
+                <div className="mb-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} alt="New screenshot" className="rounded-lg max-h-48 object-contain border border-border" />
+                  <p className="text-xs text-emerald-400 mt-1">New screenshot selected</p>
+                </div>
+              ) : isResubmit && loadingScreenshot ? (
+                <div className="mb-2 h-24 flex items-center justify-center text-text-muted text-sm border border-border-subtle rounded-lg">
+                  Loading current screenshot{'\u2026'}
+                </div>
+              ) : isResubmit && existingScreenshot ? (
+                <div className="mb-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={existingScreenshot} alt="Current screenshot" className="rounded-lg max-h-48 object-contain border border-border opacity-80" />
+                  <p className="text-xs text-text-muted mt-1">Current screenshot (select a file below to replace)</p>
+                </div>
+              ) : null}
+
               <input
                 type="file"
                 accept="image/*"
@@ -93,10 +137,6 @@ export function RegearButton({ eventId, existingRegear }: Props) {
                   file:text-xs file:font-medium file:bg-accent file:text-white
                   hover:file:brightness-110 cursor-pointer"
               />
-              {previewUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={previewUrl} alt="Preview" className="mt-2 rounded-lg max-h-48 object-contain border border-border" />
-              )}
             </div>
 
             {/* Note */}
@@ -123,7 +163,7 @@ export function RegearButton({ eventId, existingRegear }: Props) {
               </button>
               <button
                 type="submit"
-                disabled={loading || !file}
+                disabled={loading || !hasScreenshot}
                 className="btn-primary flex-1 justify-center text-sm py-2"
               >
                 {loading ? 'Submitting\u2026' : isResubmit ? 'Resubmit' : 'Submit Request'}
@@ -159,6 +199,9 @@ export function RegearButton({ eventId, existingRegear }: Props) {
             <span className="font-semibold text-amber-400">{existingRegear.silverAmount?.toLocaleString()} silver</span>{' '}
             has been added to your balance.
           </p>
+          {reviewerName && (
+            <p className="text-xs text-text-muted mt-1">Approved by {reviewerName}</p>
+          )}
         </div>
       )
     }
@@ -170,10 +213,13 @@ export function RegearButton({ eventId, existingRegear }: Props) {
               <span className="w-2 h-2 rounded-full bg-red-400" />
               <span className="text-xs font-mono text-red-400 uppercase tracking-wider">Regear Rejected</span>
             </div>
-            <p className="text-sm text-text-secondary mb-3">{existingRegear.reviewNote}</p>
+            <p className="text-sm text-text-secondary">{existingRegear.reviewNote}</p>
+            {reviewerName && (
+              <p className="text-xs text-text-muted mt-1">Rejected by {reviewerName}</p>
+            )}
             <button
               onClick={() => setModalOpen(true)}
-              className="btn-secondary text-xs w-full justify-center"
+              className="btn-secondary text-xs w-full justify-center mt-3"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
