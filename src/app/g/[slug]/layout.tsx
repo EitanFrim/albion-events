@@ -68,7 +68,7 @@ export default async function GuildLayout({ children, params }: Props) {
         }))}
         guildSlug={guild.slug}
       />
-      <AutoRefresh interval={30000} />
+      {/* <AutoRefresh interval={30000} /> */}
       <main className="flex-1">
         {children}
       </main>
