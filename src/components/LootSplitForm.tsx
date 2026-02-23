@@ -61,6 +61,9 @@ export function LootSplitForm({ guildSlug }: Props) {
   const [membersLoading, setMembersLoading] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
   const [showAddPanel, setShowAddPanel] = useState(false)
+  const [showBulkAdd, setShowBulkAdd] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkResult, setBulkResult] = useState<{ added: string[]; notFound: string[] } | null>(null)
 
   // Submission
   const [submitting, setSubmitting] = useState(false)
@@ -129,6 +132,49 @@ export function LootSplitForm({ guildSlug }: Props) {
       avatarUrl: member.user.avatarUrl,
       cut: 100,
     }])
+  }
+
+  function bulkAddPlayers() {
+    const lines = bulkText
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+
+    if (lines.length === 0) return
+
+    const addedIds = new Set(players.map(p => p.membershipId))
+    const added: string[] = []
+    const notFound: string[] = []
+    const newPlayers: SplitPlayer[] = []
+
+    for (const line of lines) {
+      const q = line.toLowerCase()
+      const member = allMembers.find(m => {
+        if (addedIds.has(m.id)) return false
+        return (
+          (m.user.inGameName ?? '').toLowerCase() === q ||
+          m.user.discordName.toLowerCase() === q
+        )
+      })
+      if (member) {
+        addedIds.add(member.id)
+        newPlayers.push({
+          membershipId: member.id,
+          displayName: member.user.inGameName ?? member.user.discordName,
+          avatarUrl: member.user.avatarUrl,
+          cut: 100,
+        })
+        added.push(member.user.inGameName ?? member.user.discordName)
+      } else {
+        notFound.push(line)
+      }
+    }
+
+    if (newPlayers.length > 0) {
+      setPlayers(prev => [...prev, ...newPlayers])
+    }
+    setBulkResult({ added, notFound })
+    setBulkText('')
   }
 
   function removePlayer(membershipId: string) {
@@ -353,14 +399,72 @@ export function LootSplitForm({ guildSlug }: Props) {
               </span>
             )}
           </h2>
-          <button
-            onClick={() => setShowAddPanel(!showAddPanel)}
-            className="btn-secondary text-xs"
-            disabled={membersLoading}
-          >
-            {membersLoading ? 'Loading\u2026' : showAddPanel ? 'Close' : 'Add Player'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setShowBulkAdd(!showBulkAdd); setShowAddPanel(false); setBulkResult(null) }}
+              className="btn-secondary text-xs"
+              disabled={membersLoading}
+            >
+              {membersLoading ? 'Loading\u2026' : showBulkAdd ? 'Close Bulk' : 'Bulk Add'}
+            </button>
+            <button
+              onClick={() => { setShowAddPanel(!showAddPanel); setShowBulkAdd(false); setBulkResult(null) }}
+              className="btn-secondary text-xs"
+              disabled={membersLoading}
+            >
+              {membersLoading ? 'Loading\u2026' : showAddPanel ? 'Close' : 'Add Player'}
+            </button>
+          </div>
         </div>
+
+        {/* Bulk add panel */}
+        {showBulkAdd && (
+          <div className="bg-bg-elevated rounded-lg border border-border p-3 space-y-3">
+            <div>
+              <label className="label">Paste player names (one per line)</label>
+              <textarea
+                value={bulkText}
+                onChange={e => { setBulkText(e.target.value); setBulkResult(null) }}
+                placeholder={'imana98\nzedfrim\nclazimi'}
+                rows={6}
+                className="input text-sm font-mono resize-y w-full"
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-text-muted">
+                Matches by in-game name or Discord name
+              </p>
+              <button
+                onClick={bulkAddPlayers}
+                disabled={!bulkText.trim()}
+                className="btn-primary text-xs"
+              >
+                Find &amp; Add
+              </button>
+            </div>
+            {bulkResult && (
+              <div className="space-y-2 text-sm">
+                {bulkResult.added.length > 0 && (
+                  <div className="rounded-lg bg-emerald-950/30 border border-emerald-900/40 px-3 py-2">
+                    <p className="text-emerald-400 text-xs font-medium mb-1">
+                      Added {bulkResult.added.length} player{bulkResult.added.length !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-emerald-400/70 text-xs font-mono">{bulkResult.added.join(', ')}</p>
+                  </div>
+                )}
+                {bulkResult.notFound.length > 0 && (
+                  <div className="rounded-lg bg-amber-950/30 border border-amber-900/40 px-3 py-2">
+                    <p className="text-amber-400 text-xs font-medium mb-1">
+                      Not found ({bulkResult.notFound.length})
+                    </p>
+                    <p className="text-amber-400/70 text-xs font-mono">{bulkResult.notFound.join(', ')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Add player panel */}
         {showAddPanel && (
