@@ -16,6 +16,7 @@ interface RegearItem {
   reviewedBy: { id: string; discordName: string; inGameName: string | null } | null
   assignedRole: string | null
   roleNotes: string | null
+  regearValue: number | null
 }
 
 interface Props {
@@ -268,7 +269,14 @@ export function RegearsManager({ eventId }: Props) {
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <button
-                    onClick={(e) => { e.stopPropagation(); setReviewAction(prev => ({ ...prev, [item.id]: 'APPROVE' })) }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setReviewAction(prev => ({ ...prev, [item.id]: 'APPROVE' }))
+                      // Auto-fill silver amount from build's regear value
+                      if (item.regearValue && !silverInput[item.id]) {
+                        setSilverInput(prev => ({ ...prev, [item.id]: String(item.regearValue) }))
+                      }
+                    }}
                     className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
                       action === 'APPROVE'
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -302,6 +310,9 @@ export function RegearsManager({ eventId }: Props) {
                       className="input text-sm"
                       autoFocus
                     />
+                    {item.regearValue && silverInput[item.id] === String(item.regearValue) && (
+                      <p className="text-xs text-accent/70 mt-1">Auto-filled from build regear value ({item.regearValue.toLocaleString()})</p>
+                    )}
                   </div>
                 )}
 

@@ -123,14 +123,28 @@ export async function GET(
       roleSlot: { select: { roleName: true, notes: true } },
     },
   }) : []
+  function parseRegearValue(notes: string | null): number | null {
+    if (!notes) return null
+    try {
+      const parsed = JSON.parse(notes)
+      const val = parseInt(parsed.regearValue, 10)
+      return val > 0 ? val : null
+    } catch { return null }
+  }
+
   const assignmentMap = Object.fromEntries(
-    assignments.map(a => [a.userId, { roleName: a.roleSlot.roleName, roleNotes: a.roleSlot.notes }])
+    assignments.map(a => [a.userId, {
+      roleName: a.roleSlot.roleName,
+      roleNotes: a.roleSlot.notes,
+      regearValue: parseRegearValue(a.roleSlot.notes),
+    }])
   )
 
   const enrichedRequests = requests.map(r => ({
     ...r,
     assignedRole: assignmentMap[r.user.id]?.roleName ?? null,
     roleNotes: assignmentMap[r.user.id]?.roleNotes ?? null,
+    regearValue: assignmentMap[r.user.id]?.regearValue ?? null,
   }))
 
   return NextResponse.json({ items: enrichedRequests })

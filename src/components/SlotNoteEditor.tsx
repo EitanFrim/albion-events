@@ -9,6 +9,7 @@ export interface SlotNote {
   cape?: string
   foodPotion?: string
   mount?: string
+  regearValue?: string
   general?: string
 }
 
@@ -20,8 +21,9 @@ export const NOTE_FIELDS: { key: keyof SlotNote; label: string; icon: string; pl
   { key: 'shoes',    label: 'Shoes',       icon: '👟',  placeholder: 'e.g. Scholar Sandals' },
   { key: 'cape',     label: 'Cape',        icon: '🧣',  placeholder: 'e.g. Thetford Cape' },
   { key: 'foodPotion', label: 'Food / Potion', icon: '🍖', placeholder: 'e.g. Pork Omelette / Resistance Potion' },
-  { key: 'mount',    label: 'Mount',       icon: '🐎',  placeholder: 'e.g. Swiftclaw' },
-  { key: 'general',  label: 'General Note', icon: '📝', placeholder: 'Rotation tips, IP floor, any extra info…' },
+  { key: 'mount',       label: 'Mount',        icon: '🐎',  placeholder: 'e.g. Swiftclaw' },
+  { key: 'regearValue', label: 'Regear Value', icon: '💰', placeholder: 'e.g. 250000' },
+  { key: 'general',     label: 'General Note', icon: '📝', placeholder: 'Rotation tips, IP floor, any extra info…' },
 ]
 
 export function parseSlotNote(raw: string | null | undefined): SlotNote {

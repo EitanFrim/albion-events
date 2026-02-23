@@ -24,8 +24,18 @@ interface Props {
   assignedRole?: AssignedRoleInfo | null
 }
 
+function parseRegearValue(notes: string | null | undefined): number | null {
+  if (!notes) return null
+  try {
+    const parsed = JSON.parse(notes)
+    const val = parseInt(parsed.regearValue, 10)
+    return val > 0 ? val : null
+  } catch { return null }
+}
+
 export function RegearButton({ eventId, existingRegear, assignedRole }: Props) {
   const router = useRouter()
+  const regearValue = assignedRole ? parseRegearValue(assignedRole.notes) : null
   const [modalOpen, setModalOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [note, setNote] = useState('')
@@ -114,10 +124,14 @@ export function RegearButton({ eventId, existingRegear, assignedRole }: Props) {
           {assignedRole && (
             <div className="rounded-lg bg-accent/5 border border-accent/15 px-3 py-2.5">
               <p className="text-xs text-text-muted font-mono uppercase tracking-widest mb-1">Assigned Role</p>
-              <p className="text-sm font-mono font-semibold text-accent">{assignedRole.roleName}</p>
-              {assignedRole.notes && (
-                <p className="text-xs text-text-secondary mt-1 italic">{assignedRole.notes}</p>
-              )}
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-mono font-semibold text-accent">{assignedRole.roleName}</p>
+                {regearValue && (
+                  <span className="text-xs font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                    {regearValue.toLocaleString()} silver
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
