@@ -22,6 +22,9 @@ export function TemplatesManager({ initialTemplates, initialCategories, initialR
   const [editing, setEditing] = useState<Template | null>(null)
   const [creating, setCreating] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function startCreate() {
     setEditing({ id: '', name: '', data: { parties: [{ name: 'Party 1', slots: [] }] } })
@@ -51,6 +54,51 @@ export function TemplatesManager({ initialTemplates, initialCategories, initialR
     if (!confirm('Delete this build?')) return
     await fetch(`/api/guild-templates/${id}`, { method: 'DELETE' })
     setTemplates(prev => prev.filter(t => t.id !== id))
+  }
+
+  function exportBuilds() {
+    const data = {
+      type: 'albion-events-builds',
+      templates: templates.map(t => ({ name: t.name, data: t.data })),
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'builds-export.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function importBuilds(file: File) {
+    setImporting(true); setImportMsg('')
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      if (data.type !== 'albion-events-builds') throw new Error('Invalid file format')
+      if (!Array.isArray(data.templates)) throw new Error('Invalid file structure')
+
+      let created = 0, skipped = 0
+      for (const tpl of data.templates) {
+        if (!tpl.name || !tpl.data?.parties) { skipped++; continue }
+        const existing = templates.find(t => t.name === tpl.name)
+        if (existing) { skipped++; continue }
+        const res = await fetch('/api/guild-templates', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: tpl.name, data: tpl.data, guildSlug }),
+        })
+        if (res.ok) {
+          const saved: Template = await res.json()
+          setTemplates(prev => [...prev, saved])
+          created++
+        } else { skipped++ }
+      }
+
+      setImportMsg(`Imported ${created} build${created !== 1 ? 's' : ''}${skipped > 0 ? `, ${skipped} skipped` : ''}`)
+    } catch (e: any) {
+      setImportMsg(`Error: ${e.message}`)
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   if (editing) {
@@ -186,6 +234,22 @@ export function TemplatesManager({ initialTemplates, initialCategories, initialR
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
         New Template
       </button>
+
+      {/* Export / Import */}
+      <div className="flex items-center gap-3 pt-2 border-t border-border-subtle">
+        <button onClick={exportBuilds} className="btn-ghost text-xs flex items-center gap-1.5"
+          disabled={templates.length === 0}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+          Export Builds
+        </button>
+        <input ref={fileInputRef} type="file" accept=".json" className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) importBuilds(f) }} />
+        <button onClick={() => fileInputRef.current?.click()} disabled={importing} className="btn-ghost text-xs flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 6l-4-4-4 4M12 2v13" /></svg>
+          {importing ? 'Importing…' : 'Import Builds'}
+        </button>
+        {importMsg && <span className={`text-xs ${importMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{importMsg}</span>}
+      </div>
     </div>
   )
 }

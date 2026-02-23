@@ -49,6 +49,9 @@ export function RolesManager({ initialCategories, initialRoles, onPick, compact 
   const [roleLoading, setRoleLoading] = useState(false)
   const [roleError, setRoleError] = useState('')
 
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const roleInputRef = useRef<HTMLInputElement>(null)
   const catInputRef = useRef<HTMLInputElement>(null)
 
@@ -105,6 +108,71 @@ export function RolesManager({ initialCategories, initialRoles, onPick, compact 
     if (!confirm('Delete this role?')) return
     await fetch(`/api/guild-roles2/${id}`, { method: 'DELETE' })
     setRoles(prev => prev.filter(r => r.id !== id))
+  }
+
+  function exportRoles() {
+    const data = {
+      type: 'albion-events-roles',
+      categories: categories.map(c => ({ name: c.name, color: c.color, displayOrder: c.displayOrder })),
+      roles: roles.map(r => ({ name: r.name, category: r.category?.name ?? null })),
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'roles-export.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function importRoles(file: File) {
+    setImporting(true); setImportMsg('')
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      if (data.type !== 'albion-events-roles') throw new Error('Invalid file format')
+      if (!Array.isArray(data.categories) || !Array.isArray(data.roles)) throw new Error('Invalid file structure')
+
+      let created = 0, skipped = 0
+      const catMap = new Map<string, string>() // name → new id
+
+      // Create categories first
+      for (const cat of data.categories) {
+        const existing = categories.find(c => c.name === cat.name)
+        if (existing) { catMap.set(cat.name, existing.id); skipped++; continue }
+        const res = await fetch('/api/guild-categories', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: cat.name, color: cat.color ?? '#6b7280', guildSlug }),
+        })
+        if (res.ok) {
+          const newCat: GuildCategory = await res.json()
+          setCategories(prev => [...prev, newCat])
+          catMap.set(cat.name, newCat.id)
+          created++
+        } else { skipped++ }
+      }
+
+      // Create roles
+      for (const role of data.roles) {
+        const existing = roles.find(r => r.name === role.name)
+        if (existing) { skipped++; continue }
+        const categoryId = role.category ? catMap.get(role.category) ?? null : null
+        const res = await fetch('/api/guild-roles2', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: role.name, categoryId, guildSlug }),
+        })
+        if (res.ok) {
+          const newRole: GuildRole = await res.json()
+          setRoles(prev => [...prev, newRole])
+          created++
+        } else { skipped++ }
+      }
+
+      setImportMsg(`Imported ${created} items${skipped > 0 ? `, ${skipped} skipped (already exist)` : ''}`)
+    } catch (e: any) {
+      setImportMsg(`Error: ${e.message}`)
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   const uncategorized = rolesByCat(null)
@@ -267,6 +335,24 @@ export function RolesManager({ initialCategories, initialRoles, onPick, compact 
             Add Category
           </button>
         )
+      )}
+
+      {/* Export / Import */}
+      {!compact && (
+        <div className="flex items-center gap-3 pt-2 border-t border-border-subtle">
+          <button onClick={exportRoles} className="btn-ghost text-xs flex items-center gap-1.5"
+            disabled={categories.length === 0 && roles.length === 0}>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+            Export Roles
+          </button>
+          <input ref={fileInputRef} type="file" accept=".json" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) importRoles(f) }} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={importing} className="btn-ghost text-xs flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 6l-4-4-4 4M12 2v13" /></svg>
+            {importing ? 'Importing…' : 'Import Roles'}
+          </button>
+          {importMsg && <span className={`text-xs ${importMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{importMsg}</span>}
+        </div>
       )}
     </div>
   )
