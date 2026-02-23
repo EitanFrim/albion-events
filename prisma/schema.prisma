@@ -314,7 +314,7 @@ model RegearRequest {
 
   event      Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user       User            @relation(fields: [userId], references: [id])
-  membership GuildMembership @relation(fields: [membershipId], references: [id])
+  membership GuildMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   reviewedBy User?           @relation("RegearReviewer", fields: [reviewedById], references: [id])
 
   @@unique([eventId, userId])
