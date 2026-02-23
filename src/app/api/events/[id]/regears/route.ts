@@ -42,6 +42,24 @@ export async function POST(
   const existing = await prisma.regearRequest.findUnique({
     where: { eventId_userId: { eventId: params.id, userId: session.user.id } },
   })
+
+  // If rejected, allow resubmission by updating the existing record
+  if (existing && existing.status === 'REJECTED') {
+    const updated = await prisma.regearRequest.update({
+      where: { id: existing.id },
+      data: {
+        screenshotData,
+        note: note.slice(0, 500) || null,
+        status: 'PENDING',
+        silverAmount: null,
+        reviewNote: null,
+        reviewedById: null,
+        reviewedAt: null,
+      },
+    })
+    return NextResponse.json({ id: updated.id, status: updated.status })
+  }
+
   if (existing) return NextResponse.json({ error: 'You already have a regear request for this event' }, { status: 409 })
 
   const regear = await prisma.regearRequest.create({
