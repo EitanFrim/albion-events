@@ -26,59 +26,40 @@ export function RegearButton({ eventId, existingRegear }: Props) {
   const [error, setError] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
-  // If player already has a request, show status card
-  if (existingRegear) {
-    if (existingRegear.status === 'PENDING') {
-      return (
-        <div className="card p-4 border-amber-900/50 bg-amber-950/20">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-xs font-mono text-amber-400 uppercase tracking-wider">Regear Pending</span>
-          </div>
-          <p className="text-sm text-text-secondary">Your regear request is awaiting officer review.</p>
-        </div>
-      )
-    }
-    if (existingRegear.status === 'APPROVED') {
-      return (
-        <div className="card p-4 border-emerald-900/50 bg-emerald-950/20">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Regear Approved</span>
-          </div>
-          <p className="text-sm text-text-primary">
-            <span className="font-semibold text-amber-400">{existingRegear.silverAmount?.toLocaleString()} silver</span>{' '}
-            has been added to your balance.
-          </p>
-        </div>
-      )
-    }
-    if (existingRegear.status === 'REJECTED') {
-      return (
-        <>
-          <div className="card p-4 border-red-900/50 bg-red-950/20">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-red-400" />
-              <span className="text-xs font-mono text-red-400 uppercase tracking-wider">Regear Rejected</span>
-            </div>
-            <p className="text-sm text-text-secondary mb-3">{existingRegear.reviewNote}</p>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="btn-secondary text-xs w-full justify-center"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit &amp; Resubmit
-            </button>
-          </div>
-          {renderModal()}
-        </>
-      )
-    }
+  const isResubmit = existingRegear?.status === 'REJECTED'
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (f.size > 5 * 1024 * 1024) { setError('File must be under 5 MB'); return }
+    if (!f.type.startsWith('image/')) { setError('Must be an image file'); return }
+    setFile(f)
+    setError('')
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(f))
   }
 
-  const isResubmit = existingRegear?.status === 'REJECTED'
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!file) { setError('Please attach a screenshot'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('screenshot', file)
+      fd.append('note', note)
+      const res = await fetch(`/api/events/${eventId}/regears`, { method: 'POST', body: fd })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Failed to submit')
+        return
+      }
+      setModalOpen(false)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
+  }
 
   function renderModal() {
     if (!modalOpen) return null
@@ -154,39 +135,59 @@ export function RegearButton({ eventId, existingRegear }: Props) {
     )
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
-    if (f.size > 5 * 1024 * 1024) { setError('File must be under 5 MB'); return }
-    if (!f.type.startsWith('image/')) { setError('Must be an image file'); return }
-    setFile(f)
-    setError('')
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
-    setPreviewUrl(URL.createObjectURL(f))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!file) { setError('Please attach a screenshot'); return }
-    setLoading(true)
-    setError('')
-    try {
-      const fd = new FormData()
-      fd.append('screenshot', file)
-      fd.append('note', note)
-      const res = await fetch(`/api/events/${eventId}/regears`, { method: 'POST', body: fd })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError(data.error ?? 'Failed to submit')
-        return
-      }
-      setModalOpen(false)
-      router.refresh()
-    } finally {
-      setLoading(false)
+  // Status cards for existing requests
+  if (existingRegear) {
+    if (existingRegear.status === 'PENDING') {
+      return (
+        <div className="card p-4 border-amber-900/50 bg-amber-950/20">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-xs font-mono text-amber-400 uppercase tracking-wider">Regear Pending</span>
+          </div>
+          <p className="text-sm text-text-secondary">Your regear request is awaiting officer review.</p>
+        </div>
+      )
+    }
+    if (existingRegear.status === 'APPROVED') {
+      return (
+        <div className="card p-4 border-emerald-900/50 bg-emerald-950/20">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Regear Approved</span>
+          </div>
+          <p className="text-sm text-text-primary">
+            <span className="font-semibold text-amber-400">{existingRegear.silverAmount?.toLocaleString()} silver</span>{' '}
+            has been added to your balance.
+          </p>
+        </div>
+      )
+    }
+    if (existingRegear.status === 'REJECTED') {
+      return (
+        <>
+          <div className="card p-4 border-red-900/50 bg-red-950/20">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="text-xs font-mono text-red-400 uppercase tracking-wider">Regear Rejected</span>
+            </div>
+            <p className="text-sm text-text-secondary mb-3">{existingRegear.reviewNote}</p>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="btn-secondary text-xs w-full justify-center"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit &amp; Resubmit
+            </button>
+          </div>
+          {renderModal()}
+        </>
+      )
     }
   }
 
+  // No existing request — show submit button
   return (
     <>
       <button
