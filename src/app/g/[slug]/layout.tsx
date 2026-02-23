@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { GuildNavBar } from '@/components/GuildNavBar'
+import { AutoRefresh } from '@/components/AutoRefresh'
 
 interface Props {
   children: React.ReactNode
@@ -37,6 +38,7 @@ export default async function GuildLayout({ children, params }: Props) {
         guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl }}
         membership={{ role: membership.role, status: membership.status }}
       />
+      <AutoRefresh interval={30000} />
       <main className="flex-1">
         {children}
       </main>
