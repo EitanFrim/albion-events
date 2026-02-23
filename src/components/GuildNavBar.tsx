@@ -92,9 +92,9 @@ export function GuildNavBar({ guild, membership }: Props) {
 
         {/* Right: balance + user menu */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Silver balance */}
+          {/* Silver balance — clickable to view history */}
           {!isPending && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/5 border border-amber-500/15">
+            <Link href={`${base}/my-balance`} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/5 border border-amber-500/15 hover:bg-amber-500/10 transition-colors">
               <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -102,7 +102,7 @@ export function GuildNavBar({ guild, membership }: Props) {
                 {membership.balance.toLocaleString()}
               </span>
               <span className="text-xs text-text-muted hidden sm:inline">silver</span>
-            </div>
+            </Link>
           )}
           {session && (
             <div className="relative" onMouseLeave={() => setMenuOpen(false)}>
