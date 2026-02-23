@@ -18,6 +18,13 @@ export default async function OnboardingPage() {
   // Already set in-game name — redirect home
   if (user?.inGameName) redirect('/')
 
+  // Find the user's guild membership (even PENDING) for IGN verification
+  const membership = await prisma.guildMembership.findFirst({
+    where: { userId: session.user.id },
+    include: { guild: { select: { slug: true } } },
+    orderBy: { createdAt: 'desc' },
+  })
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -37,6 +44,7 @@ export default async function OnboardingPage() {
           hasInGameName={!!user?.inGameName}
           currentInGameName={user?.inGameName ?? ''}
           status="ACTIVE"
+          guildSlug={membership?.guild.slug}
         />
       </div>
     </div>

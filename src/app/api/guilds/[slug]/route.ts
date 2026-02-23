@@ -37,14 +37,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   const body = await req.json()
   const name = body.name?.trim()
   const logoUrl = body.logoUrl !== undefined ? (body.logoUrl?.trim() || null) : undefined
+  const serverRegion = body.serverRegion !== undefined ? body.serverRegion : undefined
 
   if (name !== undefined && (name.length < 2 || name.length > 64)) {
     return NextResponse.json({ error: 'Name must be 2–64 characters' }, { status: 400 })
   }
 
+  const validRegions = ['americas', 'europe', 'asia', null]
+  if (serverRegion !== undefined && !validRegions.includes(serverRegion)) {
+    return NextResponse.json({ error: 'Invalid server region' }, { status: 400 })
+  }
+
   const data: Record<string, unknown> = {}
   if (name !== undefined) data.name = name
   if (logoUrl !== undefined) data.logoUrl = logoUrl
+  if (serverRegion !== undefined) data.serverRegion = serverRegion
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })

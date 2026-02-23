@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
 
 async function handleIgnModalSubmit(interaction: any) {
   const { prisma } = await import('@/lib/prisma')
+  const { verifyAlbionName, REGION_LABELS } = await import('@/lib/albion')
 
   const discordGuildId = interaction.guild_id
   const discordUser = interaction.member?.user
@@ -101,10 +102,23 @@ async function handleIgnModalSubmit(interaction: any) {
     return NextResponse.json(ephemeralMessage('User not found. Try registering again.'))
   }
 
+  // Verify the in-game name against Albion Online API
+  let finalName = ignInput
+  if (guild.serverRegion) {
+    const result = await verifyAlbionName(ignInput, guild.serverRegion)
+    if (!result.valid) {
+      const regionLabel = REGION_LABELS[guild.serverRegion] ?? guild.serverRegion
+      return NextResponse.json(
+        ephemeralMessage(`Player **"${ignInput}"** not found in Albion Online (${regionLabel} server). Check the spelling and make sure you're on the correct server region.`)
+      )
+    }
+    if (result.exactName) finalName = result.exactName
+  }
+
   // Save the in-game name
   await prisma.user.update({
     where: { id: user.id },
-    data: { inGameName: ignInput },
+    data: { inGameName: finalName },
   })
 
   // Check if they already have a pending membership

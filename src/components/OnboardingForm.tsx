@@ -7,9 +7,10 @@ interface Props {
   hasInGameName: boolean
   currentInGameName: string
   status: string
+  guildSlug?: string
 }
 
-export function OnboardingForm({ hasInGameName, currentInGameName, status }: Props) {
+export function OnboardingForm({ hasInGameName, currentInGameName, status, guildSlug }: Props) {
   const [name, setName] = useState(currentInGameName)
   const [submitted, setSubmitted] = useState(hasInGameName)
   const [loading, setLoading] = useState(false)
@@ -23,13 +24,18 @@ export function OnboardingForm({ hasInGameName, currentInGameName, status }: Pro
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inGameName: name.trim() }),
+        body: JSON.stringify({ inGameName: name.trim(), guildSlug }),
       })
-      if (!res.ok) throw new Error('Failed to save')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Failed to save')
+      }
+      const data = await res.json()
+      if (data.inGameName) setName(data.inGameName) // use API-corrected casing
       setSubmitted(true)
       router.refresh()
-    } catch {
-      setError('Failed to save name. Try again.')
+    } catch (e: any) {
+      setError(e.message)
     } finally {
       setLoading(false)
     }
@@ -93,7 +99,7 @@ export function OnboardingForm({ hasInGameName, currentInGameName, status }: Pro
         <input
           type="text"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={e => { setName(e.target.value); setError('') }}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}
           placeholder="Your Albion Online character name"
           className="input w-full"
@@ -107,7 +113,7 @@ export function OnboardingForm({ hasInGameName, currentInGameName, status }: Pro
         disabled={loading || !name.trim()}
         className="btn-primary w-full justify-center"
       >
-        {loading ? 'Saving…' : 'Submit for Verification'}
+        {loading ? 'Verifying…' : 'Submit for Verification'}
       </button>
 
       <p className="text-xs text-text-muted text-center">

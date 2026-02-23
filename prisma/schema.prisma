@@ -79,6 +79,7 @@ model Guild {
   discordMemberRoleId   String?  @map("discord_member_role_id")
   discordAllianceRoleId String?  @map("discord_alliance_role_id")
   discordBotInstalled   Boolean  @default(false) @map("discord_bot_installed")
+  serverRegion          String?  @map("server_region")
   createdAt           DateTime @default(now()) @map("created_at")
 
   owner      User              @relation("GuildOwner", fields: [ownerId], references: [id])

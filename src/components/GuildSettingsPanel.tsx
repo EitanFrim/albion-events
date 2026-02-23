@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
-  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean }
+  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean; serverRegion: string | null }
 }
 
 export function GuildSettingsPanel({ guild }: Props) {
@@ -26,6 +26,9 @@ export function GuildSettingsPanel({ guild }: Props) {
   const [logoSaved, setLogoSaved] = useState(false)
   const [discordLinked, setDiscordLinked] = useState(guild.discordBotInstalled)
   const [unlinking, setUnlinking] = useState(false)
+  const [serverRegion, setServerRegion] = useState(guild.serverRegion ?? '')
+  const [regionSaving, setRegionSaving] = useState(false)
+  const [regionSaved, setRegionSaved] = useState(false)
 
   async function saveLogo(url: string) {
     setLogoSaving(true); setLogoError(''); setLogoSaved(false)
@@ -219,6 +222,44 @@ export function GuildSettingsPanel({ guild }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Server region */}
+      <div className="card p-5 space-y-4">
+        <div>
+          <h2 className="font-display font-600 text-text-primary mb-1">Server Region</h2>
+          <p className="text-text-secondary text-sm">Set your Albion Online server region. This is used to verify player names when they register.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={serverRegion}
+            onChange={async (e) => {
+              const val = e.target.value || null
+              setServerRegion(e.target.value)
+              setRegionSaving(true); setRegionSaved(false)
+              const res = await fetch(`/api/guilds/${guild.slug}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serverRegion: val }),
+              })
+              setRegionSaving(false)
+              if (res.ok) { setRegionSaved(true); setTimeout(() => setRegionSaved(false), 2000) }
+            }}
+            className="input text-sm py-1.5 w-48"
+          >
+            <option value="">Not set (no verification)</option>
+            <option value="americas">Americas</option>
+            <option value="europe">Europe</option>
+            <option value="asia">Asia</option>
+          </select>
+          {regionSaving && <span className="text-xs text-text-muted">Saving…</span>}
+          {regionSaved && <span className="text-xs text-emerald-400">✓ Saved</span>}
+        </div>
+        {serverRegion && (
+          <p className="text-xs text-text-muted">
+            Players will need a valid Albion Online character name on the <span className="text-text-secondary font-medium">{serverRegion === 'americas' ? 'Americas' : serverRegion === 'europe' ? 'Europe' : 'Asia'}</span> server to register.
+          </p>
+        )}
       </div>
 
       {/* Discord bot integration */}

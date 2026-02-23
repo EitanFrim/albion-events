@@ -61,6 +61,17 @@ const commands = [
         type: 8, // ROLE
         required: false,
       },
+      {
+        name: 'server-region',
+        description: 'Albion Online server region for name verification (americas/europe/asia)',
+        type: 3, // STRING
+        required: false,
+        choices: [
+          { name: 'Americas', value: 'americas' },
+          { name: 'Europe', value: 'europe' },
+          { name: 'Asia', value: 'asia' },
+        ],
+      },
     ],
     default_member_permissions: '8', // ADMINISTRATOR
   },

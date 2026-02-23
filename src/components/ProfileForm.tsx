@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 
-interface Props { discordName: string; currentInGameName: string }
+interface Props { discordName: string; currentInGameName: string; guildSlug?: string }
 
-export function ProfileForm({ discordName, currentInGameName }: Props) {
+export function ProfileForm({ discordName, currentInGameName, guildSlug }: Props) {
   const [name, setName] = useState(currentInGameName)
   const [saved, setSaved] = useState(currentInGameName)
   const [loading, setLoading] = useState(false)
@@ -19,11 +19,14 @@ export function ProfileForm({ discordName, currentInGameName }: Props) {
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inGameName: name.trim() }),
+        body: JSON.stringify({ inGameName: name.trim(), guildSlug }),
       })
       if (!res.ok) throw new Error((await res.json()).error)
-      setSaved(name.trim())
-      setSuccess('Saved!')
+      const data = await res.json()
+      const finalName = data.inGameName ?? name.trim()
+      setName(finalName)
+      setSaved(finalName)
+      setSuccess('Verified & saved!')
       setTimeout(() => window.location.reload(), 800)
     } catch (err: any) { setError(err.message) }
     finally { setLoading(false) }
@@ -45,20 +48,22 @@ export function ProfileForm({ discordName, currentInGameName }: Props) {
           <input
             type="text"
             value={name}
-            onChange={e => { setName(e.target.value); setSuccess('') }}
+            onChange={e => { setName(e.target.value); setSuccess(''); setError('') }}
             placeholder="Your Albion Online character name"
             maxLength={64}
             className="input"
             autoFocus={!saved}
           />
-          <p className="text-text-muted text-xs mt-1">Shown to guild leaders on event rosters</p>
+          <p className="text-text-muted text-xs mt-1">
+            {guildSlug ? 'Must match your exact Albion Online character name' : 'Shown to guild leaders on event rosters'}
+          </p>
         </div>
 
         {error && <p className="text-red-400 text-xs">{error}</p>}
         {success && <p className="text-emerald-400 text-xs">✓ {success}</p>}
 
         <button type="submit" disabled={loading || name.trim() === saved} className="btn-primary w-full justify-center">
-          {loading ? 'Saving…' : saved ? 'Update' : 'Save Name'}
+          {loading ? 'Verifying…' : saved ? 'Update' : 'Save Name'}
         </button>
       </form>
 

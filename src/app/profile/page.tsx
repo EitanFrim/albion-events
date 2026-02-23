@@ -15,6 +15,12 @@ export default async function ProfilePage() {
     select: { discordName: true, inGameName: true },
   })
 
+  // Find the user's active guild membership to get the guildSlug for IGN verification
+  const membership = await prisma.guildMembership.findFirst({
+    where: { userId: session.user.id, status: 'ACTIVE' },
+    include: { guild: { select: { slug: true } } },
+  })
+
   return (
     <div className="max-w-md mx-auto px-4 py-12 animate-fade-in">
       <div className="mb-8">
@@ -22,7 +28,7 @@ export default async function ProfilePage() {
         <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Profile</h1>
         <p className="text-text-secondary text-sm mt-1">Set your in-game name so leaders can identify you on rosters.</p>
       </div>
-      <ProfileForm discordName={user?.discordName ?? ''} currentInGameName={user?.inGameName ?? ''} />
+      <ProfileForm discordName={user?.discordName ?? ''} currentInGameName={user?.inGameName ?? ''} guildSlug={membership?.guild.slug} />
     </div>
   )
 }

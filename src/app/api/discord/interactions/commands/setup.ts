@@ -73,11 +73,16 @@ export async function handleSetupCommand(interaction: SetupInteraction) {
     )
   }
 
-  // Extract the member-role and alliance-role options
+  // Extract the member-role, alliance-role, and server-region options
   const memberRoleOption = interaction.data.options?.find(o => o.name === 'member-role')
   const allianceRoleOption = interaction.data.options?.find(o => o.name === 'alliance-role')
+  const serverRegionOption = interaction.data.options?.find(o => o.name === 'server-region')
   const memberRoleId = memberRoleOption?.value ?? null
   const allianceRoleId = allianceRoleOption?.value ?? null
+  const serverRegion = serverRegionOption?.value ?? null
+
+  const validRegions = ['americas', 'europe', 'asia']
+  const regionLabels: Record<string, string> = { americas: 'Americas', europe: 'Europe', asia: 'Asia' }
 
   // Update the guild
   await prisma.guild.update({
@@ -87,6 +92,7 @@ export async function handleSetupCommand(interaction: SetupInteraction) {
       discordBotInstalled: true,
       ...(memberRoleId ? { discordMemberRoleId: memberRoleId } : {}),
       ...(allianceRoleId ? { discordAllianceRoleId: allianceRoleId } : {}),
+      ...(serverRegion && validRegions.includes(serverRegion) ? { serverRegion } : {}),
     },
   })
 
@@ -97,8 +103,11 @@ export async function handleSetupCommand(interaction: SetupInteraction) {
   if (allianceRoleId) {
     messages.push(`Alliance role set to <@&${allianceRoleId}>.`)
   }
-  if (!memberRoleId && !allianceRoleId) {
-    messages.push('No roles specified. Run `/setup member-role:@Role` and optionally `alliance-role:@Role` to configure registration.')
+  if (serverRegion && validRegions.includes(serverRegion)) {
+    messages.push(`Server region set to **${regionLabels[serverRegion] ?? serverRegion}**.`)
+  }
+  if (!memberRoleId && !allianceRoleId && !serverRegion) {
+    messages.push('No options specified. Run `/setup member-role:@Role`, `alliance-role:@Role`, or `server-region:americas` to configure.')
   }
 
   return NextResponse.json(
