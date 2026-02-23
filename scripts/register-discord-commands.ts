@@ -42,6 +42,7 @@ const commands = [
     name: 'register',
     description: 'Register as a verified member of the linked guild on Albion Events',
     type: 1,
+    default_member_permissions: null, // everyone can use this
   },
   {
     name: 'setup',
