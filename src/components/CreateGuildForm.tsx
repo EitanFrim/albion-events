@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 export function CreateGuildForm() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [serverRegion, setServerRegion] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -21,7 +22,7 @@ export function CreateGuildForm() {
       const res = await fetch('/api/guilds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), description: description.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim() || undefined, serverRegion: serverRegion || undefined }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Failed to create guild'); return }
@@ -65,6 +66,21 @@ export function CreateGuildForm() {
           rows={3}
           maxLength={280}
         />
+      </div>
+
+      <div>
+        <label className="label">Server Region</label>
+        <select
+          value={serverRegion}
+          onChange={e => setServerRegion(e.target.value)}
+          className="input w-full"
+        >
+          <option value="">Select region…</option>
+          <option value="americas">Americas</option>
+          <option value="europe">Europe</option>
+          <option value="asia">Asia</option>
+        </select>
+        <p className="text-xs text-text-muted mt-1">Used to verify player names against Albion Online. Can be changed later in settings.</p>
       </div>
 
       {error && <p className="text-red-400 text-sm">{error}</p>}

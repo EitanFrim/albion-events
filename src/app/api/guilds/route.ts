@@ -9,6 +9,7 @@ import { z } from 'zod'
 const schema = z.object({
   name: z.string().min(2).max(64).trim(),
   description: z.string().max(280).optional(),
+  serverRegion: z.enum(['americas', 'europe', 'asia']).optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
-  const { name, description } = parsed.data
+  const { name, description, serverRegion } = parsed.data
 
   // One guild per user — check if they already own one
   const existingOwned = await prisma.guild.findFirst({ where: { ownerId: session.user.id } })
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
       description,
       inviteCode,
       ownerId: session.user.id,
+      serverRegion: serverRegion ?? null,
       members: {
         create: {
           userId: session.user.id,
