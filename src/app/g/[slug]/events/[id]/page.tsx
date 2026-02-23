@@ -10,6 +10,7 @@ import { CompleteEventButton } from '@/components/CompleteEventButton'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
 import { PublishEventButton } from '@/components/PublishEventButton'
 import { ExportPlayersButton } from '@/components/ExportPlayersButton'
+import { RegearButton } from '@/components/RegearButton'
 import { EventStatus } from '@prisma/client'
 
 const statusConfig: Record<EventStatus, { label: string; cls: string; dot: string }> = {
@@ -85,6 +86,28 @@ export default async function GuildEventPage({ params }: Props) {
     })
   }
 
+  // Fetch current user's regear request for this event
+  let myRegear = null
+  if (session?.user.id && membership?.status === 'ACTIVE') {
+    myRegear = await prisma.regearRequest.findUnique({
+      where: { eventId_userId: { eventId: params.id, userId: session.user.id } },
+      select: {
+        id: true,
+        status: true,
+        silverAmount: true,
+        reviewNote: true,
+      },
+    })
+  }
+
+  // Count pending regears for officer badge
+  let pendingRegearCount = 0
+  if (isOfficerPlus) {
+    pendingRegearCount = await prisma.regearRequest.count({
+      where: { eventId: params.id, status: 'PENDING' },
+    })
+  }
+
   // Fetch all active signups (visible to everyone)
   const allSignups = await prisma.signup.findMany({
     where: { eventId: params.id, status: 'ACTIVE' },
@@ -127,6 +150,17 @@ export default async function GuildEventPage({ params }: Props) {
               parties={event.parties as any}
               signups={allSignups as any}
             />
+            <Link href={`/g/${params.slug}/events/${params.id}/regears`} className="btn-ghost text-xs relative">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Regears
+              {pendingRegearCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 bg-amber-400 text-bg-base rounded-full text-xs flex items-center justify-center font-bold px-1">
+                  {pendingRegearCount}
+                </span>
+              )}
+            </Link>
             <DeleteEventButton eventId={params.id} eventTitle={event.title} guildSlug={params.slug} />
           </>
         )}
@@ -276,6 +310,15 @@ export default async function GuildEventPage({ params }: Props) {
             <div className="card p-4 text-center">
               <p className="text-text-muted text-sm">Content not yet published</p>
             </div>
+          )}
+
+          {/* Regear request - show for active members on locked/completed events */}
+          {session && membership?.status === 'ACTIVE' &&
+            (event.status === 'LOCKED' || event.status === 'COMPLETED') && (
+            <RegearButton
+              eventId={params.id}
+              existingRegear={myRegear as any}
+            />
           )}
 
           {/* Signed up players list */}

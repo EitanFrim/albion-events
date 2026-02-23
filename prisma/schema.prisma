@@ -36,6 +36,12 @@ enum SignupStatus {
   WITHDRAWN
 }
 
+enum RegearStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String   @id @default(cuid())
   discordUserId String   @unique @map("discord_user_id")
@@ -54,6 +60,8 @@ model User {
   memberships      GuildMembership[]
   ownedGuilds      Guild[]          @relation("GuildOwner")
   balanceActions   BalanceTransaction[] @relation("BalancePerformer")
+  regearRequests   RegearRequest[]
+  regearReviews    RegearRequest[]      @relation("RegearReviewer")
 
   @@map("users")
 }
@@ -94,7 +102,8 @@ model GuildMembership {
 
   user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   guild        Guild               @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  transactions BalanceTransaction[]
+  transactions     BalanceTransaction[]
+  regearRequests   RegearRequest[]
 
   @@unique([userId, guildId])
   @@map("guild_memberships")
@@ -133,7 +142,8 @@ model Event {
   parties     Party[]
   signups     Signup[]
   assignments Assignment[]
-  auditLogs   AuditLog[]
+  auditLogs       AuditLog[]
+  regearRequests  RegearRequest[]
 
   @@map("events")
 }
@@ -284,4 +294,27 @@ model GuildRole {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("guild_roles")
+}
+
+model RegearRequest {
+  id             String       @id @default(cuid())
+  eventId        String       @map("event_id")
+  userId         String       @map("user_id")
+  membershipId   String       @map("membership_id")
+  screenshotData String       @map("screenshot_data") @db.Text
+  note           String?
+  status         RegearStatus @default(PENDING)
+  silverAmount   Int?         @map("silver_amount")
+  reviewNote     String?      @map("review_note")
+  reviewedById   String?      @map("reviewed_by_id")
+  reviewedAt     DateTime?    @map("reviewed_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  event      Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User            @relation(fields: [userId], references: [id])
+  membership GuildMembership @relation(fields: [membershipId], references: [id])
+  reviewedBy User?           @relation("RegearReviewer", fields: [reviewedById], references: [id])
+
+  @@unique([eventId, userId])
+  @@map("regear_requests")
 }
