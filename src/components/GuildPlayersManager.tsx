@@ -9,6 +9,7 @@ interface Member {
   id: string
   role: MemberRole
   status: MemberStatus
+  balance: number
   joinedAt: string
   verifiedAt: string | null
   user: { id: string; discordName: string; inGameName: string | null; avatarUrl: string | null }
@@ -38,6 +39,14 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
   const [loading, setLoading] = useState<string | null>(null)
   const [filter, setFilter] = useState<MemberStatus | 'ALL'>('PENDING')
   const [search, setSearch] = useState('')
+  const [balanceModal, setBalanceModal] = useState<{
+    userId: string
+    name: string
+    currentBalance: number
+  } | null>(null)
+  const [balanceAmount, setBalanceAmount] = useState('')
+  const [balanceMode, setBalanceMode] = useState<'add' | 'deduct'>('add')
+  const [balanceReason, setBalanceReason] = useState('')
 
   async function updateMember(userId: string, data: { status?: MemberStatus; role?: MemberRole }) {
     setLoading(userId)
@@ -65,6 +74,39 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
     } finally {
       setLoading(null)
     }
+  }
+
+  async function submitBalanceAdjustment() {
+    if (!balanceModal) return
+    const raw = parseInt(balanceAmount, 10)
+    if (!raw || raw <= 0) { alert('Enter a valid positive amount'); return }
+    const amount = balanceMode === 'deduct' ? -raw : raw
+
+    setLoading(balanceModal.userId)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/members/${balanceModal.userId}/balance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, reason: balanceReason || undefined }),
+      })
+      if (!res.ok) { alert('Failed to adjust balance'); return }
+      const data = await res.json()
+      setMembers(prev => prev.map(m =>
+        m.user.id === balanceModal.userId ? { ...m, balance: data.balance } : m
+      ))
+      setBalanceModal(null)
+      setBalanceAmount('')
+      setBalanceReason('')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  function openBalanceModal(userId: string, name: string, currentBalance: number) {
+    setBalanceModal({ userId, name, currentBalance })
+    setBalanceAmount('')
+    setBalanceMode('add')
+    setBalanceReason('')
   }
 
   const pendingCount = members.filter(m => m.status === 'PENDING').length
@@ -133,11 +175,19 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                       <span className={`text-xs font-mono ${rc.color}`}>{rc.label}</span>
                     </div>
                     {member.user.inGameName ? (
-                      <span className="text-xs text-text-muted font-mono">⚔️ {member.user.inGameName}</span>
+                      <span className="text-xs text-text-muted font-mono">{member.user.inGameName}</span>
                     ) : (
                       <span className="text-xs text-red-400/70 italic">No in-game name set</span>
                     )}
                   </div>
+                </div>
+
+                {/* Balance */}
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-sm font-mono ${member.balance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                    {member.balance.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-text-muted">silver</span>
                 </div>
 
                 {/* Status badge */}
@@ -172,6 +222,10 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                         {isLoading ? '…' : 'Reinstate'}
                       </button>
                     )}
+                    <button onClick={() => openBalanceModal(member.user.id, member.user.discordName, member.balance)}
+                      disabled={isLoading} className="btn-ghost text-xs py-1 px-2 text-amber-400/70 hover:text-amber-400">
+                      {isLoading ? '…' : 'Balance'}
+                    </button>
                     <button onClick={() => removeMember(member.user.id, member.user.discordName)}
                       disabled={isLoading} className="btn-ghost text-xs py-1 px-2 text-red-400/70 hover:text-red-400">
                       {isLoading ? '…' : 'Remove'}
@@ -190,6 +244,90 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Balance adjustment modal */}
+      {balanceModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setBalanceModal(null)}>
+          <div className="card p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
+            <div>
+              <h3 className="font-display font-bold text-text-primary text-lg">Adjust Balance</h3>
+              <p className="text-text-secondary text-sm mt-1">
+                {balanceModal.name} — current balance:{' '}
+                <span className={`font-mono ${balanceModal.currentBalance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                  {balanceModal.currentBalance.toLocaleString()} silver
+                </span>
+              </p>
+            </div>
+
+            {/* Mode toggle */}
+            <div className="flex gap-1 bg-bg-elevated rounded-lg p-1 border border-border">
+              <button
+                onClick={() => setBalanceMode('add')}
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-mono transition-colors ${
+                  balanceMode === 'add' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-text-muted hover:text-text-secondary'
+                }`}>
+                + Add
+              </button>
+              <button
+                onClick={() => setBalanceMode('deduct')}
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-mono transition-colors ${
+                  balanceMode === 'deduct' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'text-text-muted hover:text-text-secondary'
+                }`}>
+                - Deduct
+              </button>
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label className="text-xs text-text-muted font-mono uppercase tracking-widest block mb-1.5">
+                Amount (silver)
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={balanceAmount}
+                onChange={e => setBalanceAmount(e.target.value)}
+                placeholder="e.g. 50000"
+                className="input w-full"
+                autoFocus
+              />
+            </div>
+
+            {/* Reason */}
+            <div>
+              <label className="text-xs text-text-muted font-mono uppercase tracking-widest block mb-1.5">
+                Reason (optional)
+              </label>
+              <input
+                type="text"
+                value={balanceReason}
+                onChange={e => setBalanceReason(e.target.value)}
+                placeholder="e.g. Loot split from ZvZ"
+                className="input w-full"
+                maxLength={200}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setBalanceModal(null)} className="btn-ghost flex-1 text-sm py-2">
+                Cancel
+              </button>
+              <button
+                onClick={submitBalanceAdjustment}
+                disabled={loading === balanceModal.userId || !balanceAmount}
+                className={`flex-1 text-sm py-2 rounded-lg font-medium transition-colors ${
+                  balanceMode === 'add'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                } disabled:opacity-50`}>
+                {loading === balanceModal.userId ? '…' : balanceMode === 'add' ? 'Add Silver' : 'Deduct Silver'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -64,6 +64,48 @@ const commands = [
     type: 1,
     default_member_permissions: '8', // ADMINISTRATOR
   },
+  {
+    name: 'bal',
+    description: 'Check your current silver balance in the guild',
+    type: 1,
+    default_member_permissions: null, // everyone can use this
+  },
+  {
+    name: 'balance',
+    description: "Manage a player's silver balance (Officers only)",
+    type: 1,
+    default_member_permissions: null, // officer check done server-side
+    options: [
+      {
+        name: 'add',
+        description: "Add silver to a player's balance",
+        type: 1, // SUB_COMMAND
+        options: [
+          { name: 'player', description: 'The player to add silver to', type: 6, required: true },
+          { name: 'amount', description: 'Amount of silver to add', type: 4, required: true, min_value: 1 },
+          { name: 'reason', description: 'Reason for the deposit', type: 3, required: false },
+        ],
+      },
+      {
+        name: 'deduct',
+        description: "Deduct silver from a player's balance",
+        type: 1, // SUB_COMMAND
+        options: [
+          { name: 'player', description: 'The player to deduct silver from', type: 6, required: true },
+          { name: 'amount', description: 'Amount of silver to deduct', type: 4, required: true, min_value: 1 },
+          { name: 'reason', description: 'Reason for the deduction', type: 3, required: false },
+        ],
+      },
+      {
+        name: 'check',
+        description: "Check a player's current balance",
+        type: 1, // SUB_COMMAND
+        options: [
+          { name: 'player', description: 'The player to check', type: 6, required: true },
+        ],
+      },
+    ],
+  },
 ]
 
 async function registerCommands() {

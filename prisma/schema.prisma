@@ -53,6 +53,7 @@ model User {
   roleSpecs        PlayerRoleSpec[]
   memberships      GuildMembership[]
   ownedGuilds      Guild[]          @relation("GuildOwner")
+  balanceActions   BalanceTransaction[] @relation("BalancePerformer")
 
   @@map("users")
 }
@@ -86,15 +87,32 @@ model GuildMembership {
   guildId      String       @map("guild_id")
   role         MemberRole   @default(PLAYER)
   status       MemberStatus @default(PENDING)
+  balance      Int          @default(0)
   verifiedById String?      @map("verified_by_id")
   verifiedAt   DateTime?    @map("verified_at")
   joinedAt     DateTime     @default(now()) @map("joined_at")
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guild        Guild               @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  transactions BalanceTransaction[]
 
   @@unique([userId, guildId])
   @@map("guild_memberships")
+}
+
+model BalanceTransaction {
+  id            String   @id @default(cuid())
+  membershipId  String   @map("membership_id")
+  amount        Int
+  balanceAfter  Int      @map("balance_after")
+  reason        String?
+  performedById String   @map("performed_by_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  membership  GuildMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  performedBy User            @relation("BalancePerformer", fields: [performedById], references: [id])
+
+  @@map("balance_transactions")
 }
 
 model Event {

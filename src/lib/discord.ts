@@ -24,3 +24,7 @@ export function ephemeralMessage(content: string) {
 export function pongResponse() {
   return { type: 1 }
 }
+
+export function formatSilver(amount: number): string {
+  return amount.toLocaleString('en-US')
+}

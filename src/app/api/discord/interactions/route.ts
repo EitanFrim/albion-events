@@ -5,6 +5,8 @@ import { verifyDiscordRequest, ephemeralMessage, pongResponse } from '@/lib/disc
 import { handleRegisterCommand } from './commands/register'
 import { handleSetupCommand } from './commands/setup'
 import { handleVerifyMessageCommand } from './commands/verify-message'
+import { handleBalCommand } from './commands/bal'
+import { handleBalanceCommand } from './commands/balance'
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -34,6 +36,10 @@ export async function POST(req: NextRequest) {
         return handleSetupCommand(interaction)
       case 'verify-message':
         return handleVerifyMessageCommand(interaction)
+      case 'bal':
+        return handleBalCommand(interaction)
+      case 'balance':
+        return handleBalanceCommand(interaction)
       default:
         return NextResponse.json(ephemeralMessage(`Unknown command: ${commandName}`))
     }
