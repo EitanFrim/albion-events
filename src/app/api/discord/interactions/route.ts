@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyDiscordRequest, ephemeralMessage, pongResponse } from '@/lib/discord'
 import { handleRegisterCommand } from './commands/register'
 import { handleSetupCommand } from './commands/setup'
+import { handleVerifyMessageCommand } from './commands/verify-message'
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -31,9 +32,22 @@ export async function POST(req: NextRequest) {
         return handleRegisterCommand(interaction)
       case 'setup':
         return handleSetupCommand(interaction)
+      case 'verify-message':
+        return handleVerifyMessageCommand(interaction)
       default:
         return NextResponse.json(ephemeralMessage(`Unknown command: ${commandName}`))
     }
+  }
+
+  // MESSAGE_COMPONENT (button clicks)
+  if (interaction.type === 3) {
+    const customId = interaction.data.custom_id
+
+    if (customId === 'register_button') {
+      return handleRegisterCommand(interaction)
+    }
+
+    return NextResponse.json(ephemeralMessage('Unknown button interaction'))
   }
 
   return NextResponse.json(ephemeralMessage('Interaction not supported'))

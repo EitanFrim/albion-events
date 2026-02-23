@@ -58,6 +58,12 @@ const commands = [
     ],
     default_member_permissions: '8', // ADMINISTRATOR
   },
+  {
+    name: 'verify-message',
+    description: 'Post a verification message with a Register button in this channel',
+    type: 1,
+    default_member_permissions: '8', // ADMINISTRATOR
+  },
 ]
 
 async function registerCommands() {
