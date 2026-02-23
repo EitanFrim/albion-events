@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
   const membership = await prisma.guildMembership.findFirst({
     where: { userId: session.user.id },
     include: { guild: { select: { slug: true } } },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { joinedAt: 'desc' },
   })
 
   return (
