@@ -81,6 +81,7 @@ export function GuildNavBar({ guild, membership }: Props) {
               {isOfficerPlus && navLink(`${base}/admin/roles`, 'Roles')}
               {navLink(`${base}/admin/templates`, 'Builds')}
               {isOfficerPlus && navLink(`${base}/admin/players`, 'Players')}
+              {isOfficerPlus && navLink(`${base}/admin/balance-logs`, 'Balance Logs')}
               {isOwner && navLink(`${base}/settings`, 'Settings')}
             </div>
           )}
