@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 
 interface Props {
   guild: { id: string; name: string; slug: string; logoUrl?: string | null }
-  membership: { role: string; status: string }
+  membership: { role: string; status: string; balance: number }
 }
 
 const roleColors: Record<string, string> = {
@@ -87,8 +87,20 @@ export function GuildNavBar({ guild, membership }: Props) {
           )}
         </div>
 
-        {/* Right: user menu */}
+        {/* Right: balance + user menu */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Silver balance */}
+          {!isPending && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/5 border border-amber-500/15">
+              <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className={`text-sm font-mono font-medium ${membership.balance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                {membership.balance.toLocaleString()}
+              </span>
+              <span className="text-xs text-text-muted hidden sm:inline">silver</span>
+            </div>
+          )}
           {session && (
             <div className="relative" onMouseLeave={() => setMenuOpen(false)}>
               <button

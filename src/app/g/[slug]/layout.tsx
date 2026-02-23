@@ -36,7 +36,7 @@ export default async function GuildLayout({ children, params }: Props) {
     <div className="min-h-screen flex flex-col">
       <GuildNavBar
         guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl }}
-        membership={{ role: membership.role, status: membership.status }}
+        membership={{ role: membership.role, status: membership.status, balance: membership.balance }}
       />
       <AutoRefresh interval={30000} />
       <main className="flex-1">
