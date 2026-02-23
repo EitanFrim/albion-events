@@ -55,6 +55,18 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
     }
   }
 
+  async function removeMember(userId: string, name: string) {
+    if (!confirm(`Remove ${name} from the guild? They will need to re-register.`)) return
+    setLoading(userId)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/members/${userId}`, { method: 'DELETE' })
+      if (!res.ok) { alert('Action failed'); return }
+      setMembers(prev => prev.filter(m => m.user.id !== userId))
+    } finally {
+      setLoading(null)
+    }
+  }
+
   const pendingCount = members.filter(m => m.status === 'PENDING').length
 
   const filtered = members.filter(m => {
@@ -160,6 +172,10 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                         {isLoading ? '…' : 'Reinstate'}
                       </button>
                     )}
+                    <button onClick={() => removeMember(member.user.id, member.user.discordName)}
+                      disabled={isLoading} className="btn-ghost text-xs py-1 px-2 text-red-400/70 hover:text-red-400">
+                      {isLoading ? '…' : 'Remove'}
+                    </button>
                     {isOwner && (
                       <select value={member.role}
                         onChange={e => updateMember(member.user.id, { role: e.target.value as MemberRole })}

@@ -65,3 +65,32 @@ export async function PATCH(
 
   return NextResponse.json(updated)
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { slug: string; userId: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const guild = await prisma.guild.findUnique({ where: { slug: params.slug } })
+  if (!guild) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const myAccess = await requireGuildAccess(session.user.id, guild.id, 'OFFICER')
+  if (!myAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  // Can't remove the owner
+  const target = await prisma.guildMembership.findUnique({
+    where: { userId_guildId: { userId: params.userId, guildId: guild.id } },
+  })
+  if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+  if (target.role === 'OWNER') {
+    return NextResponse.json({ error: 'Cannot remove the guild owner' }, { status: 403 })
+  }
+
+  await prisma.guildMembership.delete({
+    where: { userId_guildId: { userId: params.userId, guildId: guild.id } },
+  })
+
+  return NextResponse.json({ success: true })
+}
