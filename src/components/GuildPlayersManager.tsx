@@ -203,45 +203,49 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                 </span>
 
                 {/* Actions */}
-                {!isSelf && member.role !== 'OWNER' && (
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {member.status === 'PENDING' && (
-                      <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE' })}
-                        disabled={isLoading} className="btn-primary text-xs py-1 px-3">
-                        {isLoading ? '…' : '✓ Verify'}
-                      </button>
-                    )}
-                    {member.status === 'ACTIVE' && (
-                      <button onClick={() => updateMember(member.user.id, { status: 'SUSPENDED' })}
-                        disabled={isLoading} className="btn-danger text-xs py-1 px-3">
-                        {isLoading ? '…' : 'Suspend'}
-                      </button>
-                    )}
-                    {member.status === 'SUSPENDED' && (
-                      <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE' })}
-                        disabled={isLoading} className="btn-secondary text-xs py-1 px-3">
-                        {isLoading ? '…' : 'Reinstate'}
-                      </button>
-                    )}
-                    <button onClick={() => openBalanceModal(member.user.id, member.user.discordName, member.balance)}
-                      disabled={isLoading} className="btn-ghost text-xs py-1 px-2 text-amber-400/70 hover:text-amber-400">
-                      {isLoading ? '…' : 'Balance'}
-                    </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!isSelf && member.role !== 'OWNER' && (
+                    <>
+                      {member.status === 'PENDING' && (
+                        <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE' })}
+                          disabled={isLoading} className="btn-primary text-xs py-1 px-3">
+                          {isLoading ? '…' : '✓ Verify'}
+                        </button>
+                      )}
+                      {member.status === 'ACTIVE' && (
+                        <button onClick={() => updateMember(member.user.id, { status: 'SUSPENDED' })}
+                          disabled={isLoading} className="btn-danger text-xs py-1 px-3">
+                          {isLoading ? '…' : 'Suspend'}
+                        </button>
+                      )}
+                      {member.status === 'SUSPENDED' && (
+                        <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE' })}
+                          disabled={isLoading} className="btn-secondary text-xs py-1 px-3">
+                          {isLoading ? '…' : 'Reinstate'}
+                        </button>
+                      )}
+                    </>
+                  )}
+                  <button onClick={() => openBalanceModal(member.user.id, member.user.discordName, member.balance)}
+                    disabled={isLoading} className="btn-ghost text-xs py-1 px-2 text-amber-400/70 hover:text-amber-400">
+                    {isLoading ? '…' : 'Balance'}
+                  </button>
+                  {!isSelf && member.role !== 'OWNER' && (
                     <button onClick={() => removeMember(member.user.id, member.user.discordName)}
                       disabled={isLoading} className="btn-ghost text-xs py-1 px-2 text-red-400/70 hover:text-red-400">
                       {isLoading ? '…' : 'Remove'}
                     </button>
-                    {isOwner && (
-                      <select value={member.role}
-                        onChange={e => updateMember(member.user.id, { role: e.target.value as MemberRole })}
-                        disabled={isLoading} className="input text-xs py-1 pr-7 w-28">
-                        <option value="PLAYER">Member</option>
-                        <option value="OFFICER">Officer</option>
-                      </select>
-                    )}
-                  </div>
-                )}
-                {isSelf && <span className="text-xs text-text-muted/50 font-mono italic">you</span>}
+                  )}
+                  {isOwner && !isSelf && member.role !== 'OWNER' && (
+                    <select value={member.role}
+                      onChange={e => updateMember(member.user.id, { role: e.target.value as MemberRole })}
+                      disabled={isLoading} className="input text-xs py-1 pr-7 w-28">
+                      <option value="PLAYER">Member</option>
+                      <option value="OFFICER">Officer</option>
+                    </select>
+                  )}
+                  {isSelf && <span className="text-xs text-text-muted/50 font-mono italic">you</span>}
+                </div>
               </div>
             )
           })}
