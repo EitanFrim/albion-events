@@ -13,12 +13,18 @@ interface ExistingRegear {
   reviewedBy: { discordName: string; inGameName: string | null } | null
 }
 
+interface AssignedRoleInfo {
+  roleName: string
+  notes: string | null
+}
+
 interface Props {
   eventId: string
   existingRegear: ExistingRegear | null
+  assignedRole?: AssignedRoleInfo | null
 }
 
-export function RegearButton({ eventId, existingRegear }: Props) {
+export function RegearButton({ eventId, existingRegear, assignedRole }: Props) {
   const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -103,6 +109,17 @@ export function RegearButton({ eventId, existingRegear }: Props) {
                 : 'Upload a screenshot showing your death or gear loss.'}
             </p>
           </div>
+
+          {/* Assigned role info */}
+          {assignedRole && (
+            <div className="rounded-lg bg-accent/5 border border-accent/15 px-3 py-2.5">
+              <p className="text-xs text-text-muted font-mono uppercase tracking-widest mb-1">Assigned Role</p>
+              <p className="text-sm font-mono font-semibold text-accent">{assignedRole.roleName}</p>
+              {assignedRole.notes && (
+                <p className="text-xs text-text-secondary mt-1 italic">{assignedRole.notes}</p>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Screenshot section */}

@@ -37,7 +37,7 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
     )
   }
 
-  if (!guild.discordMemberRoleId) {
+  if (!guild.discordMemberRoleId && !guild.discordAllianceRoleId) {
     return NextResponse.json(
       ephemeralMessage(
         'The bot is not fully configured. An admin needs to set a member role with `/setup`.'
@@ -45,14 +45,20 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
     )
   }
 
-  // Check role requirement
-  if (!memberRoles.includes(guild.discordMemberRoleId)) {
+  // Determine which role to assign based on Discord roles
+  const hasMemberRole = guild.discordMemberRoleId ? memberRoles.includes(guild.discordMemberRoleId) : false
+  const hasAllianceRole = guild.discordAllianceRoleId ? memberRoles.includes(guild.discordAllianceRoleId) : false
+
+  if (!hasMemberRole && !hasAllianceRole) {
     return NextResponse.json(
       ephemeralMessage(
         'You do not have the required Discord role to register. Contact a guild officer to get the member role.'
       )
     )
   }
+
+  // Member role takes priority over alliance role
+  const assignedRole: 'PLAYER' | 'ALLIANCE' = hasMemberRole ? 'PLAYER' : 'ALLIANCE'
 
   // Find or create User
   const avatarUrl = discordUser.avatar
@@ -92,9 +98,10 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
   }
 
   // If user has no in-game name, show modal to collect it first
+  // Encode the assigned role in the modal custom_id so we know it on submit
   if (!user.inGameName) {
     return NextResponse.json(
-      modalResponse('register_ign_modal', 'Set Your In-Game Name', [
+      modalResponse(`register_ign_modal:${assignedRole}`, 'Set Your In-Game Name', [
         {
           type: 1, // ACTION_ROW
           components: [
@@ -115,20 +122,22 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
   }
 
   // Complete registration
-  return completeRegistration(user.id, guild.id, guild.name, !!existing)
+  return completeRegistration(user.id, guild.id, guild.name, !!existing, assignedRole)
 }
 
 export async function completeRegistration(
   userId: string,
   guildId: string,
   guildName: string,
-  hasPendingMembership: boolean
+  hasPendingMembership: boolean,
+  memberRole: 'PLAYER' | 'ALLIANCE' = 'PLAYER'
 ) {
   if (hasPendingMembership) {
-    // PENDING → upgrade to ACTIVE
+    // PENDING → upgrade to ACTIVE with the correct role
     await prisma.guildMembership.update({
       where: { userId_guildId: { userId, guildId } },
       data: {
+        role: memberRole,
         status: 'ACTIVE',
         verifiedAt: new Date(),
       },
@@ -139,7 +148,7 @@ export async function completeRegistration(
       data: {
         userId,
         guildId,
-        role: 'PLAYER',
+        role: memberRole,
         status: 'ACTIVE',
         verifiedAt: new Date(),
       },

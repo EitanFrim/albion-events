@@ -14,6 +14,8 @@ interface RegearItem {
   reviewedAt: string | null
   user: { id: string; discordName: string; inGameName: string | null; avatarUrl: string | null }
   reviewedBy: { id: string; discordName: string; inGameName: string | null } | null
+  assignedRole: string | null
+  roleNotes: string | null
 }
 
 interface Props {
@@ -164,10 +166,17 @@ export function RegearsManager({ eventId }: Props) {
             </div>
           )}
 
-          {/* Name + note */}
+          {/* Name + assigned role + note */}
           <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-text-primary">{playerName}</span>
-            {item.note && <span className="text-xs text-text-muted ml-2 truncate hidden sm:inline">{item.note}</span>}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-text-primary">{playerName}</span>
+              {item.assignedRole && (
+                <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 flex-shrink-0">
+                  {item.assignedRole}
+                </span>
+              )}
+            </div>
+            {item.note && <span className="text-xs text-text-muted truncate hidden sm:block">{item.note}</span>}
           </div>
 
           {/* Status badge */}
@@ -213,6 +222,19 @@ export function RegearsManager({ eventId }: Props) {
                 <div className="h-16 flex items-center justify-center text-text-muted text-sm italic">Failed to load screenshot</div>
               )}
             </div>
+
+            {/* Assigned role + role notes */}
+            {item.assignedRole && (
+              <div>
+                <p className="text-xs text-text-muted font-mono uppercase tracking-widest mb-1">Assigned Role</p>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm font-mono font-semibold text-accent">{item.assignedRole}</span>
+                  {item.roleNotes && (
+                    <span className="text-xs text-text-secondary italic">— {item.roleNotes}</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Player note */}
             {item.note && (

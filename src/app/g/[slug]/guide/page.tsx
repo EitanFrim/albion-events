@@ -209,10 +209,28 @@ export default async function GuidePage({ params }: Props) {
               </div>
             </div>
 
-            {/* Step 4: Post the verify button */}
+            {/* Step 4: Set the alliance role (optional) */}
             <div className="card p-5">
               <div className="flex items-center gap-2.5 mb-2">
                 <span className="font-mono text-xs font-700 text-[#5865F2] bg-[#5865F2]/10 border border-[#5865F2]/20 w-6 h-6 rounded-full flex items-center justify-center">4</span>
+                <h3 className="font-display font-700 text-text-primary">Set the alliance role (optional)</h3>
+              </div>
+              <p className="text-text-secondary text-sm leading-relaxed mb-3">
+                If your guild has alliance members with a separate Discord role, you can configure it so they automatically register with the <span className="text-blue-400 font-semibold">Alliance</span> role instead of Member.
+              </p>
+              <div className="bg-bg-base border border-border rounded-lg px-4 py-3 font-mono text-sm">
+                <span className="text-text-muted">/</span><span className="text-accent">setup</span> <span className="text-text-muted">alliance-role:</span><span className="text-blue-400">@YourAllianceRole</span>
+              </div>
+              <div className="flex items-start gap-2 bg-accent/5 border border-accent/15 rounded-lg px-3 py-2 mt-3">
+                <span className="text-accent text-xs mt-0.5 flex-shrink-0">💡</span>
+                <p className="text-xs text-text-secondary leading-relaxed">Players with the member role register as Member. Players with only the alliance role register as Alliance. You can set both in one command: <code className="text-accent">/setup member-role:@Members alliance-role:@Alliance</code></p>
+              </div>
+            </div>
+
+            {/* Step 5: Post the verify button */}
+            <div className="card p-5">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="font-mono text-xs font-700 text-[#5865F2] bg-[#5865F2]/10 border border-[#5865F2]/20 w-6 h-6 rounded-full flex items-center justify-center">5</span>
                 <h3 className="font-display font-700 text-text-primary">Post the Verify button</h3>
               </div>
               <p className="text-text-secondary text-sm leading-relaxed mb-3">

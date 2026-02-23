@@ -58,9 +58,9 @@ export async function POST(req: NextRequest) {
 
   // MODAL_SUBMIT
   if (interaction.type === 5) {
-    const customId = interaction.data.custom_id
+    const customId: string = interaction.data.custom_id
 
-    if (customId === 'register_ign_modal') {
+    if (customId.startsWith('register_ign_modal')) {
       return handleIgnModalSubmit(interaction)
     }
 
@@ -85,6 +85,11 @@ async function handleIgnModalSubmit(interaction: any) {
     return NextResponse.json(ephemeralMessage('Please provide a valid in-game name.'))
   }
 
+  // Extract the assigned role from the modal custom_id (e.g. "register_ign_modal:ALLIANCE")
+  const customId: string = interaction.data.custom_id ?? ''
+  const rolePart = customId.split(':')[1]
+  const assignedRole: 'PLAYER' | 'ALLIANCE' = rolePart === 'ALLIANCE' ? 'ALLIANCE' : 'PLAYER'
+
   // Find guild and user
   const guild = await prisma.guild.findUnique({ where: { discordGuildId } })
   if (!guild) {
@@ -107,5 +112,5 @@ async function handleIgnModalSubmit(interaction: any) {
     where: { userId_guildId: { userId: user.id, guildId: guild.id } },
   })
 
-  return completeRegistration(user.id, guild.id, guild.name, !!existing)
+  return completeRegistration(user.id, guild.id, guild.name, !!existing, assignedRole)
 }

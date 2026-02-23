@@ -114,5 +114,24 @@ export async function GET(
     orderBy: { createdAt: 'asc' },
   })
 
-  return NextResponse.json({ items: requests })
+  // Fetch assignments for all requesting players to show their assigned role
+  const userIds = requests.map(r => r.user.id)
+  const assignments = userIds.length > 0 ? await prisma.assignment.findMany({
+    where: { eventId: params.id, userId: { in: userIds } },
+    select: {
+      userId: true,
+      roleSlot: { select: { roleName: true, notes: true } },
+    },
+  }) : []
+  const assignmentMap = Object.fromEntries(
+    assignments.map(a => [a.userId, { roleName: a.roleSlot.roleName, roleNotes: a.roleSlot.notes }])
+  )
+
+  const enrichedRequests = requests.map(r => ({
+    ...r,
+    assignedRole: assignmentMap[r.user.id]?.roleName ?? null,
+    roleNotes: assignmentMap[r.user.id]?.roleNotes ?? null,
+  }))
+
+  return NextResponse.json({ items: enrichedRequests })
 }

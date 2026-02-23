@@ -31,11 +31,6 @@ export async function PATCH(
 
   const { status, role } = parsed.data
 
-  // Only owners can change roles
-  if (role && myAccess.role !== 'OWNER') {
-    return NextResponse.json({ error: 'Only the guild owner can change roles' }, { status: 403 })
-  }
-
   // Can't modify the owner
   const target = await prisma.guildMembership.findUnique({
     where: { userId_guildId: { userId: params.userId, guildId: guild.id } },
@@ -43,6 +38,14 @@ export async function PATCH(
   if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
   if (target.role === 'OWNER' && params.userId !== session.user.id) {
     return NextResponse.json({ error: 'Cannot modify the guild owner' }, { status: 403 })
+  }
+
+  // Only owners can change roles (officers can set role during verification)
+  if (role && myAccess.role !== 'OWNER') {
+    const isVerifying = status === 'ACTIVE' && target.status === 'PENDING'
+    if (!isVerifying) {
+      return NextResponse.json({ error: 'Only the guild owner can change roles' }, { status: 403 })
+    }
   }
 
   const updateData: any = {}

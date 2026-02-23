@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
-  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordBotInstalled: boolean }
+  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean }
 }
 
 export function GuildSettingsPanel({ guild }: Props) {
@@ -245,6 +245,10 @@ export function GuildSettingsPanel({ guild }: Props) {
                 <span className="text-text-muted">Member Role ID</span>
                 <span className="text-text-secondary font-mono text-xs">{guild.discordMemberRoleId ?? 'Not set'}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">Alliance Role ID</span>
+                <span className="text-text-secondary font-mono text-xs">{guild.discordAllianceRoleId ?? 'Not set'}</span>
+              </div>
             </div>
             <button
               onClick={async () => {
@@ -272,6 +276,7 @@ export function GuildSettingsPanel({ guild }: Props) {
               <p>1. Click &quot;Install Bot&quot; to add the bot to your Discord server.</p>
               <p>2. Run <code className="text-accent">/setup</code> in your Discord server to link it to this guild.</p>
               <p>3. Run <code className="text-accent">/setup member-role:@YourRole</code> to set the registration role.</p>
+              <p>4. Optionally: <code className="text-accent">/setup alliance-role:@AllianceRole</code> for alliance members.</p>
             </div>
             {process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID && (
               <a

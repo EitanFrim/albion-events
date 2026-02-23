@@ -11,6 +11,7 @@ import { RoleNoteButton } from '@/components/RoleNoteButton'
 import { PublishEventButton } from '@/components/PublishEventButton'
 import { ExportPlayersButton } from '@/components/ExportPlayersButton'
 import { RegearButton } from '@/components/RegearButton'
+import { ReactivateEventButton } from '@/components/ReactivateEventButton'
 import { EventStatus } from '@prisma/client'
 
 const statusConfig: Record<EventStatus, { label: string; cls: string; dot: string }> = {
@@ -146,6 +147,7 @@ export default async function GuildEventPage({ params }: Props) {
             </Link>
             <PublishEventButton eventId={params.id} currentStatus={event.status} />
             {event.status !== 'COMPLETED' && <CompleteEventButton eventId={params.id} guildSlug={params.slug} />}
+            {event.status === 'COMPLETED' && <ReactivateEventButton eventId={params.id} />}
             <ExportPlayersButton
               eventTitle={event.title}
               parties={event.parties as any}
@@ -313,12 +315,16 @@ export default async function GuildEventPage({ params }: Props) {
             </div>
           )}
 
-          {/* Regear request - show for active members on locked/completed events */}
+          {/* Regear request - show for active members on open/locked/completed events */}
           {session && membership?.status === 'ACTIVE' &&
-            (event.status === 'LOCKED' || event.status === 'COMPLETED') && (
+            (event.status === 'PUBLISHED' || event.status === 'LOCKED' || event.status === 'COMPLETED') && (
             <RegearButton
               eventId={params.id}
               existingRegear={myRegear as any}
+              assignedRole={mySignup?.assignment?.roleSlot ? {
+                roleName: mySignup.assignment.roleSlot.roleName,
+                notes: (mySignup.assignment.roleSlot as any).notes ?? null,
+              } : null}
             />
           )}
 

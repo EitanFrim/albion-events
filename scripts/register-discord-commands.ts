@@ -55,6 +55,12 @@ const commands = [
         type: 8, // ROLE
         required: false,
       },
+      {
+        name: 'alliance-role',
+        description: 'The Discord role for alliance members (registers as Alliance instead of Member)',
+        type: 8, // ROLE
+        required: false,
+      },
     ],
     default_member_permissions: '8', // ADMINISTRATOR
   },
