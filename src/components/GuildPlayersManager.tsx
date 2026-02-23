@@ -80,6 +80,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
     if (!balanceModal) return
     const raw = parseInt(balanceAmount, 10)
     if (!raw || raw <= 0) { alert('Enter a valid positive amount'); return }
+    if (!balanceReason.trim()) { alert('Please provide a reason'); return }
     const amount = balanceMode === 'deduct' ? -raw : raw
 
     setLoading(balanceModal.userId)
@@ -87,7 +88,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
       const res = await fetch(`/api/guilds/${guildSlug}/members/${balanceModal.userId}/balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, reason: balanceReason || undefined }),
+        body: JSON.stringify({ amount, reason: balanceReason.trim() }),
       })
       if (!res.ok) { alert('Failed to adjust balance'); return }
       const data = await res.json()
@@ -299,7 +300,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
             {/* Reason */}
             <div>
               <label className="text-xs text-text-muted font-mono uppercase tracking-widest block mb-1.5">
-                Reason (optional)
+                Reason
               </label>
               <input
                 type="text"
@@ -318,7 +319,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
               </button>
               <button
                 onClick={submitBalanceAdjustment}
-                disabled={loading === balanceModal.userId || !balanceAmount}
+                disabled={loading === balanceModal.userId || !balanceAmount || !balanceReason.trim()}
                 className={`flex-1 text-sm py-2 rounded-lg font-medium transition-colors ${
                   balanceMode === 'add'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'

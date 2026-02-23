@@ -127,7 +127,10 @@ export async function handleBalanceCommand(interaction: DiscordInteraction) {
     }
 
     const amount = sub.name === 'deduct' ? -rawAmount : rawAmount
-    const reason = sub.opts.reason as string | undefined
+    const reason = sub.opts.reason as string
+    if (!reason) {
+      return NextResponse.json(ephemeralMessage('A reason is required for balance changes.'))
+    }
 
     const result = await adjustBalance({
       membershipId: targetMembership.id,

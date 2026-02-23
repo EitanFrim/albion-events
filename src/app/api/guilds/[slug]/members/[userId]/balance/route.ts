@@ -10,7 +10,7 @@ import { z } from 'zod'
 
 const balanceSchema = z.object({
   amount: z.number().int().refine(v => v !== 0, 'Amount must be non-zero'),
-  reason: z.string().max(200).optional(),
+  reason: z.string().min(1, 'Reason is required').max(200),
 })
 
 export async function POST(

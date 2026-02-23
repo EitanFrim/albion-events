@@ -83,7 +83,7 @@ const commands = [
         options: [
           { name: 'player', description: 'The player to add silver to', type: 6, required: true },
           { name: 'amount', description: 'Amount of silver to add', type: 4, required: true, min_value: 1 },
-          { name: 'reason', description: 'Reason for the deposit', type: 3, required: false },
+          { name: 'reason', description: 'Reason for the deposit', type: 3, required: true },
         ],
       },
       {
@@ -93,7 +93,7 @@ const commands = [
         options: [
           { name: 'player', description: 'The player to deduct silver from', type: 6, required: true },
           { name: 'amount', description: 'Amount of silver to deduct', type: 4, required: true, min_value: 1 },
-          { name: 'reason', description: 'Reason for the deduction', type: 3, required: false },
+          { name: 'reason', description: 'Reason for the deduction', type: 3, required: true },
         ],
       },
       {
