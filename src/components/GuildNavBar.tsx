@@ -15,12 +15,14 @@ const roleColors: Record<string, string> = {
   OWNER: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   OFFICER: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
   PLAYER: 'text-text-muted bg-bg-elevated border-border',
+  ALLIANCE: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
 }
 
 const roleLabels: Record<string, string> = {
   OWNER: 'Owner',
   OFFICER: 'Officer',
   PLAYER: 'Member',
+  ALLIANCE: 'Alliance',
 }
 
 export function GuildNavBar({ guild, membership }: Props) {

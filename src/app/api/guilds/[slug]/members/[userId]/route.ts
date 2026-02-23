@@ -9,7 +9,7 @@ import { z } from 'zod'
 
 const schema = z.object({
   status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED']).optional(),
-  role: z.enum(['OWNER', 'OFFICER', 'PLAYER']).optional(),
+  role: z.enum(['OWNER', 'OFFICER', 'PLAYER', 'ALLIANCE']).optional(),
 })
 
 export async function PATCH(

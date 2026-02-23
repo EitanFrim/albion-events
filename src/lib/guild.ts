@@ -41,8 +41,8 @@ export async function requireGuildAccess(
   const membership = await getMembership(userId, guildId)
   if (!membership || membership.status !== 'ACTIVE') return null
 
-  const roleRank = { PLAYER: 0, OFFICER: 1, OWNER: 2 }
-  if (roleRank[membership.role] < roleRank[minRole]) return null
+  const roleRank: Record<string, number> = { ALLIANCE: 0, PLAYER: 0, OFFICER: 1, OWNER: 2 }
+  if ((roleRank[membership.role] ?? -1) < (roleRank[minRole] ?? 0)) return null
 
   return membership
 }

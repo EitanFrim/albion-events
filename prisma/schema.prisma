@@ -16,6 +16,7 @@ enum MemberRole {
   OWNER
   OFFICER
   PLAYER
+  ALLIANCE
 }
 
 enum MemberStatus {

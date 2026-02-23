@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-type MemberRole = 'OWNER' | 'OFFICER' | 'PLAYER'
+type MemberRole = 'OWNER' | 'OFFICER' | 'PLAYER' | 'ALLIANCE'
 type MemberStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED'
 
 interface Member {
@@ -29,9 +29,10 @@ const statusConfig: Record<MemberStatus, { label: string; dot: string; text: str
 }
 
 const roleConfig: Record<MemberRole, { label: string; color: string }> = {
-  OWNER:   { label: 'Owner',   color: 'text-amber-400' },
-  OFFICER: { label: 'Officer', color: 'text-purple-400' },
-  PLAYER:  { label: 'Member',  color: 'text-text-muted' },
+  OWNER:    { label: 'Owner',    color: 'text-amber-400' },
+  OFFICER:  { label: 'Officer',  color: 'text-purple-400' },
+  PLAYER:   { label: 'Member',   color: 'text-text-muted' },
+  ALLIANCE: { label: 'Alliance', color: 'text-blue-400' },
 }
 
 export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId }: Props) {
@@ -204,10 +205,16 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {/* Safe / positive actions */}
                   {!isSelf && member.role !== 'OWNER' && member.status === 'PENDING' && (
-                    <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE' })}
-                      disabled={isLoading} className="btn-primary text-xs py-1 px-3">
-                      {isLoading ? '…' : '✓ Verify'}
-                    </button>
+                    <div className="flex items-center gap-1 bg-bg-elevated rounded-lg p-0.5 border border-border">
+                      <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE', role: 'PLAYER' })}
+                        disabled={isLoading} className="btn-primary text-xs py-1 px-2.5 rounded-md">
+                        {isLoading ? '…' : '✓ Member'}
+                      </button>
+                      <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE', role: 'ALLIANCE' })}
+                        disabled={isLoading} className="text-xs py-1 px-2.5 rounded-md font-medium transition-colors bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30">
+                        {isLoading ? '…' : '✓ Alliance'}
+                      </button>
+                    </div>
                   )}
                   {!isSelf && member.role !== 'OWNER' && member.status === 'SUSPENDED' && (
                     <button onClick={() => updateMember(member.user.id, { status: 'ACTIVE' })}
@@ -224,6 +231,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                       onChange={e => updateMember(member.user.id, { role: e.target.value as MemberRole })}
                       disabled={isLoading} className="input text-xs py-1 pr-7 w-28">
                       <option value="PLAYER">Member</option>
+                      <option value="ALLIANCE">Alliance</option>
                       <option value="OFFICER">Officer</option>
                     </select>
                   )}
