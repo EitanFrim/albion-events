@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { type SlotNote, NOTE_FIELDS, parseSlotNote, hasNote } from '@/components/SlotNoteEditor'
+import { type SlotNote, NOTE_FIELDS, parseSlotNote, hasNote, formatSilver } from '@/components/SlotNoteEditor'
 
 interface Props {
   rawNote: string | null | undefined
@@ -42,17 +42,22 @@ export function RoleNoteButton({ rawNote, roleName, color }: Props) {
               <button onClick={() => setOpen(false)} className="text-text-muted hover:text-text-primary ml-1 text-sm leading-none">×</button>
             </div>
             <div className="p-3 space-y-2">
-              {NOTE_FIELDS.filter(f => note[f.key]?.trim()).map(field => (
-                <div key={field.key} className={field.key === 'general' ? 'pt-1.5 mt-0.5 border-t border-border-subtle' : ''}>
-                  <div className="flex items-start gap-2">
-                    <span className="text-xs w-5 flex-shrink-0 mt-0.5">{field.icon}</span>
-                    <div className="min-w-0">
-                      <span className="text-xs font-mono text-text-muted">{field.label}</span>
-                      <p className="text-xs text-text-primary whitespace-pre-wrap leading-relaxed mt-0.5">{note[field.key]}</p>
+              {NOTE_FIELDS.filter(f => note[f.key]?.trim()).map(field => {
+                const displayValue = field.key === 'regearValue'
+                  ? `${formatSilver(note.regearValue)} silver`
+                  : note[field.key]
+                return (
+                  <div key={field.key} className={field.key === 'general' ? 'pt-1.5 mt-0.5 border-t border-border-subtle' : ''}>
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs w-5 flex-shrink-0 mt-0.5">{field.icon}</span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-mono text-text-muted">{field.label}</span>
+                        <p className={`text-xs whitespace-pre-wrap leading-relaxed mt-0.5 ${field.key === 'regearValue' ? 'text-amber-400 font-mono font-semibold' : 'text-text-primary'}`}>{displayValue}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </>

@@ -22,9 +22,22 @@ export const NOTE_FIELDS: { key: keyof SlotNote; label: string; icon: string; pl
   { key: 'cape',     label: 'Cape',        icon: '🧣',  placeholder: 'e.g. Thetford Cape' },
   { key: 'foodPotion', label: 'Food / Potion', icon: '🍖', placeholder: 'e.g. Pork Omelette / Resistance Potion' },
   { key: 'mount',       label: 'Mount',        icon: '🐎',  placeholder: 'e.g. Swiftclaw' },
-  { key: 'regearValue', label: 'Regear Value', icon: '💰', placeholder: 'e.g. 250000' },
+  { key: 'regearValue', label: 'Regear Value', icon: '💰', placeholder: 'e.g. 250,000' },
   { key: 'general',     label: 'General Note', icon: '📝', placeholder: 'Rotation tips, IP floor, any extra info…' },
 ]
+
+/** Format a numeric string with commas (e.g. "1250000" → "1,250,000") */
+export function formatSilver(value: string | number | null | undefined): string {
+  if (value == null || value === '') return ''
+  const num = typeof value === 'number' ? value : parseInt(String(value).replace(/[^0-9]/g, ''), 10)
+  if (isNaN(num)) return ''
+  return num.toLocaleString('en-US')
+}
+
+/** Strip non-digits from a string (e.g. "1,250,000" → "1250000") */
+export function rawNumber(value: string): string {
+  return value.replace(/[^0-9]/g, '')
+}
 
 export function parseSlotNote(raw: string | null | undefined): SlotNote {
   if (!raw) return {}
@@ -53,6 +66,7 @@ export function SlotNoteEditor({ note, onChange }: Props) {
       <div className="grid grid-cols-2 gap-2">
         {NOTE_FIELDS.map(field => {
           const isGeneral = field.key === 'general'
+          const isRegearValue = field.key === 'regearValue'
           return (
             <div key={field.key} className={isGeneral ? 'col-span-2' : ''}>
               <label className="flex items-center gap-1.5 text-xs text-text-muted mb-1">
@@ -66,6 +80,15 @@ export function SlotNoteEditor({ note, onChange }: Props) {
                   placeholder={field.placeholder}
                   rows={2}
                   className="input w-full text-xs resize-none"
+                />
+              ) : isRegearValue ? (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatSilver(note.regearValue)}
+                  onChange={e => onChange({ ...note, regearValue: rawNumber(e.target.value) })}
+                  placeholder={field.placeholder}
+                  className="input w-full text-xs py-1.5"
                 />
               ) : (
                 <input

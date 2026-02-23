@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { formatSilver, rawNumber } from '@/components/SlotNoteEditor'
 
 type RegearStatusType = 'PENDING' | 'APPROVED' | 'REJECTED'
 
@@ -301,17 +302,17 @@ export function RegearsManager({ eventId }: Props) {
                   <div>
                     <label className="label">Silver Amount</label>
                     <input
-                      type="number"
-                      min="1"
-                      value={silverInput[item.id] ?? ''}
-                      onChange={e => setSilverInput(prev => ({ ...prev, [item.id]: e.target.value }))}
+                      type="text"
+                      inputMode="numeric"
+                      value={formatSilver(silverInput[item.id])}
+                      onChange={e => setSilverInput(prev => ({ ...prev, [item.id]: rawNumber(e.target.value) }))}
                       onClick={e => e.stopPropagation()}
-                      placeholder="e.g. 250000"
+                      placeholder="e.g. 250,000"
                       className="input text-sm"
                       autoFocus
                     />
                     {item.regearValue && silverInput[item.id] === String(item.regearValue) && (
-                      <p className="text-xs text-accent/70 mt-1">Auto-filled from build regear value ({item.regearValue.toLocaleString()})</p>
+                      <p className="text-xs text-accent/70 mt-1">Auto-filled from build regear value ({formatSilver(item.regearValue)})</p>
                     )}
                   </div>
                 )}
