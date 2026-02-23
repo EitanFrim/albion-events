@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 type MemberRole = 'OWNER' | 'OFFICER' | 'PLAYER' | 'ALLIANCE'
 type MemberStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED'
+type SortKey = 'name' | 'role' | 'balance' | 'joined'
+type SortDir = 'asc' | 'desc'
 
 interface Member {
   id: string
@@ -38,8 +40,10 @@ const roleConfig: Record<MemberRole, { label: string; color: string }> = {
 export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId }: Props) {
   const [members, setMembers] = useState<Member[]>(initial)
   const [loading, setLoading] = useState<string | null>(null)
-  const [filter, setFilter] = useState<MemberStatus | 'ALL'>('PENDING')
+  const [filter, setFilter] = useState<MemberStatus | 'ALL'>('ACTIVE')
   const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [balanceModal, setBalanceModal] = useState<{
     userId: string
     name: string
@@ -113,21 +117,82 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
 
   const pendingCount = members.filter(m => m.status === 'PENDING').length
 
-  const filtered = members.filter(m => {
-    const matchStatus = filter === 'ALL' || m.status === filter
-    const q = search.toLowerCase()
-    const matchSearch = !q ||
-      m.user.discordName.toLowerCase().includes(q) ||
-      (m.user.inGameName ?? '').toLowerCase().includes(q)
-    return matchStatus && matchSearch
-  })
+  const roleRank: Record<MemberRole, number> = { OWNER: 0, OFFICER: 1, PLAYER: 2, ALLIANCE: 3 }
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir(key === 'balance' ? 'desc' : 'asc')
+    }
+  }
+
+  const filtered = useMemo(() => {
+    const list = members.filter(m => {
+      const matchStatus = filter === 'ALL' || m.status === filter
+      const q = search.toLowerCase()
+      const matchSearch = !q ||
+        m.user.discordName.toLowerCase().includes(q) ||
+        (m.user.inGameName ?? '').toLowerCase().includes(q)
+      return matchStatus && matchSearch
+    })
+
+    list.sort((a, b) => {
+      let cmp = 0
+      switch (sortKey) {
+        case 'name': {
+          const nameA = (a.user.inGameName ?? a.user.discordName).toLowerCase()
+          const nameB = (b.user.inGameName ?? b.user.discordName).toLowerCase()
+          cmp = nameA.localeCompare(nameB)
+          break
+        }
+        case 'role':
+          cmp = roleRank[a.role] - roleRank[b.role]
+          break
+        case 'balance':
+          cmp = a.balance - b.balance
+          break
+        case 'joined':
+          cmp = new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+          break
+      }
+      return sortDir === 'desc' ? -cmp : cmp
+    })
+
+    return list
+  }, [members, filter, search, sortKey, sortDir])
+
+  const sortOptions: { key: SortKey; label: string }[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'role', label: 'Role' },
+    { key: 'balance', label: 'Balance' },
+    { key: 'joined', label: 'Joined' },
+  ]
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Pending banner */}
+      {pendingCount > 0 && filter !== 'PENDING' && (
+        <button
+          onClick={() => setFilter('PENDING')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-950/20 border border-amber-900/30 hover:bg-amber-950/30 transition-colors text-left"
+        >
+          <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
+          </span>
+          <span className="text-sm text-amber-400 font-medium">
+            {pendingCount} player{pendingCount !== 1 ? 's' : ''} awaiting verification
+          </span>
+          <span className="ml-auto text-xs text-amber-400/60 font-mono">Review &rarr;</span>
+        </button>
+      )}
+
+      {/* Filters + Sort */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1 bg-bg-elevated rounded-lg p-1 border border-border">
-          {(['PENDING', 'ACTIVE', 'SUSPENDED', 'ALL'] as const).map(s => (
+          {(['ACTIVE', 'PENDING', 'SUSPENDED', 'ALL'] as const).map(s => (
             <button key={s} onClick={() => setFilter(s)}
               className={`px-3 py-1.5 rounded-md text-xs font-mono transition-colors relative ${
                 filter === s ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-secondary'
@@ -143,7 +208,28 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
         </div>
         <input type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by name…" className="input text-sm py-1.5 flex-1 min-w-[180px]" />
-        <span className="text-xs text-text-muted font-mono ml-auto">{filtered.length} players</span>
+      </div>
+
+      {/* Sort bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-text-muted font-mono">Sort:</span>
+        {sortOptions.map(opt => (
+          <button
+            key={opt.key}
+            onClick={() => toggleSort(opt.key)}
+            className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors flex items-center gap-1 ${
+              sortKey === opt.key
+                ? 'bg-bg-elevated text-text-primary border border-border'
+                : 'text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            {opt.label}
+            {sortKey === opt.key && (
+              <span className="text-text-muted">{sortDir === 'asc' ? '↑' : '↓'}</span>
+            )}
+          </button>
+        ))}
+        <span className="text-xs text-text-muted font-mono ml-auto">{filtered.length} player{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {filtered.length === 0 ? (
