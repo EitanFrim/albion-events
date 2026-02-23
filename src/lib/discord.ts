@@ -28,3 +28,14 @@ export function pongResponse() {
 export function formatSilver(amount: number): string {
   return amount.toLocaleString('en-US')
 }
+
+export function modalResponse(customId: string, title: string, components: any[]) {
+  return {
+    type: 9, // MODAL
+    data: {
+      custom_id: customId,
+      title,
+      components,
+    },
+  }
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ephemeralMessage } from '@/lib/discord'
+import { ephemeralMessage, modalResponse } from '@/lib/discord'
 
 interface DiscordInteraction {
   guild_id?: string
@@ -89,35 +89,66 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
         ephemeralMessage('Your membership has been suspended. Contact a guild officer.')
       )
     }
+  }
+
+  // If user has no in-game name, show modal to collect it first
+  if (!user.inGameName) {
+    return NextResponse.json(
+      modalResponse('register_ign_modal', 'Set Your In-Game Name', [
+        {
+          type: 1, // ACTION_ROW
+          components: [
+            {
+              type: 4, // TEXT_INPUT
+              custom_id: 'ign_input',
+              label: 'Your Albion Online in-game name',
+              style: 1, // SHORT
+              min_length: 2,
+              max_length: 32,
+              required: true,
+              placeholder: 'e.g. SilverKnight',
+            },
+          ],
+        },
+      ])
+    )
+  }
+
+  // Complete registration
+  return completeRegistration(user.id, guild.id, guild.name, !!existing)
+}
+
+export async function completeRegistration(
+  userId: string,
+  guildId: string,
+  guildName: string,
+  hasPendingMembership: boolean
+) {
+  if (hasPendingMembership) {
     // PENDING → upgrade to ACTIVE
     await prisma.guildMembership.update({
-      where: { userId_guildId: { userId: user.id, guildId: guild.id } },
+      where: { userId_guildId: { userId, guildId } },
       data: {
         status: 'ACTIVE',
         verifiedAt: new Date(),
       },
     })
-    return NextResponse.json(
-      ephemeralMessage(
-        `Your membership in **${guild.name}** has been verified! You can now access all guild features.`
-      )
-    )
+  } else {
+    // Create new ACTIVE membership
+    await prisma.guildMembership.create({
+      data: {
+        userId,
+        guildId,
+        role: 'PLAYER',
+        status: 'ACTIVE',
+        verifiedAt: new Date(),
+      },
+    })
   }
-
-  // Create new ACTIVE membership
-  await prisma.guildMembership.create({
-    data: {
-      userId: user.id,
-      guildId: guild.id,
-      role: 'PLAYER',
-      status: 'ACTIVE',
-      verifiedAt: new Date(),
-    },
-  })
 
   return NextResponse.json(
     ephemeralMessage(
-      `Welcome to **${guild.name}**! You have been registered as a verified member.`
+      `Welcome to **${guildName}**! You have been registered as a verified member.`
     )
   )
 }
