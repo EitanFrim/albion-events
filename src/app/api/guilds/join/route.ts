@@ -24,6 +24,14 @@ export async function POST(req: NextRequest) {
   })
 
   if (existing) {
+    // If suspended (removed), reactivate as pending so they can rejoin — balance is preserved
+    if (existing.status === 'SUSPENDED') {
+      const updated = await prisma.guildMembership.update({
+        where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
+        data: { status: 'PENDING' },
+      })
+      return NextResponse.json({ guild, membership: updated }, { status: 201 })
+    }
     return NextResponse.json({ guild, membership: existing, alreadyMember: true })
   }
 

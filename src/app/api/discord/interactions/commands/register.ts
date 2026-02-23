@@ -87,17 +87,10 @@ export async function handleRegisterCommand(interaction: DiscordInteraction) {
     where: { userId_guildId: { userId: user.id, guildId: guild.id } },
   })
 
-  if (existing) {
-    if (existing.status === 'ACTIVE') {
-      return NextResponse.json(
-        ephemeralMessage(`You are already a verified member of **${guild.name}**!`)
-      )
-    }
-    if (existing.status === 'SUSPENDED') {
-      return NextResponse.json(
-        ephemeralMessage('Your membership has been suspended. Contact a guild officer.')
-      )
-    }
+  if (existing && existing.status === 'ACTIVE') {
+    return NextResponse.json(
+      ephemeralMessage(`You are already a verified member of **${guild.name}**!`)
+    )
   }
 
   // Get the player's Discord server nickname (fallback to display name → username)
@@ -156,11 +149,12 @@ export async function completeRegistration(
   userId: string,
   guildId: string,
   guildName: string,
-  hasPendingMembership: boolean,
+  hasExistingMembership: boolean,
   memberRole: 'PLAYER' | 'ALLIANCE' = 'PLAYER'
 ) {
-  if (hasPendingMembership) {
-    // PENDING → upgrade to ACTIVE with the correct role
+  if (hasExistingMembership) {
+    // Reactivate existing membership (PENDING or SUSPENDED → ACTIVE)
+    // Balance is preserved from the previous membership
     await prisma.guildMembership.update({
       where: { userId_guildId: { userId, guildId } },
       data: {

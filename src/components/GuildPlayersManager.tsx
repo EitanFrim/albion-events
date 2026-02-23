@@ -70,12 +70,14 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
   }
 
   async function removeMember(userId: string, name: string) {
-    if (!confirm(`Remove ${name} from the guild? They will need to re-register.`)) return
+    if (!confirm(`Remove ${name} from the guild? They will need to re-register. Their balance will be preserved.`)) return
     setLoading(userId)
     try {
       const res = await fetch(`/api/guilds/${guildSlug}/members/${userId}`, { method: 'DELETE' })
       if (!res.ok) { alert('Action failed'); return }
-      setMembers(prev => prev.filter(m => m.user.id !== userId))
+      setMembers(prev => prev.map(m =>
+        m.user.id === userId ? { ...m, status: 'SUSPENDED' as MemberStatus } : m
+      ))
     } finally {
       setLoading(null)
     }
