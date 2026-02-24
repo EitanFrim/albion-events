@@ -29,6 +29,8 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props
   const [roleColors, setRoleColors] = useState<Record<string, string>>({})
   // Track whether this user has an active signup (prop OR just created one this session)
   const [isSignedUp, setIsSignedUp] = useState(!!existingSignup)
+  // Compact vs editing mode — start compact if already signed up
+  const [editing, setEditing] = useState(!existingSignup)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Fetch role colors
@@ -77,6 +79,7 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props
       })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed')
       setIsSignedUp(true)
+      setEditing(false)
       setSuccess(isSignedUp ? 'Updated!' : 'Signed up!')
       router.refresh()
     } catch (err: any) { setError(err.message) }
@@ -106,16 +109,97 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props
     </div>
   )
 
+  /* ── Compact view: already signed up, not editing ── */
+  if (isSignedUp && !editing) {
+    return (
+      <div className="card p-4 space-y-3">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Signed Up
+            </span>
+          </div>
+          {!isLocked && (
+            <button
+              type="button"
+              onClick={() => { setEditing(true); setSuccess(''); setError('') }}
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Edit
+            </button>
+          )}
+        </div>
+
+        {/* Role badges (compact) */}
+        <div className="flex flex-wrap gap-1.5">
+          {selectedRoles.map((role, i) => {
+            const color = getColor(role)
+            return (
+              <span
+                key={role}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium"
+                style={{ backgroundColor: color + '20', color, border: `1px solid ${color}40` }}
+              >
+                <span
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                  style={{ backgroundColor: color }}
+                >
+                  {i + 1}
+                </span>
+                {role}
+              </span>
+            )
+          })}
+        </div>
+
+        {/* Note (if any) */}
+        {note && (
+          <p className="text-xs text-text-muted italic truncate">
+            {note}
+          </p>
+        )}
+
+        {/* Success / Error messages */}
+        {success && <p className="text-emerald-400 text-xs">{success}</p>}
+        {error && <p className="text-red-400 text-xs">{error}</p>}
+
+        {/* Withdraw button */}
+        <button
+          type="button" onClick={handleWithdraw} disabled={loading}
+          className="w-full text-center text-xs text-text-muted hover:text-red-400 transition-colors py-1"
+        >
+          {loading ? 'Withdrawing…' : 'Withdraw'}
+        </button>
+      </div>
+    )
+  }
+
+  /* ── Full editing / sign-up form ── */
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-600 text-text-primary text-sm">
-          {isSignedUp ? 'Update Signup' : 'Sign Up'}
+          {isSignedUp ? 'Edit Signup' : 'Sign Up'}
         </h3>
         {isSignedUp && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Registered
-          </span>
+          <button
+            type="button"
+            onClick={() => {
+              // Reset to saved values and collapse
+              setSelectedRoles(existingSignup?.preferredRoles ?? [])
+              setNote(existingSignup?.note ?? '')
+              setEditing(false)
+              setError('')
+              setSuccess('')
+            }}
+            className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+          >
+            Cancel
+          </button>
         )}
       </div>
 
