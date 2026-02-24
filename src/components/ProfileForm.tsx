@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 
-interface Props { discordName: string; currentInGameName: string; guildSlug?: string }
+interface Props { discordName: string; currentInGameName: string; guildSlug?: string; currentRegion?: string }
 
-export function ProfileForm({ discordName, currentInGameName, guildSlug }: Props) {
+export function ProfileForm({ discordName, currentInGameName, guildSlug, currentRegion }: Props) {
   const [name, setName] = useState(currentInGameName)
   const [saved, setSaved] = useState(currentInGameName)
+  const [region, setRegion] = useState(currentRegion ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -14,12 +15,13 @@ export function ProfileForm({ discordName, currentInGameName, guildSlug }: Props
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) { setError('Enter your in-game name'); return }
+    if (!guildSlug && !region) { setError('Select a server region so we can verify your name'); return }
     setLoading(true); setError(''); setSuccess('')
     try {
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inGameName: name.trim(), guildSlug }),
+        body: JSON.stringify({ inGameName: name.trim(), guildSlug, region: guildSlug ? undefined : region }),
       })
       if (!res.ok) throw new Error((await res.json()).error)
       const data = await res.json()
@@ -55,9 +57,31 @@ export function ProfileForm({ discordName, currentInGameName, guildSlug }: Props
             autoFocus={!saved}
           />
           <p className="text-text-muted text-xs mt-1">
-            {guildSlug ? 'Must match your exact Albion Online character name' : 'Shown to guild leaders on event rosters'}
+            Must match your exact Albion Online character name
           </p>
         </div>
+
+        {!guildSlug && (
+          <div>
+            <label className="label">
+              Server Region
+              {!region && <span className="ml-2 text-amber-400 normal-case font-body tracking-normal text-xs">— required</span>}
+            </label>
+            <select
+              value={region}
+              onChange={e => { setRegion(e.target.value); setSuccess(''); setError('') }}
+              className="input w-full"
+            >
+              <option value="">Select region…</option>
+              <option value="americas">Americas</option>
+              <option value="europe">Europe</option>
+              <option value="asia">Asia</option>
+            </select>
+            <p className="text-text-muted text-xs mt-1">
+              Used to verify your character name against Albion Online
+            </p>
+          </div>
+        )}
 
         {error && <p className="text-red-400 text-xs">{error}</p>}
         {success && <p className="text-emerald-400 text-xs">✓ {success}</p>}

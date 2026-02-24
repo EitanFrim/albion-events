@@ -21,6 +21,7 @@ export async function GET() {
 const schema = z.object({
   inGameName: z.string().min(1).max(64).trim(),
   guildSlug: z.string().optional(),
+  region: z.enum(['americas', 'europe', 'asia']).optional(),
 })
 
 export async function PUT(req: NextRequest) {
@@ -35,24 +36,31 @@ export async function PUT(req: NextRequest) {
 
   let finalName = parsed.data.inGameName
 
-  // Verify against Albion Online API if guild has a server region configured
+  // Determine which region to verify against:
+  // 1. If player is in a guild with a region configured, use that
+  // 2. Otherwise, use the region provided directly by the player
+  let verifyRegion: string | null = null
+
   if (parsed.data.guildSlug) {
     const guild = await prisma.guild.findUnique({
       where: { slug: parsed.data.guildSlug },
       select: { serverRegion: true },
     })
+    verifyRegion = guild?.serverRegion ?? null
+  } else if (parsed.data.region) {
+    verifyRegion = parsed.data.region
+  }
 
-    if (guild?.serverRegion) {
-      const result = await verifyAlbionName(finalName, guild.serverRegion)
-      if (!result.valid) {
-        return NextResponse.json(
-          { error: `Player "${finalName}" not found in Albion Online. Check the spelling and make sure you're on the correct server region.` },
-          { status: 400 }
-        )
-      }
-      // Use the exact casing from the API
-      if (result.exactName) finalName = result.exactName
+  if (verifyRegion) {
+    const result = await verifyAlbionName(finalName, verifyRegion)
+    if (!result.valid) {
+      return NextResponse.json(
+        { error: `Player "${finalName}" not found in Albion Online. Check the spelling and make sure you're on the correct server region.` },
+        { status: 400 }
+      )
     }
+    // Use the exact casing from the API
+    if (result.exactName) finalName = result.exactName
   }
 
   const user = await prisma.user.update({
