@@ -63,15 +63,16 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
     }
   }
 
-  async function removeMember(userId: string, name: string) {
-    if (!confirm(`Remove ${name} from the guild? They will need to re-register. Their balance will be preserved.`)) return
+  async function removeMember(userId: string, name: string, balance: number) {
+    const balanceWarning = balance !== 0
+      ? `\n\nThis player has a balance of ${balance.toLocaleString()} silver which will be permanently deleted.`
+      : ''
+    if (!confirm(`Permanently remove ${name} from the guild?${balanceWarning}\n\nThis action cannot be undone. If you just want to temporarily remove them, use Suspend instead.`)) return
     setLoading(userId)
     try {
       const res = await fetch(`/api/guilds/${guildSlug}/members/${userId}`, { method: 'DELETE' })
       if (!res.ok) { alert('Action failed'); return }
-      setMembers(prev => prev.map(m =>
-        m.user.id === userId ? { ...m, status: 'SUSPENDED' as MemberStatus } : m
-      ))
+      setMembers(prev => prev.filter(m => m.user.id !== userId))
     } finally {
       setLoading(null)
     }
@@ -445,7 +446,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                           </button>
                         )}
                         <button
-                          onClick={() => removeMember(member.user.id, displayName)}
+                          onClick={() => removeMember(member.user.id, displayName, member.balance)}
                           disabled={isLoading}
                           title="Remove"
                           className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"

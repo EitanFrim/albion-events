@@ -91,10 +91,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot remove the guild owner' }, { status: 403 })
   }
 
-  // Soft-delete: set to SUSPENDED so balance is preserved if they rejoin
-  await prisma.guildMembership.update({
+  await prisma.guildMembership.delete({
     where: { userId_guildId: { userId: params.userId, guildId: guild.id } },
-    data: { status: 'SUSPENDED' },
   })
 
   return NextResponse.json({ success: true })
