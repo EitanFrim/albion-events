@@ -319,6 +319,36 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
     }
   }
 
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDelete = async (saleId: string, description: string | null) => {
+    const name = description || 'this sale'
+    if (!confirm(`Are you sure you want to delete "${name}"?\n\nThis will permanently remove the sale, all signups, and tagged participants. The Discord message will also be deleted.\n\nThis action cannot be undone.`)) return
+
+    setDeletingId(saleId)
+    setError(null)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Failed to delete sale')
+        return
+      }
+      if (expandedSaleId === saleId) {
+        setExpandedSaleId(null)
+        setExpandedDetail(null)
+      }
+      setSuccess('Sale deleted successfully.')
+      await refreshSales()
+    } catch {
+      setError('Network error deleting sale')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const openSales = sales.filter(s => s.status === 'OPEN')
   const closedSales = sales.filter(s => s.status !== 'OPEN')
 
@@ -686,6 +716,20 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                             </div>
                           )}
                         </div>
+
+                        {/* Delete sale */}
+                        <div className="mt-6 pt-4 border-t border-border-subtle">
+                          <button
+                            className="text-sm text-red-400/70 hover:text-red-400 flex items-center gap-1.5 transition-colors"
+                            onClick={() => handleDelete(sale.id, sale.description)}
+                            disabled={deletingId === sale.id}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                            {deletingId === sale.id ? 'Deleting...' : 'Delete Sale'}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <p className="text-text-muted text-sm">Failed to load details.</p>
@@ -918,6 +962,22 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                                 Open in Loot Split
                               </a>
                             )}
+                          </div>
+                        )}
+
+                        {/* Delete sale — not available for split-completed sales */}
+                        {!expandedDetail?.splitCompleted && (
+                          <div className="mt-6 pt-4 border-t border-border-subtle">
+                            <button
+                              className="text-sm text-red-400/70 hover:text-red-400 flex items-center gap-1.5 transition-colors"
+                              onClick={() => handleDelete(sale.id, sale.description)}
+                              disabled={deletingId === sale.id}
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                              </svg>
+                              {deletingId === sale.id ? 'Deleting...' : 'Delete Sale'}
+                            </button>
                           </div>
                         )}
                       </div>
