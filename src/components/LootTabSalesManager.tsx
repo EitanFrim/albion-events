@@ -125,6 +125,9 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
   // Split state
   const [splitting, setSplitting] = useState(false)
 
+  // Guide state
+  const [showGuide, setShowGuide] = useState(false)
+
   // Live countdown
   const [, setTick] = useState(0)
   useEffect(() => {
@@ -651,6 +654,64 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                         {/* Participants & Split section — only for DRAWN sales */}
                         {expandedDetail.status === 'DRAWN' && (
                           <div className="mt-6 pt-4 border-t border-border-subtle">
+                            {/* How it works guide */}
+                            {!expandedDetail.splitCompleted && (
+                              <div className="mb-4">
+                                <button
+                                  onClick={() => setShowGuide(!showGuide)}
+                                  className="flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+                                  </svg>
+                                  How does the loot split work?
+                                  <svg className={`w-3 h-3 transition-transform ${showGuide ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                  </svg>
+                                </button>
+
+                                {showGuide && (
+                                  <div className="mt-3 bg-surface-2/50 rounded-lg p-4 border border-border-subtle text-sm text-text-secondary space-y-3">
+                                    <div className="flex gap-3">
+                                      <span className="shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-mono font-600">1</span>
+                                      <div>
+                                        <p className="text-text-primary font-600">Create a sale</p>
+                                        <p>Use <code className="text-accent text-xs">/loot-tab-sale</code> in Discord or the form above. Set the price, duration, repair cost, and silver bags.</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <span className="shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-mono font-600">2</span>
+                                      <div>
+                                        <p className="text-text-primary font-600">Members sign up</p>
+                                        <p>Guild members click the Sign Up button on the Discord embed during the sale window.</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <span className="shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-mono font-600">3</span>
+                                      <div>
+                                        <p className="text-text-primary font-600">Draw a winner</p>
+                                        <p>Use <code className="text-accent text-xs">/loot-tab-draw</code> in Discord or click &quot;Draw Now&quot; here. A random winner is selected and both parties are pinged.</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <span className="shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-mono font-600">4</span>
+                                      <div>
+                                        <p className="text-text-primary font-600">Tag participants</p>
+                                        <p>Add the players who were in the content run. Use the input below or type <code className="text-accent text-xs">!tag Player1, Player2, Player3</code> in Discord. Players are matched by their in-game name.</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                      <span className="shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-mono font-600">5</span>
+                                      <div>
+                                        <p className="text-text-primary font-600">Execute the split</p>
+                                        <p>Once all participants are tagged, click &quot;Execute Split&quot;. The total amount (<strong>Price + Silver Bags</strong>) is divided equally among all tagged players and added to their balances. A Discord notification is sent with the breakdown.</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             {/* Split completed badge */}
                             {expandedDetail.splitCompleted && (
                               <div className="mb-4 flex items-center gap-2">
