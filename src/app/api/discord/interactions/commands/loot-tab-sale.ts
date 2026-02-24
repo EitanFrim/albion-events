@@ -68,12 +68,15 @@ export async function handleLootTabSaleCommand(interaction: DiscordInteraction) 
     opts[opt.name] = opt.value
   }
 
+  const title = (opts.title as string) || null
   const price = opts.price as number
   const duration = opts.duration as number
   const repairCost = (opts['repair-cost'] as number) ?? 0
   const silverBags = (opts['silver-bags'] as number) ?? 0
-  const description = (opts.description as string) || null
 
+  if (!title) {
+    return NextResponse.json(ephemeralMessage('Title is required.'))
+  }
   if (!price || price <= 0) {
     return NextResponse.json(ephemeralMessage('Price must be a positive number.'))
   }
@@ -91,7 +94,7 @@ export async function handleLootTabSaleCommand(interaction: DiscordInteraction) 
       durationHours: duration,
       repairCost,
       silverBags,
-      description,
+      description: title,
       expiresAt,
       channelId: channelId || null,
     },
@@ -118,7 +121,7 @@ export async function handleLootTabSaleCommand(interaction: DiscordInteraction) 
 
   return NextResponse.json(
     ephemeralMessage(
-      `Loot tab sale created!\n**Price:** ${formatSilver(price)} silver\n**Duration:** ${duration}h\n**Repair Cost:** ${formatSilver(repairCost)} silver\n**Silver Bags:** ${formatSilver(silverBags)} silver`
+      `Loot tab sale created!\n**Title:** ${title}\n**Price:** ${formatSilver(price)} silver\n**Duration:** ${duration}h\n**Repair Cost:** ${formatSilver(repairCost)} silver\n**Silver Bags:** ${formatSilver(silverBags)} silver`
     )
   )
 }

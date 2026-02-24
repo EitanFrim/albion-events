@@ -8,7 +8,7 @@ import { handleVerifyMessageCommand } from './commands/verify-message'
 import { handleBalCommand } from './commands/bal'
 import { handleBalanceCommand } from './commands/balance'
 import { handleLootTabSaleCommand } from './commands/loot-tab-sale'
-import { handleLootTabDrawCommand } from './commands/loot-tab-draw'
+import { handleLootTabDrawCommand, handleLootTabDrawAutocomplete } from './commands/loot-tab-draw'
 import { handleLootTabSignup } from './commands/loot-tab-signup'
 
 // Fire-and-forget: draw any expired loot tab sales
@@ -72,6 +72,17 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json(ephemeralMessage(`Unknown command: ${commandName}`))
     }
+  }
+
+  // APPLICATION_COMMAND_AUTOCOMPLETE
+  if (interaction.type === 4) {
+    const commandName = interaction.data.name
+
+    if (commandName === 'loot-tab-draw') {
+      return handleLootTabDrawAutocomplete(interaction)
+    }
+
+    return NextResponse.json({ type: 8, data: { choices: [] } })
   }
 
   // MESSAGE_COMPONENT (button clicks)

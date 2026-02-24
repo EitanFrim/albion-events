@@ -13,8 +13,52 @@ interface DiscordInteraction {
     }
     roles: string[]
   }
-  data: Record<string, unknown>
+  data: {
+    options?: Array<{
+      name: string
+      type: number
+      value: string | number
+      focused?: boolean
+    }>
+  }
 }
+
+// ── Autocomplete: return list of active sales ────────────────────────────
+
+export async function handleLootTabDrawAutocomplete(interaction: DiscordInteraction) {
+  const discordGuildId = interaction.guild_id
+  if (!discordGuildId) {
+    return NextResponse.json({ type: 8, data: { choices: [] } })
+  }
+
+  const guild = await prisma.guild.findUnique({ where: { discordGuildId } })
+  if (!guild) {
+    return NextResponse.json({ type: 8, data: { choices: [] } })
+  }
+
+  // Get the current typed value for filtering
+  const focused = interaction.data.options?.find(o => o.focused)
+  const query = (focused?.value as string || '').toLowerCase()
+
+  const openSales = await prisma.lootTabSale.findMany({
+    where: { guildId: guild.id, status: 'OPEN' },
+    include: { _count: { select: { bids: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 25,
+  })
+
+  const choices = openSales
+    .filter(s => !query || (s.description || '').toLowerCase().includes(query))
+    .slice(0, 25)
+    .map(s => ({
+      name: `${s.description || 'Untitled'} — ${formatSilver(s.price)} silver (${s._count.bids} signups)`,
+      value: s.id,
+    }))
+
+  return NextResponse.json({ type: 8, data: { choices } })
+}
+
+// ── Command: draw a specific sale ────────────────────────────────────────
 
 export async function handleLootTabDrawCommand(interaction: DiscordInteraction) {
   if (!interaction.guild_id || !interaction.member) {
@@ -55,18 +99,23 @@ export async function handleLootTabDrawCommand(interaction: DiscordInteraction) 
     )
   }
 
-  // Find the oldest OPEN sale for this guild
+  // Get the selected sale ID from the autocomplete option
+  const saleId = interaction.data.options?.find(o => o.name === 'sale')?.value as string
+
+  if (!saleId) {
+    return NextResponse.json(
+      ephemeralMessage('Please select a sale to draw.')
+    )
+  }
+
+  // Verify sale belongs to this guild
   const sale = await prisma.lootTabSale.findFirst({
-    where: {
-      guildId: guild.id,
-      status: 'OPEN',
-    },
-    orderBy: { createdAt: 'asc' },
+    where: { id: saleId, guildId: guild.id, status: 'OPEN' },
   })
 
   if (!sale) {
     return NextResponse.json(
-      ephemeralMessage('There are no active loot tab sales to draw.')
+      ephemeralMessage('Sale not found or already drawn. Use the autocomplete to pick an active sale.')
     )
   }
 
@@ -82,7 +131,7 @@ export async function handleLootTabDrawCommand(interaction: DiscordInteraction) 
       )
     case 'no_bids':
       return NextResponse.json(
-        ephemeralMessage('No one signed up for the sale. It has been cancelled.')
+        ephemeralMessage(`No one signed up for **${sale.description || 'the sale'}**. It has been cancelled.`)
       )
     case 'not_found':
       return NextResponse.json(

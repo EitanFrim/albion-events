@@ -130,6 +130,12 @@ const commands = [
     default_member_permissions: null, // officer check done server-side
     options: [
       {
+        name: 'title',
+        description: 'Title for the loot tab sale (e.g. T8 Avalonian Loot Tab)',
+        type: 3, // STRING
+        required: true,
+      },
+      {
         name: 'price',
         description: 'Fixed sale price in silver',
         type: 4, // INTEGER
@@ -158,12 +164,6 @@ const commands = [
         required: true,
         min_value: 0,
       },
-      {
-        name: 'description',
-        description: 'Description of the loot tab being sold',
-        type: 3, // STRING
-        required: false,
-      },
     ],
   },
   {
@@ -171,6 +171,15 @@ const commands = [
     description: 'Manually draw a winner for an active loot tab sale (Officers only)',
     type: 1,
     default_member_permissions: null, // officer check done server-side
+    options: [
+      {
+        name: 'sale',
+        description: 'Which sale to draw (pick from active sales)',
+        type: 3, // STRING
+        required: true,
+        autocomplete: true,
+      },
+    ],
   },
 ]
 
