@@ -539,6 +539,93 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                             ))}
                           </div>
                         )}
+
+                        {/* Tag participants — available on OPEN sales too */}
+                        <div className="mt-6 pt-4 border-t border-border-subtle">
+                          <h3 className="text-sm font-600 text-text-secondary mb-3 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-1.997M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                            </svg>
+                            Tagged Players ({expandedDetail.participants.length})
+                          </h3>
+
+                          {/* Tag players input */}
+                          <div className="mb-4">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                className="input flex-1"
+                                placeholder="Enter player names separated by commas (e.g. Player1, Player2, Player3)"
+                                value={tagInput}
+                                onChange={e => setTagInput(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    handleTagPlayers(sale.id)
+                                  }
+                                }}
+                                disabled={tagging}
+                              />
+                              <button
+                                className="btn-primary text-sm px-4"
+                                onClick={() => handleTagPlayers(sale.id)}
+                                disabled={tagging || !tagInput.trim()}
+                              >
+                                {tagging ? 'Adding...' : 'Add Players'}
+                              </button>
+                            </div>
+                            <p className="text-text-muted text-xs mt-1">
+                              You can also tag via Discord: <code className="text-accent">!tag Player1, Player2</code> or <code className="text-accent">!tag</code> with one name per line
+                            </p>
+
+                            {/* Tag result feedback */}
+                            {tagResult && (
+                              <div className="mt-2 text-sm space-y-1">
+                                {tagResult.added.length > 0 && (
+                                  <p className="text-emerald-400">
+                                    Added: {tagResult.added.join(', ')}
+                                  </p>
+                                )}
+                                {tagResult.alreadyTagged.length > 0 && (
+                                  <p className="text-amber-400">
+                                    Already tagged: {tagResult.alreadyTagged.join(', ')}
+                                  </p>
+                                )}
+                                {tagResult.notFound.length > 0 && (
+                                  <p className="text-red-400">
+                                    Not found: {tagResult.notFound.join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Participants list */}
+                          {expandedDetail.participants.length === 0 ? (
+                            <p className="text-text-muted text-sm">No players tagged yet. You can tag players now and execute the split after the winner is drawn.</p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {expandedDetail.participants.map(p => (
+                                <div key={p.id} className="flex items-center gap-2 text-sm group">
+                                  <Avatar user={p.user} size={20} />
+                                  <span className="text-text-primary">
+                                    {p.user.inGameName || p.user.discordName}
+                                  </span>
+                                  <button
+                                    className="text-red-400/60 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                    onClick={() => handleRemoveParticipant(sale.id, p.id)}
+                                    disabled={removingId === p.id}
+                                    title="Remove participant"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <p className="text-text-muted text-sm">Failed to load details.</p>
@@ -697,7 +784,7 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                                       <span className="shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-mono font-600">4</span>
                                       <div>
                                         <p className="text-text-primary font-600">Tag participants</p>
-                                        <p>Add the players who were in the content run. Use the input below or type <code className="text-accent text-xs">!tag Player1, Player2, Player3</code> in Discord. Players are matched by their in-game name.</p>
+                                        <p>Add the players who were in the content run. Use the input below, or in Discord type <code className="text-accent text-xs">!tag Player1, Player2</code> (comma-separated) or <code className="text-accent text-xs">!tag</code> followed by one name per line. Players are matched by their in-game name.</p>
                                       </div>
                                     </div>
                                     <div className="flex gap-3">
@@ -763,7 +850,7 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                                   </button>
                                 </div>
                                 <p className="text-text-muted text-xs mt-1">
-                                  You can also tag players via Discord: <code className="text-accent">!tag Player1, Player2</code>
+                                  You can also tag via Discord: <code className="text-accent">!tag Player1, Player2</code> or <code className="text-accent">!tag</code> with one name per line
                                 </p>
 
                                 {/* Tag result feedback */}

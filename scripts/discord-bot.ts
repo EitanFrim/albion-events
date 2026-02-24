@@ -137,13 +137,17 @@ client.on('messageCreate', async (message: Message) => {
         embeds: [new EmbedBuilder()
           .setColor(0xf97316)
           .setTitle('Usage: !tag')
-          .setDescription('`!tag PlayerName1, PlayerName2, PlayerName3`\n\nSeparate player names with commas or spaces. Names are matched against in-game names in the guild.')
+          .setDescription(
+            '**Option 1** — comma-separated:\n`!tag Player1, Player2, Player3`\n\n' +
+            '**Option 2** — one per line:\n```\n!tag\nPlayer1\nPlayer2\nPlayer3\n```\n\n' +
+            'Names are matched against in-game names in the guild.'
+          )
         ],
       })
       return
     }
 
-    // Split by comma first, then by whitespace for each segment
+    // Split by commas or newlines — supports both "!tag A, B, C" and multi-line lists
     const playerNames = rawNames
       .split(/[,\n]+/)
       .map(n => n.trim())
@@ -153,7 +157,7 @@ client.on('messageCreate', async (message: Message) => {
       await message.reply({
         embeds: [new EmbedBuilder()
           .setColor(0xef4444)
-          .setDescription('No player names provided. Usage: `!tag Player1, Player2, Player3`')
+          .setDescription('No player names provided.\n\nUsage: `!tag Player1, Player2` or one name per line after `!tag`')
         ],
       })
       return
@@ -201,14 +205,14 @@ client.on('messageCreate', async (message: Message) => {
       return
     }
 
-    // Find eligible sales (DRAWN, not yet split)
+    // Find eligible sales (OPEN or DRAWN, not yet split)
     const eligibleSales = await prisma.lootTabSale.findMany({
       where: {
         guildId: guild.id,
-        status: 'DRAWN',
+        status: { in: ['OPEN', 'DRAWN'] },
         splitCompleted: false,
       },
-      orderBy: { drawnAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 25,
     })
 
@@ -216,7 +220,7 @@ client.on('messageCreate', async (message: Message) => {
       await message.reply({
         embeds: [new EmbedBuilder()
           .setColor(0xef4444)
-          .setDescription('No eligible loot tab sales found. A sale must be drawn (winner selected) and not yet split.')
+          .setDescription('No eligible loot tab sales found. You need an active or drawn sale that hasn\'t been split yet.')
         ],
       })
       return
@@ -228,8 +232,8 @@ client.on('messageCreate', async (message: Message) => {
     } else {
       // Send a select menu for the officer to pick which sale
       const options = eligibleSales.slice(0, 25).map((s: any) => ({
-        label: (s.description || 'Untitled Sale').slice(0, 100),
-        description: `${formatSilver(s.price)} silver — drawn ${new Date(s.drawnAt).toLocaleDateString()}`,
+        label: `[${s.status}] ${(s.description || 'Untitled Sale').slice(0, 90)}`,
+        description: `${formatSilver(s.price)} silver — ${s.status === 'DRAWN' ? `drawn ${new Date(s.drawnAt).toLocaleDateString()}` : `expires ${new Date(s.expiresAt).toLocaleDateString()}`}`,
         value: s.id,
       }))
 

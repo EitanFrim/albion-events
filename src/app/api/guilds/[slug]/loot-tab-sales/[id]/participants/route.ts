@@ -61,8 +61,8 @@ export async function POST(
   })
   if (!sale) return NextResponse.json({ error: 'Sale not found' }, { status: 404 })
 
-  if (sale.status !== 'DRAWN') {
-    return NextResponse.json({ error: 'Can only add participants to drawn sales' }, { status: 400 })
+  if (sale.status === 'CANCELLED') {
+    return NextResponse.json({ error: 'Cannot add participants to a cancelled sale' }, { status: 400 })
   }
   if (sale.splitCompleted) {
     return NextResponse.json({ error: 'Sale has already been split' }, { status: 400 })
