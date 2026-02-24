@@ -193,12 +193,14 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                           </div>
                           {slot.assignments.map(a => {
                             const hasWithdrawn = withdrawnUserIds.has(a.userId)
+                            const isMe = a.userId === session?.user.id
                             return (
-                              <div key={a.id} className={`flex items-center gap-1.5 px-2 py-0.5 ml-3 ${hasWithdrawn ? 'opacity-70' : ''}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasWithdrawn ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                                <span className={`text-xs truncate ${hasWithdrawn ? 'text-amber-300/80 line-through' : 'text-emerald-300/80'}`}>
+                              <div key={a.id} className={`flex items-center gap-1.5 px-2 py-0.5 ml-3 rounded ${hasWithdrawn ? 'opacity-70' : ''} ${isMe && !hasWithdrawn ? 'bg-accent/10 ring-1 ring-accent/30 -mx-1 px-3' : ''}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasWithdrawn ? 'bg-amber-400' : isMe ? 'bg-accent animate-pulse-soft' : 'bg-emerald-400'}`} />
+                                <span className={`text-xs truncate ${hasWithdrawn ? 'text-amber-300/80 line-through' : isMe ? 'text-accent font-semibold' : 'text-emerald-300/80'}`}>
                                   {a.user.inGameName || a.user.discordName}
                                 </span>
+                                {isMe && !hasWithdrawn && <span className="text-[10px] text-accent/70 font-mono flex-shrink-0">you</span>}
                                 {hasWithdrawn && (
                                   <span className="text-xs text-amber-400/60 font-mono flex-shrink-0">withdrew</span>
                                 )}
@@ -241,7 +243,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
               parties={event.parties}
               existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
               isLocked={false}
-              assignedRole={mySignup?.assignment?.roleSlot?.roleName ?? null}
+
             />
           ) : event.status === 'LOCKED' && session && mySignup ? (
             <SignupForm
@@ -249,7 +251,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
               parties={event.parties}
               existingSignup={{ preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' }}
               isLocked={true}
-              assignedRole={mySignup?.assignment?.roleSlot?.roleName ?? null}
+
             />
           ) : !session ? (
             <div className="card p-5 text-center">
