@@ -11,11 +11,12 @@ interface Props {
   parties: Party[]
   existingSignup: { preferredRoles: string[]; note: string } | null
   isLocked: boolean
+  assignedRole?: string | null
 }
 
 interface GuildRole { id: string; name: string; categoryId: string | null; category: { id: string; name: string; color: string } | null }
 
-export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props) {
+export function SignupForm({ eventId, parties, existingSignup, isLocked, assignedRole }: Props) {
   const router = useRouter()
   const allRoles = Array.from(new Set(parties.flatMap(p => p.roleSlots.map(s => s.roleName))))
 
@@ -138,19 +139,27 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props
         <div className="flex flex-wrap gap-1.5">
           {selectedRoles.map((role, i) => {
             const color = getColor(role)
+            const isAssigned = assignedRole === role
             return (
               <span
                 key={role}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium"
-                style={{ backgroundColor: color + '20', color, border: `1px solid ${color}40` }}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium ${isAssigned ? 'ring-1 ring-emerald-400/60 shadow-[0_0_8px_rgba(52,211,153,0.15)]' : ''}`}
+                style={{
+                  backgroundColor: isAssigned ? color + '30' : color + '20',
+                  color,
+                  border: `1px solid ${isAssigned ? color : color + '40'}`,
+                }}
               >
                 <span
                   className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
                   style={{ backgroundColor: color }}
                 >
-                  {i + 1}
+                  {isAssigned ? '\u2713' : i + 1}
                 </span>
                 {role}
+                {isAssigned && (
+                  <span className="text-emerald-400 text-[10px] font-mono ml-0.5">ASSIGNED</span>
+                )}
               </span>
             )
           })}
@@ -215,18 +224,20 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props
           <div className="flex flex-wrap gap-1.5 mb-2">
             {selectedRoles.map((role, i) => {
               const color = getColor(role)
+              const isAssigned = assignedRole === role
               return (
                 <button
                   key={role} type="button" onClick={() => toggleRole(role)}
                   title="Click to remove"
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all hover:opacity-70"
-                  style={{ backgroundColor: color + '25', color, border: `1px solid ${color}55` }}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all hover:opacity-70 ${isAssigned ? 'ring-1 ring-emerald-400/60' : ''}`}
+                  style={{ backgroundColor: isAssigned ? color + '30' : color + '25', color, border: `1px solid ${isAssigned ? color : color + '55'}` }}
                 >
                   <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                     style={{ backgroundColor: color }}>
-                    {i + 1}
+                    {isAssigned ? '\u2713' : i + 1}
                   </span>
                   {role}
+                  {isAssigned && <span className="text-emerald-400 text-[10px] font-mono">ASSIGNED</span>}
                   <span className="opacity-50">×</span>
                 </button>
               )

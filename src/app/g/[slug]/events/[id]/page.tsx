@@ -284,6 +284,7 @@ export default async function GuildEventPage({ params }: Props) {
               parties={event.parties}
               existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
               isLocked={false}
+              assignedRole={mySignup?.assignment?.roleSlot?.roleName ?? null}
             />
           ) : event.status === 'LOCKED' && session && mySignup ? (
             <SignupForm
@@ -291,6 +292,7 @@ export default async function GuildEventPage({ params }: Props) {
               parties={event.parties}
               existingSignup={{ preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' }}
               isLocked={true}
+              assignedRole={mySignup?.assignment?.roleSlot?.roleName ?? null}
             />
           ) : !session ? (
             <div className="card p-5 text-center">
