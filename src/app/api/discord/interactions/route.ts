@@ -11,6 +11,25 @@ import { handleLootTabSaleCommand } from './commands/loot-tab-sale'
 import { handleLootTabDrawCommand } from './commands/loot-tab-draw'
 import { handleLootTabSignup } from './commands/loot-tab-signup'
 
+// Fire-and-forget: draw any expired loot tab sales
+async function processExpiredSales() {
+  try {
+    const { prisma } = await import('@/lib/prisma')
+    const { drawWinner } = await import('@/lib/loot-tab-sale')
+
+    const expired = await prisma.lootTabSale.findMany({
+      where: { status: 'OPEN', expiresAt: { lte: new Date() } },
+      select: { id: true },
+    })
+
+    for (const sale of expired) {
+      await drawWinner(sale.id)
+    }
+  } catch (err) {
+    console.error('Auto-draw expired sales error:', err)
+  }
+}
+
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
   const signature = req.headers.get('X-Signature-Ed25519')
@@ -27,6 +46,9 @@ export async function POST(req: NextRequest) {
   if (interaction.type === 1) {
     return NextResponse.json(pongResponse())
   }
+
+  // Auto-draw expired sales on every interaction (fire-and-forget)
+  processExpiredSales()
 
   // APPLICATION_COMMAND
   if (interaction.type === 2) {
