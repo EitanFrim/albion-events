@@ -33,6 +33,17 @@ export default async function GuildLayout({ children, params }: Props) {
     redirect(`/?error=not-a-member`)
   }
 
+  // Query total guild balance across all active members (for officer+ nav)
+  const isOfficerPlus = membership.role === 'OWNER' || membership.role === 'OFFICER'
+  let totalGuildBalance = 0
+  if (isOfficerPlus) {
+    const agg = await prisma.guildMembership.aggregate({
+      where: { guildId: guild.id, status: 'ACTIVE' },
+      _sum: { balance: true },
+    })
+    totalGuildBalance = agg._sum.balance ?? 0
+  }
+
   // Query unseen balance transactions for notifications (active members only)
   const unseenTransactions = membership.status === 'ACTIVE'
     ? await prisma.balanceTransaction.findMany({
@@ -57,6 +68,7 @@ export default async function GuildLayout({ children, params }: Props) {
       <GuildNavBar
         guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl }}
         membership={{ role: membership.role, status: membership.status, balance: membership.balance }}
+        totalGuildBalance={totalGuildBalance}
       />
       <BalanceNotifications
         transactions={unseenTransactions.map(t => ({
