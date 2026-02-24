@@ -31,6 +31,7 @@ interface SplitResult {
 
 interface Props {
   guildSlug: string
+  saleId?: string
 }
 
 // Format a number string with commas: "1234567" → "1,234,567"
@@ -45,7 +46,7 @@ function parseFormatted(value: string): string {
   return value.replace(/[^0-9]/g, '')
 }
 
-export function LootSplitForm({ guildSlug }: Props) {
+export function LootSplitForm({ guildSlug, saleId }: Props) {
   // Form inputs (stored as raw digit strings)
   const [contentName, setContentName] = useState('')
   const [soldAmount, setSoldAmount] = useState('')
@@ -70,6 +71,10 @@ export function LootSplitForm({ guildSlug }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<SplitResult[] | null>(null)
 
+  // Sale pre-fill state
+  const [saleName, setSaleName] = useState<string | null>(null)
+  const [salePreFilled, setSalePreFilled] = useState(false)
+
   // Fetch members on mount
   const fetchMembers = useCallback(async () => {
     setMembersLoading(true)
@@ -84,6 +89,55 @@ export function LootSplitForm({ guildSlug }: Props) {
   }, [guildSlug])
 
   useEffect(() => { fetchMembers() }, [fetchMembers])
+
+  // Pre-fill from loot tab sale
+  useEffect(() => {
+    if (!saleId || salePreFilled || allMembers.length === 0) return
+
+    async function loadSale() {
+      try {
+        const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}`)
+        if (!res.ok) return
+        const sale = await res.json()
+
+        // Pre-fill form fields
+        setContentName(sale.description || 'Loot Tab Sale')
+        setSoldAmount(String(sale.price))
+        setSilverBags(String(sale.silverBags))
+        setRepairCost(String(sale.repairCost))
+        setGuildTaxPct('0')
+        setSaleName(sale.description || 'Loot Tab Sale')
+
+        // Match participants to guild members by userId
+        if (sale.participants && sale.participants.length > 0) {
+          const memberByUserId = new Map(allMembers.map(m => [m.user.id, m]))
+          const preFillPlayers: SplitPlayer[] = []
+
+          for (const p of sale.participants) {
+            const member = memberByUserId.get(p.userId)
+            if (member) {
+              preFillPlayers.push({
+                membershipId: member.id,
+                displayName: member.user.inGameName ?? member.user.discordName,
+                avatarUrl: member.user.avatarUrl,
+                cut: 100,
+              })
+            }
+          }
+
+          if (preFillPlayers.length > 0) {
+            setPlayers(preFillPlayers)
+          }
+        }
+
+        setSalePreFilled(true)
+      } catch {
+        // Silently fail — user can still fill manually
+      }
+    }
+
+    loadSale()
+  }, [saleId, salePreFilled, allMembers, guildSlug])
 
   // Live calculation
   const calculation = useMemo(() => {
@@ -207,6 +261,7 @@ export function LootSplitForm({ guildSlug }: Props) {
           membershipId: p.membershipId,
           amount: p.calculatedAmount,
         })),
+      ...(saleId ? { saleId } : {}),
     }
 
     setSubmitting(true)
@@ -287,6 +342,16 @@ export function LootSplitForm({ guildSlug }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Pre-fill banner */}
+      {saleName && (
+        <div className="card px-4 py-3 border-accent/30 bg-accent/5 flex items-center gap-2 text-sm">
+          <svg className="w-4 h-4 text-accent shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+          </svg>
+          <span className="text-accent">Pre-filled from loot tab sale: <strong>{saleName}</strong></span>
+        </div>
+      )}
+
       {/* Content Details */}
       <div className="card p-5 space-y-4">
         <h2 className="font-display font-600 text-text-primary text-sm">Content Details</h2>

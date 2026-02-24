@@ -6,9 +6,12 @@ import { LootSplitForm } from '@/components/LootSplitForm'
 
 export const dynamic = 'force-dynamic'
 
-interface Props { params: { slug: string } }
+interface Props {
+  params: { slug: string }
+  searchParams: { saleId?: string }
+}
 
-export default async function LootSplitPage({ params }: Props) {
+export default async function LootSplitPage({ params, searchParams }: Props) {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/auth/signin')
 
@@ -32,7 +35,7 @@ export default async function LootSplitPage({ params }: Props) {
           Calculate and distribute silver from content runs to guild members.
         </p>
       </div>
-      <LootSplitForm guildSlug={params.slug} />
+      <LootSplitForm guildSlug={params.slug} saleId={searchParams.saleId} />
     </div>
   )
 }

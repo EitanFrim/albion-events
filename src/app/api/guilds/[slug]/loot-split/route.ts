@@ -19,6 +19,7 @@ const lootSplitSchema = z.object({
   repairCost: z.number().int().nonnegative(),
   guildTax: z.number().int().nonnegative(),
   players: z.array(playerSchema).min(1, 'At least one player required'),
+  saleId: z.string().optional(),
 })
 
 export async function POST(
@@ -40,7 +41,7 @@ export async function POST(
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid data' }, { status: 400 })
   }
 
-  const { contentName, soldAmount, repairCost, guildTax, players } = parsed.data
+  const { contentName, soldAmount, repairCost, guildTax, players, saleId } = parsed.data
 
   // Verify all membershipIds belong to this guild
   const membershipIds = players.map(p => p.membershipId)
@@ -79,6 +80,18 @@ export async function POST(
       amount: player.amount,
       newBalance: result.newBalance,
     })
+  }
+
+  // If linked to a loot tab sale, mark it as split
+  if (saleId) {
+    try {
+      await prisma.lootTabSale.updateMany({
+        where: { id: saleId, guildId: guild.id, status: 'DRAWN', splitCompleted: false },
+        data: { splitCompleted: true, splitAt: new Date() },
+      })
+    } catch {
+      // Non-critical — balances were already adjusted
+    }
   }
 
   return NextResponse.json({ ok: true, results })

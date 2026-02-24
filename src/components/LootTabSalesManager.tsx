@@ -122,9 +122,6 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
   const [tagResult, setTagResult] = useState<{ added: string[]; notFound: string[]; alreadyTagged: string[] } | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
 
-  // Split state
-  const [splitting, setSplitting] = useState(false)
-
   // Guide state
   const [showGuide, setShowGuide] = useState(false)
 
@@ -306,29 +303,6 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
       setError('Network error removing participant')
     } finally {
       setRemovingId(null)
-    }
-  }
-
-  const handleSplit = async (saleId: string) => {
-    if (!confirm('Are you sure you want to execute the loot split? This will add silver to all tagged players\' balances and cannot be undone.')) return
-    setSplitting(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}/split`, {
-        method: 'POST',
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Failed to execute split')
-        return
-      }
-      setSuccess(`Split completed! ${formatSilver(data.perPlayer)} silver added to each of ${data.participantCount} players.`)
-      await refreshDetail(saleId)
-      await refreshSales()
-    } catch {
-      setError('Network error executing split')
-    } finally {
-      setSplitting(false)
     }
   }
 
@@ -904,48 +878,17 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                               </div>
                             )}
 
-                            {/* Split calculator — only if participants exist */}
-                            {expandedDetail.participants.length > 0 && (
-                              <div className="bg-surface-2/50 rounded-lg p-4 border border-border-subtle">
-                                <h4 className="text-sm font-600 text-text-primary mb-3">Loot Split Calculator</h4>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
-                                  <div>
-                                    <span className="text-text-muted">Price</span>
-                                    <p className="text-text-primary font-mono">{formatSilver(sale.price)}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-text-muted">Silver Bags</span>
-                                    <p className="text-text-primary font-mono">{formatSilver(sale.silverBags)}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-text-muted">Total</span>
-                                    <p className="text-accent font-mono font-600">{formatSilver(sale.price + sale.silverBags)}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-text-muted">Per Player ({expandedDetail.participants.length})</span>
-                                    <p className="text-emerald-400 font-mono font-600">
-                                      {formatSilver(Math.floor((sale.price + sale.silverBags) / expandedDetail.participants.length))}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Remainder warning */}
-                                {(sale.price + sale.silverBags) % expandedDetail.participants.length !== 0 && (
-                                  <p className="text-text-muted text-xs mb-3">
-                                    Remainder: {formatSilver((sale.price + sale.silverBags) % expandedDetail.participants.length)} silver (not distributed)
-                                  </p>
-                                )}
-
-                                {!expandedDetail.splitCompleted && (
-                                  <button
-                                    className="btn-primary text-sm"
-                                    onClick={() => handleSplit(sale.id)}
-                                    disabled={splitting}
-                                  >
-                                    {splitting ? 'Splitting...' : 'Execute Split'}
-                                  </button>
-                                )}
-                              </div>
+                            {/* Open in Loot Split — only for DRAWN sales with participants, not yet split */}
+                            {expandedDetail.participants.length > 0 && !expandedDetail.splitCompleted && (
+                              <a
+                                href={`/g/${guildSlug}/admin/loot-split?saleId=${sale.id}`}
+                                className="btn-primary text-sm inline-flex items-center gap-2"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                </svg>
+                                Open in Loot Split
+                              </a>
                             )}
                           </div>
                         )}
