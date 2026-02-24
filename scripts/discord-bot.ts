@@ -13,8 +13,8 @@
 
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from 'discord.js'
-import type { Message, StringSelectMenuInteraction } from 'discord.js'
+import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js'
+import type { Message } from 'discord.js'
 
 // ── Load .env ─────────────────────────────────────────────────────────────
 const envPath = resolve(__dirname, '..', '.env')
@@ -226,57 +226,63 @@ client.on('messageCreate', async (message: Message) => {
       return
     }
 
-    // Auto-select if only one eligible sale, otherwise show select menu
+    // Auto-select if only one eligible sale, otherwise ask user to pick by number
     if (eligibleSales.length === 1) {
       await tagPlayersToSale(message, prisma, eligibleSales[0], found, notFound, user.id)
     } else {
-      // Send a select menu for the officer to pick which sale
-      const options = eligibleSales.slice(0, 25).map((s: any) => ({
-        label: `[${s.status}] ${(s.description || 'Untitled Sale').slice(0, 90)}`,
-        description: `${formatSilver(s.price)} silver — ${s.status === 'DRAWN' ? `drawn ${new Date(s.drawnAt).toLocaleDateString()}` : `expires ${new Date(s.expiresAt).toLocaleDateString()}`}`,
-        value: s.id,
-      }))
+      // List sales with numbers so the user can reply with a number
+      const salesList = eligibleSales.map((s: any, i: number) => {
+        const dateInfo = s.status === 'DRAWN'
+          ? `drawn ${new Date(s.drawnAt).toLocaleDateString()}`
+          : `expires ${new Date(s.expiresAt).toLocaleDateString()}`
+        return `**${i + 1}.** [${s.status}] ${s.description || 'Untitled Sale'} — ${formatSilver(s.price)} silver (${dateInfo})`
+      }).join('\n')
 
-      const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId(`tag_sale_select:${message.id}`)
-        .setPlaceholder('Select a loot tab sale...')
-        .addOptions(options)
-
-      const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu)
-
-      const reply = await message.reply({
+      await message.reply({
         embeds: [new EmbedBuilder()
           .setColor(0xf97316)
           .setTitle('Multiple eligible sales')
-          .setDescription(`Found **${found.length}** player(s). Select which sale to tag them to:`)
+          .setDescription(`Found **${found.length}** player(s). Reply with a number to select which sale:\n\n${salesList}`)
         ],
-        components: [row],
       })
 
-      // Wait for the selection (60 second timeout)
+      // Wait for the user to reply with a number (30 second timeout)
       try {
-        const interaction = await reply.awaitMessageComponent({
-          filter: (i) => i.user.id === message.author.id && i.customId === `tag_sale_select:${message.id}`,
-          time: 60_000,
-        }) as StringSelectMenuInteraction
+        const collected = await (message.channel as any).awaitMessages({
+          filter: (m: Message) => m.author.id === message.author.id && /^\d+$/.test(m.content.trim()),
+          max: 1,
+          time: 30_000,
+        })
 
-        const selectedSaleId = interaction.values[0]
-        const selectedSale = eligibleSales.find((s: any) => s.id === selectedSaleId)
-
-        if (selectedSale) {
-          await interaction.deferUpdate()
-          await tagPlayersToSale(message, prisma, selectedSale, found, notFound, user.id)
-          // Remove the select menu
-          await reply.edit({ components: [] })
+        const reply = collected.first()
+        if (!reply) {
+          await message.reply({
+            embeds: [new EmbedBuilder()
+              .setColor(0x6b7280)
+              .setDescription('Selection timed out. Use `!tag` again to try.')
+            ],
+          })
+          return
         }
+
+        const choice = parseInt(reply.content.trim(), 10)
+        if (choice < 1 || choice > eligibleSales.length) {
+          await message.reply({
+            embeds: [new EmbedBuilder()
+              .setColor(0xef4444)
+              .setDescription(`Invalid choice. Please pick a number between 1 and ${eligibleSales.length}. Use \`!tag\` again to retry.`)
+            ],
+          })
+          return
+        }
+
+        await tagPlayersToSale(message, prisma, eligibleSales[choice - 1], found, notFound, user.id)
       } catch {
-        // Timeout — remove the select menu
-        await reply.edit({
+        await message.reply({
           embeds: [new EmbedBuilder()
             .setColor(0x6b7280)
             .setDescription('Selection timed out. Use `!tag` again to try.')
           ],
-          components: [],
         })
       }
     }
