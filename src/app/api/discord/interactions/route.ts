@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ type: 8, data: { choices: [] } })
   }
 
-  // MESSAGE_COMPONENT (button clicks)
+  // MESSAGE_COMPONENT (button clicks, select menus)
   if (interaction.type === 3) {
     const customId = interaction.data.custom_id
 
@@ -97,7 +97,9 @@ export async function POST(req: NextRequest) {
       return handleLootTabSignup(interaction, customId)
     }
 
-    return NextResponse.json(ephemeralMessage('Unknown button interaction'))
+    // Silently acknowledge unknown components (e.g. gateway bot select menus)
+    // Type 6 = DEFERRED_UPDATE_MESSAGE — acknowledges without showing anything
+    return NextResponse.json({ type: 6 })
   }
 
   // MODAL_SUBMIT

@@ -364,4 +364,13 @@ async function tagPlayersToSale(
 }
 
 // ── Start the bot ─────────────────────────────────────────────────────────
-client.login(DISCORD_BOT_TOKEN)
+console.log('Starting Discord gateway bot...')
+
+client.on('error', (err) => {
+  console.error('Discord client error:', err)
+})
+
+client.login(DISCORD_BOT_TOKEN).catch((err) => {
+  console.error('Failed to login:', err)
+  process.exit(1)
+})
