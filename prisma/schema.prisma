@@ -43,6 +43,12 @@ enum RegearStatus {
   REJECTED
 }
 
+enum LootTabSaleStatus {
+  OPEN
+  DRAWN
+  CANCELLED
+}
+
 model User {
   id            String   @id @default(cuid())
   discordUserId String   @unique @map("discord_user_id")
@@ -63,6 +69,9 @@ model User {
   balanceActions   BalanceTransaction[] @relation("BalancePerformer")
   regearRequests   RegearRequest[]
   regearReviews    RegearRequest[]      @relation("RegearReviewer")
+  lootTabSalesCreated LootTabSale[]     @relation("LootTabSaleCreator")
+  lootTabSalesWon     LootTabSale[]     @relation("LootTabSaleWinner")
+  lootTabBids         LootTabBid[]
 
   @@map("users")
 }
@@ -88,6 +97,7 @@ model Guild {
   roles      GuildRole2[]
   categories GuildCategory[]
   templates  GuildTemplate[]
+  lootTabSales LootTabSale[]
 
   @@map("guilds")
 }
@@ -321,4 +331,42 @@ model RegearRequest {
 
   @@unique([eventId, userId])
   @@map("regear_requests")
+}
+
+model LootTabSale {
+  id            String             @id @default(cuid())
+  guildId       String             @map("guild_id")
+  createdById   String             @map("created_by_id")
+  price         Int
+  durationHours Int                @map("duration_hours")
+  repairCost    Int                @default(0) @map("repair_cost")
+  silverBags    Int                @default(0) @map("silver_bags")
+  description   String?
+  status        LootTabSaleStatus  @default(OPEN)
+  expiresAt     DateTime           @map("expires_at")
+  channelId     String?            @map("channel_id")
+  messageId     String?            @map("message_id")
+  winnerId      String?            @map("winner_id")
+  drawnAt       DateTime?          @map("drawn_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  guild     Guild        @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  createdBy User         @relation("LootTabSaleCreator", fields: [createdById], references: [id])
+  winner    User?        @relation("LootTabSaleWinner", fields: [winnerId], references: [id])
+  bids      LootTabBid[]
+
+  @@map("loot_tab_sales")
+}
+
+model LootTabBid {
+  id        String   @id @default(cuid())
+  saleId    String   @map("sale_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sale LootTabSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id])
+
+  @@unique([saleId, userId])
+  @@map("loot_tab_bids")
 }

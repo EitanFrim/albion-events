@@ -14,6 +14,7 @@ export default withAuth(
           pathname.startsWith('/auth') ||
           pathname.startsWith('/api/auth') ||
           pathname.startsWith('/api/discord') ||
+          pathname.startsWith('/api/cron') ||
           pathname.startsWith('/_next') ||
           pathname === '/favicon.ico'
         ) return true

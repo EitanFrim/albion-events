@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/draw-loot-tabs",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

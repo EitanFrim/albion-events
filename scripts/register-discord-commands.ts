@@ -123,6 +123,55 @@ const commands = [
       },
     ],
   },
+  {
+    name: 'loot-tab-sale',
+    description: 'Create a loot tab sale for guild members to sign up for (Officers only)',
+    type: 1,
+    default_member_permissions: null, // officer check done server-side
+    options: [
+      {
+        name: 'price',
+        description: 'Fixed sale price in silver',
+        type: 4, // INTEGER
+        required: true,
+        min_value: 1,
+      },
+      {
+        name: 'duration',
+        description: 'Duration in hours before the winner is drawn',
+        type: 4, // INTEGER
+        required: true,
+        min_value: 1,
+        max_value: 168,
+      },
+      {
+        name: 'repair-cost',
+        description: 'Repair cost in silver (stored for reference)',
+        type: 4, // INTEGER
+        required: true,
+        min_value: 0,
+      },
+      {
+        name: 'silver-bags',
+        description: 'Silver bags amount (stored for reference)',
+        type: 4, // INTEGER
+        required: true,
+        min_value: 0,
+      },
+      {
+        name: 'description',
+        description: 'Description of the loot tab being sold',
+        type: 3, // STRING
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'loot-tab-draw',
+    description: 'Manually draw a winner for an active loot tab sale (Officers only)',
+    type: 1,
+    default_member_permissions: null, // officer check done server-side
+  },
 ]
 
 async function registerCommands() {

@@ -7,6 +7,9 @@ import { handleSetupCommand } from './commands/setup'
 import { handleVerifyMessageCommand } from './commands/verify-message'
 import { handleBalCommand } from './commands/bal'
 import { handleBalanceCommand } from './commands/balance'
+import { handleLootTabSaleCommand } from './commands/loot-tab-sale'
+import { handleLootTabDrawCommand } from './commands/loot-tab-draw'
+import { handleLootTabSignup } from './commands/loot-tab-signup'
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -40,6 +43,10 @@ export async function POST(req: NextRequest) {
         return handleBalCommand(interaction)
       case 'balance':
         return handleBalanceCommand(interaction)
+      case 'loot-tab-sale':
+        return handleLootTabSaleCommand(interaction)
+      case 'loot-tab-draw':
+        return handleLootTabDrawCommand(interaction)
       default:
         return NextResponse.json(ephemeralMessage(`Unknown command: ${commandName}`))
     }
@@ -51,6 +58,10 @@ export async function POST(req: NextRequest) {
 
     if (customId === 'register_button') {
       return handleRegisterCommand(interaction)
+    }
+
+    if (customId.startsWith('loot_tab_signup:')) {
+      return handleLootTabSignup(interaction, customId)
     }
 
     return NextResponse.json(ephemeralMessage('Unknown button interaction'))

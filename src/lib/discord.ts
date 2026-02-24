@@ -39,3 +39,59 @@ export function modalResponse(customId: string, title: string, components: any[]
     },
   }
 }
+
+// ── Discord REST API helpers (proactive messaging) ──────────────────────
+
+const DISCORD_API_BASE = 'https://discord.com/api/v10'
+
+export async function sendChannelMessage(
+  channelId: string,
+  payload: {
+    content?: string
+    embeds?: any[]
+    components?: any[]
+  }
+): Promise<{ id: string } | null> {
+  const res = await fetch(`${DISCORD_API_BASE}/channels/${channelId}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.text()
+    console.error(`Discord send message failed (${res.status}):`, err)
+    return null
+  }
+  return res.json()
+}
+
+export async function editChannelMessage(
+  channelId: string,
+  messageId: string,
+  payload: {
+    content?: string
+    embeds?: any[]
+    components?: any[]
+  }
+): Promise<{ id: string } | null> {
+  const res = await fetch(
+    `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  )
+  if (!res.ok) {
+    const err = await res.text()
+    console.error(`Discord edit message failed (${res.status}):`, err)
+    return null
+  }
+  return res.json()
+}
