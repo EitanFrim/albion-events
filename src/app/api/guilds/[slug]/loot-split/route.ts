@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { requireGuildAccess } from '@/lib/guild'
 import { adjustBalance } from '@/lib/balance'
+import { sendChannelMessage, formatSilver } from '@/lib/discord'
 import { z } from 'zod'
 
 const playerSchema = z.object({
@@ -82,14 +83,75 @@ export async function POST(
     })
   }
 
-  // If linked to a loot tab sale, mark it as split
+  // If linked to a loot tab sale, mark it as split and send Discord notification
   if (saleId) {
     try {
-      await prisma.lootTabSale.updateMany({
+      // Fetch the sale to get channelId and details
+      const sale = await prisma.lootTabSale.findFirst({
         where: { id: saleId, guildId: guild.id, status: 'DRAWN', splitCompleted: false },
-        data: { splitCompleted: true, splitAt: new Date() },
+        select: { id: true, channelId: true, description: true, price: true, silverBags: true, repairCost: true },
       })
-    } catch {
+
+      if (sale) {
+        await prisma.lootTabSale.update({
+          where: { id: sale.id },
+          data: { splitCompleted: true, splitAt: new Date() },
+        })
+
+        // Send Discord notification to the sale's channel
+        if (sale.channelId) {
+          const totalSold = soldAmount
+          const net = totalSold - repairCost
+          const afterTax = net - guildTax
+          const totalDistributed = results.reduce((sum, r) => sum + r.amount, 0)
+          const remainder = afterTax - totalDistributed
+          const officerDiscordId = (session.user as any).discordId
+
+          const playerLines = results
+            .map(r => `• **${r.displayName}** — +${formatSilver(r.amount)} silver`)
+            .join('\n')
+
+          const calcLines = [
+            `**Sold Amount:** ${formatSilver(sale.price)} silver`,
+            `**Silver Bags:** ${formatSilver(sale.silverBags)} silver`,
+            `**Total:** ${formatSilver(totalSold)} silver`,
+            `**Repair Cost:** -${formatSilver(repairCost)} silver`,
+          ]
+          if (guildTax > 0) {
+            calcLines.push(`**Guild Tax:** -${formatSilver(guildTax)} silver`)
+          }
+          calcLines.push(`**After Deductions:** ${formatSilver(afterTax)} silver`)
+          if (remainder > 0) {
+            calcLines.push(`**Remainder:** ${formatSilver(remainder)} silver (not distributed)`)
+          }
+
+          await sendChannelMessage(sale.channelId, {
+            embeds: [{
+              title: `💰 Loot Split — ${sale.description || 'Loot Tab Sale'}`,
+              color: 0x22c55e,
+              fields: [
+                {
+                  name: 'Breakdown',
+                  value: calcLines.join('\n'),
+                  inline: false,
+                },
+                {
+                  name: `Players (${results.length})`,
+                  value: playerLines,
+                  inline: false,
+                },
+              ],
+              footer: {
+                text: `Split by ${officerDiscordId ? `officer` : 'an officer'} • ${formatSilver(totalDistributed)} silver distributed`,
+              },
+              timestamp: new Date().toISOString(),
+            }],
+            ...(officerDiscordId ? { content: `Split performed by <@${officerDiscordId}>` } : {}),
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to mark sale as split or send notification:', err)
       // Non-critical — balances were already adjusted
     }
   }
