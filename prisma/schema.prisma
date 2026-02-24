@@ -72,6 +72,8 @@ model User {
   lootTabSalesCreated LootTabSale[]     @relation("LootTabSaleCreator")
   lootTabSalesWon     LootTabSale[]     @relation("LootTabSaleWinner")
   lootTabBids         LootTabBid[]
+  lootTabParticipations    LootTabParticipant[]
+  lootTabParticipantsAdded LootTabParticipant[] @relation("ParticipantAddedBy")
 
   @@map("users")
 }
@@ -346,14 +348,17 @@ model LootTabSale {
   expiresAt     DateTime           @map("expires_at")
   channelId     String?            @map("channel_id")
   messageId     String?            @map("message_id")
-  winnerId      String?            @map("winner_id")
-  drawnAt       DateTime?          @map("drawn_at")
-  createdAt     DateTime           @default(now()) @map("created_at")
+  winnerId       String?            @map("winner_id")
+  drawnAt        DateTime?          @map("drawn_at")
+  splitCompleted Boolean            @default(false) @map("split_completed")
+  splitAt        DateTime?          @map("split_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
 
-  guild     Guild        @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  createdBy User         @relation("LootTabSaleCreator", fields: [createdById], references: [id])
-  winner    User?        @relation("LootTabSaleWinner", fields: [winnerId], references: [id])
-  bids      LootTabBid[]
+  guild        Guild                @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  createdBy    User                 @relation("LootTabSaleCreator", fields: [createdById], references: [id])
+  winner       User?                @relation("LootTabSaleWinner", fields: [winnerId], references: [id])
+  bids         LootTabBid[]
+  participants LootTabParticipant[]
 
   @@map("loot_tab_sales")
 }
@@ -369,4 +374,19 @@ model LootTabBid {
 
   @@unique([saleId, userId])
   @@map("loot_tab_bids")
+}
+
+model LootTabParticipant {
+  id        String   @id @default(cuid())
+  saleId    String   @map("sale_id")
+  userId    String   @map("user_id")
+  addedById String   @map("added_by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sale    LootTabSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id])
+  addedBy User        @relation("ParticipantAddedBy", fields: [addedById], references: [id])
+
+  @@unique([saleId, userId])
+  @@map("loot_tab_participants")
 }

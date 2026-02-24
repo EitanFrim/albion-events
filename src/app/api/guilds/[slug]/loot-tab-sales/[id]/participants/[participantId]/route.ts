@@ -6,9 +6,10 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { requireGuildAccess } from '@/lib/guild'
 
-export async function GET(
+// DELETE — Remove a participant
+export async function DELETE(
   req: NextRequest,
-  { params }: { params: { slug: string; id: string } }
+  { params }: { params: { slug: string; id: string; participantId: string } }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -19,27 +20,28 @@ export async function GET(
   const myAccess = await requireGuildAccess(session.user.id, guild.id, 'OFFICER')
   if (!myAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+  // Verify the sale belongs to this guild and isn't split yet
   const sale = await prisma.lootTabSale.findFirst({
     where: { id: params.id, guildId: guild.id },
-    include: {
-      createdBy: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } },
-      winner: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } },
-      bids: {
-        include: {
-          user: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } },
-        },
-        orderBy: { createdAt: 'asc' },
-      },
-      participants: {
-        include: {
-          user: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } },
-        },
-        orderBy: { createdAt: 'asc' },
-      },
-    },
   })
-
   if (!sale) return NextResponse.json({ error: 'Sale not found' }, { status: 404 })
 
-  return NextResponse.json(sale)
+  if (sale.splitCompleted) {
+    return NextResponse.json({ error: 'Cannot remove participants after split' }, { status: 400 })
+  }
+
+  // Delete the participant
+  const participant = await prisma.lootTabParticipant.findFirst({
+    where: { id: params.participantId, saleId: sale.id },
+  })
+
+  if (!participant) {
+    return NextResponse.json({ error: 'Participant not found' }, { status: 404 })
+  }
+
+  await prisma.lootTabParticipant.delete({
+    where: { id: params.participantId },
+  })
+
+  return NextResponse.json({ ok: true })
 }

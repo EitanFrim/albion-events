@@ -26,6 +26,13 @@ interface Sale {
   _count: { bids: number }
 }
 
+interface Participant {
+  id: string
+  userId: string
+  createdAt: string
+  user: SaleUser
+}
+
 interface SaleDetail extends Omit<Sale, '_count'> {
   bids: Array<{
     id: string
@@ -33,6 +40,9 @@ interface SaleDetail extends Omit<Sale, '_count'> {
     createdAt: string
     user: SaleUser
   }>
+  participants: Participant[]
+  splitCompleted: boolean
+  splitAt: string | null
 }
 
 interface Props {
@@ -105,6 +115,15 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
 
   // Drawing state
   const [drawingId, setDrawingId] = useState<string | null>(null)
+
+  // Participant tagging state
+  const [tagInput, setTagInput] = useState('')
+  const [tagging, setTagging] = useState(false)
+  const [tagResult, setTagResult] = useState<{ added: string[]; notFound: string[]; alreadyTagged: string[] } | null>(null)
+  const [removingId, setRemovingId] = useState<string | null>(null)
+
+  // Split state
+  const [splitting, setSplitting] = useState(false)
 
   // Live countdown
   const [, setTick] = useState(0)
@@ -206,10 +225,14 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
     if (expandedSaleId === saleId) {
       setExpandedSaleId(null)
       setExpandedDetail(null)
+      setTagResult(null)
+      setTagInput('')
       return
     }
     setExpandedSaleId(saleId)
     setDetailLoading(true)
+    setTagResult(null)
+    setTagInput('')
     try {
       const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}`)
       if (res.ok) {
@@ -217,6 +240,93 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
       }
     } catch { /* ignore */ }
     setDetailLoading(false)
+  }
+
+  const refreshDetail = async (saleId: string) => {
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}`)
+      if (res.ok) {
+        setExpandedDetail(await res.json())
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleTagPlayers = async (saleId: string) => {
+    const names = tagInput
+      .split(/[,\n]+/)
+      .map(n => n.trim())
+      .filter(n => n.length > 0)
+
+    if (names.length === 0) return
+
+    setTagging(true)
+    setTagResult(null)
+    setError(null)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}/participants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players: names }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to tag players')
+        return
+      }
+      setTagResult({
+        added: data.added.map((a: any) => a.displayName),
+        notFound: data.notFound,
+        alreadyTagged: data.alreadyTagged,
+      })
+      setTagInput('')
+      await refreshDetail(saleId)
+    } catch {
+      setError('Network error tagging players')
+    } finally {
+      setTagging(false)
+    }
+  }
+
+  const handleRemoveParticipant = async (saleId: string, participantId: string) => {
+    setRemovingId(participantId)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}/participants/${participantId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Failed to remove participant')
+        return
+      }
+      await refreshDetail(saleId)
+    } catch {
+      setError('Network error removing participant')
+    } finally {
+      setRemovingId(null)
+    }
+  }
+
+  const handleSplit = async (saleId: string) => {
+    if (!confirm('Are you sure you want to execute the loot split? This will add silver to all tagged players\' balances and cannot be undone.')) return
+    setSplitting(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}/split`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to execute split')
+        return
+      }
+      setSuccess(`Split completed! ${formatSilver(data.perPlayer)} silver added to each of ${data.participantCount} players.`)
+      await refreshDetail(saleId)
+      await refreshSales()
+    } catch {
+      setError('Network error executing split')
+    } finally {
+      setSplitting(false)
+    }
   }
 
   const openSales = sales.filter(s => s.status === 'OPEN')
@@ -511,6 +621,7 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                           </div>
                         </div>
 
+                        {/* Signups */}
                         <h3 className="text-sm font-600 text-text-secondary mb-2">
                           All Signups ({expandedDetail.bids.length})
                         </h3>
@@ -534,6 +645,160 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                                 </div>
                               )
                             })}
+                          </div>
+                        )}
+
+                        {/* Participants & Split section — only for DRAWN sales */}
+                        {expandedDetail.status === 'DRAWN' && (
+                          <div className="mt-6 pt-4 border-t border-border-subtle">
+                            {/* Split completed badge */}
+                            {expandedDetail.splitCompleted && (
+                              <div className="mb-4 flex items-center gap-2">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                  <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                  </svg>
+                                  Split Completed
+                                </span>
+                                {expandedDetail.splitAt && (
+                                  <span className="text-text-muted text-xs">
+                                    {new Date(expandedDetail.splitAt).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <h3 className="text-sm font-600 text-text-secondary mb-3 flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-1.997M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                              </svg>
+                              Tagged Players ({expandedDetail.participants.length})
+                            </h3>
+
+                            {/* Tag players input — only if not yet split */}
+                            {!expandedDetail.splitCompleted && (
+                              <div className="mb-4">
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    className="input flex-1"
+                                    placeholder="Enter player names separated by commas (e.g. Player1, Player2, Player3)"
+                                    value={tagInput}
+                                    onChange={e => setTagInput(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        handleTagPlayers(sale.id)
+                                      }
+                                    }}
+                                    disabled={tagging}
+                                  />
+                                  <button
+                                    className="btn-primary text-sm px-4"
+                                    onClick={() => handleTagPlayers(sale.id)}
+                                    disabled={tagging || !tagInput.trim()}
+                                  >
+                                    {tagging ? 'Adding...' : 'Add Players'}
+                                  </button>
+                                </div>
+                                <p className="text-text-muted text-xs mt-1">
+                                  You can also tag players via Discord: <code className="text-accent">!tag Player1, Player2</code>
+                                </p>
+
+                                {/* Tag result feedback */}
+                                {tagResult && (
+                                  <div className="mt-2 text-sm space-y-1">
+                                    {tagResult.added.length > 0 && (
+                                      <p className="text-emerald-400">
+                                        Added: {tagResult.added.join(', ')}
+                                      </p>
+                                    )}
+                                    {tagResult.alreadyTagged.length > 0 && (
+                                      <p className="text-amber-400">
+                                        Already tagged: {tagResult.alreadyTagged.join(', ')}
+                                      </p>
+                                    )}
+                                    {tagResult.notFound.length > 0 && (
+                                      <p className="text-red-400">
+                                        Not found: {tagResult.notFound.join(', ')}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Participants list */}
+                            {expandedDetail.participants.length === 0 ? (
+                              <p className="text-text-muted text-sm">No players tagged yet.</p>
+                            ) : (
+                              <div className="space-y-1.5 mb-4">
+                                {expandedDetail.participants.map(p => (
+                                  <div key={p.id} className="flex items-center gap-2 text-sm group">
+                                    <Avatar user={p.user} size={20} />
+                                    <span className="text-text-primary">
+                                      {p.user.inGameName || p.user.discordName}
+                                    </span>
+                                    {!expandedDetail.splitCompleted && (
+                                      <button
+                                        className="text-red-400/60 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                        onClick={() => handleRemoveParticipant(sale.id, p.id)}
+                                        disabled={removingId === p.id}
+                                        title="Remove participant"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Split calculator — only if participants exist */}
+                            {expandedDetail.participants.length > 0 && (
+                              <div className="bg-surface-2/50 rounded-lg p-4 border border-border-subtle">
+                                <h4 className="text-sm font-600 text-text-primary mb-3">Loot Split Calculator</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
+                                  <div>
+                                    <span className="text-text-muted">Price</span>
+                                    <p className="text-text-primary font-mono">{formatSilver(sale.price)}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-muted">Silver Bags</span>
+                                    <p className="text-text-primary font-mono">{formatSilver(sale.silverBags)}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-muted">Total</span>
+                                    <p className="text-accent font-mono font-600">{formatSilver(sale.price + sale.silverBags)}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-text-muted">Per Player ({expandedDetail.participants.length})</span>
+                                    <p className="text-emerald-400 font-mono font-600">
+                                      {formatSilver(Math.floor((sale.price + sale.silverBags) / expandedDetail.participants.length))}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Remainder warning */}
+                                {(sale.price + sale.silverBags) % expandedDetail.participants.length !== 0 && (
+                                  <p className="text-text-muted text-xs mb-3">
+                                    Remainder: {formatSilver((sale.price + sale.silverBags) % expandedDetail.participants.length)} silver (not distributed)
+                                  </p>
+                                )}
+
+                                {!expandedDetail.splitCompleted && (
+                                  <button
+                                    className="btn-primary text-sm"
+                                    onClick={() => handleSplit(sale.id)}
+                                    disabled={splitting}
+                                  >
+                                    {splitting ? 'Splitting...' : 'Execute Split'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
