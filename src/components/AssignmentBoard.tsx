@@ -32,8 +32,12 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
   const [filter, setFilter] = useState('')
   const [error, setError] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedIsGuildMember, setSelectedIsGuildMember] = useState(false)
   const [roleColorMap, setRoleColorMap] = useState<Record<string, string>>({})
   const [specializations, setSpecializations] = useState<Record<string, string[]>>({})
+  const [guildMembers, setGuildMembers] = useState<{ userId: string; user: UserRef }[]>([])
+  const [showGuildMembers, setShowGuildMembers] = useState(false)
+  const [guildMembersLoaded, setGuildMembersLoaded] = useState(false)
 
   const isReadonly = event.status === 'COMPLETED'
 
@@ -80,6 +84,18 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
     const interval = setInterval(refreshSignups, 20_000)
     return () => { window.removeEventListener('focus', refreshSignups); clearInterval(interval) }
   }, [event.id, isReadonly])
+
+  async function fetchGuildMembers() {
+    if (!guildSlug || guildMembersLoaded) return
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/members`)
+      if (res.ok) {
+        const data = await res.json()
+        setGuildMembers(data.filter((m: any) => m.status === 'ACTIVE').map((m: any) => ({ userId: m.user.id, user: m.user })))
+        setGuildMembersLoaded(true)
+      }
+    } catch {}
+  }
 
   function getRoleColor(roleName: string) {
     return roleColorMap[roleName.toLowerCase()] ?? '#6b7280'
@@ -135,6 +151,27 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
     finally { setLoading(null) }
   }
 
+  async function officerSignup(userId: string, roleSlotId: string) {
+    setLoading(userId); setError('')
+    try {
+      const res = await fetch(`/api/events/${event.id}/officer-signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, roleSlotId }) })
+      if (!res.ok) { setError((await res.json()).error); return }
+      const data = await res.json()
+      applyAssign(userId, roleSlotId, data.id, data.user)
+      // Add to signups state so they appear in "Assigned" list
+      const roleName = data.roleSlot?.roleName ?? ''
+      setSignups(prev => [...prev, {
+        id: data.signupId ?? data.id,
+        userId, preferredRoles: [roleName], note: null, status: 'ACTIVE',
+        user: data.user,
+        assignment: { id: data.id, roleSlot: { roleName, id: roleSlotId } },
+      }])
+      setSelectedUserId(null)
+      setSelectedIsGuildMember(false)
+    } catch { setError('Failed to sign up player') }
+    finally { setLoading(null) }
+  }
+
   async function unassign(userId: string) {
     setLoading(userId); setError('')
     try {
@@ -152,6 +189,8 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
   }
 
   const activeSelected = selectedUserId ? activeSignups.find(s => s.userId === selectedUserId) : null
+  const guildMemberSelected = selectedUserId && selectedIsGuildMember ? guildMembers.find(m => m.userId === selectedUserId) : null
+  const hasSelection = !!(activeSelected || guildMemberSelected)
 
   return (
     <div className="space-y-5">
@@ -204,8 +243,8 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                       const color = getRoleColor(slot.roleName)
                       const indent = (slotIndex % 8) * 3
                       const isPreferred = activeSelected?.preferredRoles.includes(slot.roleName) ?? false
-                      const isSpec = activeSelected
-                        ? safeSpecs(specializations, activeSelected.userId).some(s => s.toLowerCase() === slot.roleName.toLowerCase())
+                      const isSpec = (activeSelected || guildMemberSelected)
+                        ? safeSpecs(specializations, (activeSelected?.userId ?? guildMemberSelected?.userId)!).some(s => s.toLowerCase() === slot.roleName.toLowerCase())
                         : false
 
                       return (
@@ -225,7 +264,7 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                           <div className="ml-1 space-y-0.5 pb-1">
                             {Array.from({ length: slot.capacity }).map((_, i) => {
                               const assignment = slot.assignments[i]
-                              const canAssignHere = activeSelected && !assignment && !isReadonly
+                              const canAssignHere = hasSelection && !assignment && !isReadonly
 
                               if (assignment) {
                                 const isWithdrawn = withdrawnSignups.some(s => s.userId === assignment.userId)
@@ -265,7 +304,11 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
 
                               return (
                                 <button key={i}
-                                  onClick={() => canAssignHere ? assign(activeSelected!.userId, slot.id) : undefined}
+                                  onClick={() => {
+                                    if (!canAssignHere) return
+                                    if (guildMemberSelected) officerSignup(guildMemberSelected.userId, slot.id)
+                                    else if (activeSelected) assign(activeSelected.userId, slot.id)
+                                  }}
                                   disabled={!!loading || !canAssignHere}
                                   className={`w-full flex items-center gap-1.5 py-1 px-2 rounded transition-all text-left text-xs ${
                                     canAssignHere && isPreferred
@@ -303,7 +346,9 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
 
           {!isReadonly && (
             <p className="text-xs text-text-muted">
-              {selectedUserId ? '✓ Player selected — click a slot to assign' : 'Select a player below, then click a slot'}
+              {selectedUserId
+                ? `✓ Player selected — click a slot to ${selectedIsGuildMember ? 'sign up & assign' : 'assign'}`
+                : 'Select a player below, then click a slot'}
             </p>
           )}
 
@@ -354,7 +399,7 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
                 const isSelected = selectedUserId === signup.userId
                 const playerSpecs = safeSpecs(specializations, signup.userId)
                 return (
-                  <button key={signup.userId} onClick={() => setSelectedUserId(isSelected ? null : signup.userId)}
+                  <button key={signup.userId} onClick={() => { setSelectedUserId(isSelected ? null : signup.userId); setSelectedIsGuildMember(false) }}
                     disabled={isReadonly}
                     className={`w-full text-left p-2.5 rounded-lg border transition-all ${isSelected ? 'bg-accent/10 border-accent/40' : 'card hover:border-border'}`}>
                     <div className="flex items-center justify-between mb-1.5">
@@ -397,6 +442,76 @@ export function AssignmentBoard({ event, parties: initialParties, signups: initi
               })}
             </div>
           </div>
+
+          {/* Add from Guild */}
+          {guildSlug && !isReadonly && (
+            <div>
+              <button
+                onClick={() => {
+                  const next = !showGuildMembers
+                  setShowGuildMembers(next)
+                  if (next) fetchGuildMembers()
+                }}
+                className="text-xs font-mono text-accent uppercase tracking-widest mb-2 flex items-center gap-1.5 hover:text-accent/80 transition-colors"
+              >
+                <svg className={`w-3 h-3 transition-transform ${showGuildMembers ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+                Add from Guild
+              </button>
+              {showGuildMembers && (() => {
+                const signedUpUserIds = new Set(signups.map(s => s.userId))
+                const available = guildMembers.filter(m => !signedUpUserIds.has(m.userId))
+                const filtered = filterText
+                  ? available.filter(m =>
+                      m.user.discordName.toLowerCase().includes(filterText) ||
+                      (m.user.inGameName ?? '').toLowerCase().includes(filterText) ||
+                      safeSpecs(specializations, m.userId).some(s => s.toLowerCase().includes(filterText))
+                    )
+                  : available
+                return (
+                  <div className="space-y-1.5 max-h-60 overflow-y-auto pr-0.5">
+                    {filtered.length === 0 && (
+                      <p className="text-xs text-text-muted italic px-1">
+                        {guildMembersLoaded ? 'No additional guild members' : 'Loading...'}
+                      </p>
+                    )}
+                    {filtered.map(member => {
+                      const isSelected = selectedUserId === member.userId && selectedIsGuildMember
+                      const playerSpecs = safeSpecs(specializations, member.userId)
+                      return (
+                        <button key={member.userId}
+                          onClick={() => {
+                            if (isSelected) { setSelectedUserId(null); setSelectedIsGuildMember(false) }
+                            else { setSelectedUserId(member.userId); setSelectedIsGuildMember(true) }
+                          }}
+                          className={`w-full text-left p-2.5 rounded-lg border transition-all ${isSelected ? 'bg-accent/10 border-accent/40' : 'card hover:border-border'}`}
+                        >
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-sm font-medium text-text-primary truncate">{displayName(member.user)}</span>
+                            {isSelected && <span className="text-xs text-accent flex-shrink-0 ml-1">selected</span>}
+                          </div>
+                          {playerSpecs.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {playerSpecs.map(spec => {
+                                const color = getRoleColor(spec)
+                                return (
+                                  <span key={spec} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono border"
+                                    style={{ backgroundColor: color + '18', color, borderColor: color + '44' }}>
+                                    ⭐ {spec}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
+          )}
 
           {/* Assigned list */}
           {assigned.length > 0 && (
