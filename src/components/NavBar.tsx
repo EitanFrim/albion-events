@@ -3,8 +3,8 @@
 import { useSession, signIn, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useEffect, useTransition } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 
 export function NavBar() {
   const { data: session, status } = useSession()
@@ -12,6 +12,8 @@ export function NavBar() {
   const [inGameName, setInGameName] = useState<string | null>(null)
   const [nameLoaded, setNameLoaded] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const [isRefreshing, startRefresh] = useTransition()
 
   useEffect(() => {
     if (!session?.user?.id) return
@@ -79,6 +81,22 @@ export function NavBar() {
 
           {/* Right */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => startRefresh(() => router.refresh())}
+              disabled={isRefreshing}
+              title="Refresh data"
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors disabled:opacity-50"
+            >
+              <svg
+                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+
             {status === 'loading' ? (
               <div className="w-7 h-7 rounded-full bg-bg-elevated animate-pulse" />
             ) : session ? (
