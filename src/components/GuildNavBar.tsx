@@ -143,8 +143,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
                         <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-amber-500/[0.06] to-transparent">
                           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Guild Total Silver</p>
                           <div className="flex items-center gap-2">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src="https://render.albiononline.com/v1/item/T8_SILVERBAG_NONTRADABLE" alt="Silver" className="w-5 h-5 flex-shrink-0" />
+                            <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
                             <span className={`text-lg font-display font-700 ${totalGuildBalance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
                               {totalGuildBalance.toLocaleString()}
                             </span>
@@ -207,8 +208,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
           {/* Silver balance — clickable to view history */}
           {!isPending && (
             <Link href={`${base}/my-balance`} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/5 border border-amber-500/15 hover:bg-amber-500/10 transition-colors">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="https://render.albiononline.com/v1/item/T8_SILVERBAG_NONTRADABLE" alt="Silver" className="w-5 h-5 flex-shrink-0" />
+              <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               <span className={`text-sm font-mono font-medium ${membership.balance < 0 ? 'text-red-400' : 'text-amber-400'}`}>
                 {membership.balance.toLocaleString()}
               </span>

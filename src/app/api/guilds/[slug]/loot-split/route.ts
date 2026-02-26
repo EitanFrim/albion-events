@@ -129,7 +129,6 @@ export async function POST(
             embeds: [{
               title: `💰 Loot Split — ${sale.description || 'Loot Tab Sale'}`,
               color: 0x22c55e,
-              thumbnail: { url: 'https://render.albiononline.com/v1/item/T8_SILVERBAG_NONTRADABLE' },
               fields: [
                 {
                   name: 'Breakdown',
