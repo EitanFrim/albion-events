@@ -43,6 +43,7 @@ export function buildSaleEmbed(
   return {
     title: sale.description || 'Loot Tab Sale',
     color: winner ? 0x22c55e : 0xf97316, // green if drawn, orange if open
+    thumbnail: { url: 'https://render.albiononline.com/v1/item/T8_SILVERBAG_NONTRADABLE' },
     fields,
     footer: { text: winner ? 'Sale completed' : 'Click the button below to sign up!' },
     timestamp: new Date(sale.createdAt).toISOString(),

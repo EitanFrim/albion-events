@@ -342,6 +342,7 @@ async function tagPlayersToSale(
     .setColor(0x22c55e)
     .setTitle('Players Tagged')
     .setDescription(`**${sale.description || 'Loot Tab Sale'}** — ${formatSilver(sale.price)} silver`)
+    .setThumbnail('https://render.albiononline.com/v1/item/T8_SILVERBAG_NONTRADABLE')
 
   const lines: string[] = []
   lines.push(`**Added:** ${addedCount} player(s)`)
