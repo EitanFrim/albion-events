@@ -222,7 +222,7 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
       if (data.status === 'drawn') {
         setSuccess(`Winner drawn: ${data.winner.inGameName || data.winner.discordName}!`)
       } else if (data.status === 'no_bids') {
-        setSuccess('No signups — sale has been cancelled.')
+        setSuccess('No signups — sold to guild.')
       } else if (data.error) {
         setError(data.error)
       }
@@ -349,8 +349,8 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
     }
   }
 
-  const openSales = sales.filter(s => s.status === 'OPEN')
-  const closedSales = sales.filter(s => s.status !== 'OPEN')
+  const activeSales = sales.filter(s => s.status === 'OPEN' || (s.status === 'DRAWN' && !s.splitCompleted))
+  const closedSales = sales.filter(s => s.status === 'CANCELLED' || (s.status === 'DRAWN' && s.splitCompleted))
 
   return (
     <div className="space-y-6">
@@ -537,16 +537,16 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
       </div>
 
       {/* Active Sales */}
-      {openSales.length > 0 && (
+      {activeSales.length > 0 && (
         <div>
           <h2 className="font-display text-lg font-700 text-text-primary mb-3 flex items-center gap-2">
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-mono">
-              {openSales.length}
+              {activeSales.length}
             </span>
             Active Sales
           </h2>
           <div className="space-y-3">
-            {openSales.map(sale => (
+            {activeSales.map(sale => (
               <div key={sale.id} className={`card ${cardBorderClass(sale.status)}`}>
                 <div
                   className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-surface-2/50 transition-colors"
