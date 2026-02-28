@@ -131,7 +131,7 @@ export async function handleLootTabDrawCommand(interaction: DiscordInteraction) 
       )
     case 'no_bids':
       return NextResponse.json(
-        ephemeralMessage(`No one signed up for **${sale.description || 'the sale'}**. It has been cancelled.`)
+        ephemeralMessage(`No one signed up for **${sale.description || 'the sale'}**. It has been sold to the guild.`)
       )
     case 'not_found':
       return NextResponse.json(

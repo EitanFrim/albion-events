@@ -92,22 +92,28 @@ export async function drawWinner(saleId: string): Promise<DrawResult> {
       return { status: 'not_found' as const }
     }
 
-    // No bids → cancel
+    // No bids → sold to guild (no individual winner)
     if (sale.bids.length === 0) {
       await tx.lootTabSale.update({
         where: { id: saleId },
-        data: { status: 'CANCELLED', drawnAt: new Date() },
+        data: { status: 'DRAWN', drawnAt: new Date() },
       })
 
       // Update Discord embed if we have the message reference
       if (sale.channelId && sale.messageId) {
         const embed = buildSaleEmbed(sale, 0)
-        embed.title = `${embed.title} — Cancelled`
-        embed.color = 0xef4444 // red
-        embed.footer = { text: 'No signups — sale cancelled' }
+        embed.title = `${embed.title} — Sold to Guild`
+        embed.color = 0x3b82f6 // blue
+        embed.footer = { text: 'No signups — sold to guild' }
         await editChannelMessage(sale.channelId, sale.messageId, {
           embeds: [embed],
           components: [buildSaleComponents(saleId, false)],
+        })
+      }
+
+      if (sale.channelId) {
+        await sendChannelMessage(sale.channelId, {
+          content: `📦 **${sale.description || 'Loot Tab Sale'}** had no signups — sold to guild for **${formatSilver(sale.price)}** silver.`,
         })
       }
 

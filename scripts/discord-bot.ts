@@ -51,7 +51,7 @@ async function getPrisma() {
 }
 
 // ── Role hierarchy helper ─────────────────────────────────────────────────
-const ROLE_RANK: Record<string, number> = { ALLIANCE: 0, PLAYER: 0, OFFICER: 1, OWNER: 2 }
+const ROLE_RANK: Record<string, number> = { GUEST: -1, ALLIANCE: 0, PLAYER: 0, OFFICER: 1, OWNER: 2 }
 
 function hasMinRole(role: string, minRole: string): boolean {
   return (ROLE_RANK[role] ?? -1) >= (ROLE_RANK[minRole] ?? 0)
