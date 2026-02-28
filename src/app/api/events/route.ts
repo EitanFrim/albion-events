@@ -14,6 +14,7 @@ const createEventSchema = z.object({
   timezone: z.string().default('UTC'),
   locationNote: z.string().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT'),
+  visibility: z.enum(['MEMBERS_ONLY', 'PUBLIC']).default('MEMBERS_ONLY'),
 })
 
 export async function POST(req: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
   const parsed = createEventSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
-  const { guildSlug, title, description, startTime, timezone, locationNote, status } = parsed.data
+  const { guildSlug, title, description, startTime, timezone, locationNote, status, visibility } = parsed.data
 
   const guild = await prisma.guild.findUnique({ where: { slug: guildSlug } })
   if (!guild) return NextResponse.json({ error: 'Guild not found' }, { status: 404 })
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     data: {
       guildId: guild.id,
       title, description, startTime: new Date(startTime),
-      timezone, locationNote, status,
+      timezone, locationNote, status, visibility,
       createdById: session.user.id,
     },
     include: {

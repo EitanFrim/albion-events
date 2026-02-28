@@ -19,6 +19,7 @@ export default async function GuildTemplatesPage({ params }: Props) {
     where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
   })
   if (!membership || membership.status !== 'ACTIVE') redirect(`/g/${params.slug}`)
+  if (membership.role === 'GUEST') redirect(`/g/${params.slug}`)
 
   const isOfficerPlus = membership.role === 'OWNER' || membership.role === 'OFFICER'
 

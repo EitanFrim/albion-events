@@ -17,12 +17,18 @@ enum MemberRole {
   OFFICER
   PLAYER
   ALLIANCE
+  GUEST
 }
 
 enum MemberStatus {
   PENDING
   ACTIVE
   SUSPENDED
+}
+
+enum EventVisibility {
+  MEMBERS_ONLY
+  PUBLIC
 }
 
 enum EventStatus {
@@ -148,8 +154,9 @@ model Event {
   startTime    DateTime    @map("start_time")
   timezone     String      @default("UTC")
   locationNote String?     @map("location_note")
-  status       EventStatus @default(DRAFT)
-  createdById  String      @map("created_by")
+  status       EventStatus     @default(DRAFT)
+  visibility   EventVisibility @default(MEMBERS_ONLY)
+  createdById  String          @map("created_by")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 

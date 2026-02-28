@@ -47,6 +47,7 @@ const updateEventSchema = z.object({
   timezone: z.string().optional(),
   locationNote: z.string().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'LOCKED', 'COMPLETED']).optional(),
+  visibility: z.enum(['MEMBERS_ONLY', 'PUBLIC']).optional(),
 })
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {

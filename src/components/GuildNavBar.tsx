@@ -17,6 +17,7 @@ const roleColors: Record<string, string> = {
   OFFICER: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
   PLAYER: 'text-text-muted bg-bg-elevated border-border',
   ALLIANCE: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  GUEST: 'text-gray-400 bg-gray-500/10 border-gray-500/20',
 }
 
 const roleLabels: Record<string, string> = {
@@ -24,6 +25,7 @@ const roleLabels: Record<string, string> = {
   OFFICER: 'Officer',
   PLAYER: 'Member',
   ALLIANCE: 'Alliance',
+  GUEST: 'Guest',
 }
 
 export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props) {
@@ -38,6 +40,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
 
   const isOfficerPlus = membership.role === 'OWNER' || membership.role === 'OFFICER'
   const isOwner = membership.role === 'OWNER'
+  const isGuest = membership.role === 'GUEST'
   const isPending = membership.status === 'PENDING'
 
   // Close management dropdown when clicking outside
@@ -114,7 +117,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
               {navLink(base, 'Contents')}
               {isOfficerPlus && navLink(`${base}/admin/events/new`, '+ New Content')}
               {isOfficerPlus && navLink(`${base}/admin/roles`, 'Roles')}
-              {navLink(`${base}/admin/templates`, 'Builds')}
+              {!isGuest && navLink(`${base}/admin/templates`, 'Builds')}
 
               {/* Management dropdown */}
               {isOfficerPlus && (

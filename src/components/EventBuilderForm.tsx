@@ -109,7 +109,7 @@ interface PartyInput { id?: string; name: string; roleSlots: RoleSlotInput[] }
 interface Template { id: string; name: string; data: { parties: { name: string; slots: { roleName: string; capacity: number; note?: SlotNote }[] }[] } }
 
 interface Props {
-  initialData?: { title: string; description: string; startTime: string; timezone: string; locationNote: string; parties: PartyInput[] }
+  initialData?: { title: string; description: string; startTime: string; timezone: string; locationNote: string; parties: PartyInput[]; visibility?: string }
   eventId?: string
   guildSlug?: string
 }
@@ -147,6 +147,9 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
   const [startTime, setStartTime] = useState(initTime)
   const [locationNote, setLocationNote] = useState(initialData?.locationNote ?? '')
   const [parties, setParties] = useState<PartyInput[]>(initialData?.parties ?? [{ name: 'Party 1', roleSlots: [] }])
+  const [visibility, setVisibility] = useState<'MEMBERS_ONLY' | 'PUBLIC'>(
+    (initialData?.visibility as 'MEMBERS_ONLY' | 'PUBLIC') ?? 'MEMBERS_ONLY'
+  )
   const [siegeHammer, setSiegeHammer] = useState(initParsed.hasSiege)
   const [extraSets, setExtraSets] = useState(initParsed.sets)
   const [loading, setLoading] = useState(false)
@@ -242,7 +245,7 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
     if (extras.length > 0) fullDescription = fullDescription ? `${fullDescription}\n\n${extras.join(' · ')}` : extras.join(' · ')
 
     try {
-      const payload = { title, description: fullDescription, startTime: getStartTimeISO(), timezone: 'UTC', locationNote, status, guildSlug }
+      const payload = { title, description: fullDescription, startTime: getStartTimeISO(), timezone: 'UTC', locationNote, status, visibility, guildSlug }
       let savedEventId = eventId
 
       if (!eventId) {
@@ -365,6 +368,46 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
               <span className="text-text-muted text-xs font-mono ml-1">UTC</span>
             </div>
           </div>
+        </div>
+
+        {/* Visibility */}
+        <div>
+          <label className="label">Visibility</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setVisibility('MEMBERS_ONLY')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                visibility === 'MEMBERS_ONLY'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border bg-bg-elevated text-text-secondary hover:border-border-strong'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Members Only
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibility('PUBLIC')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                visibility === 'PUBLIC'
+                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                  : 'border-border bg-bg-elevated text-text-secondary hover:border-border-strong'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Public
+            </button>
+          </div>
+          <p className="text-xs text-text-muted mt-1.5">
+            {visibility === 'PUBLIC'
+              ? 'Anyone with the event link can view and sign up (guests, members, alliance).'
+              : 'Only guild members and alliance can view and sign up.'}
+          </p>
         </div>
 
         {/* Siege Hammer + Sets */}

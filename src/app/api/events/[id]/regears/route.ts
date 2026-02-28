@@ -17,9 +17,20 @@ export async function POST(
   const event = await prisma.event.findUnique({ where: { id: params.id } })
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
 
-  // Must be an active guild member
-  const membership = await requireGuildAccess(session.user.id, event.guildId, 'PLAYER')
-  if (!membership) return NextResponse.json({ error: 'Must be a verified guild member' }, { status: 403 })
+  // For public events, allow any active membership (including GUEST)
+  // For members-only events, require PLAYER+ role
+  let membership
+  if (event.visibility === 'PUBLIC') {
+    membership = await prisma.guildMembership.findUnique({
+      where: { userId_guildId: { userId: session.user.id, guildId: event.guildId } },
+    })
+    if (!membership || membership.status !== 'ACTIVE') {
+      return NextResponse.json({ error: 'Must be an active member' }, { status: 403 })
+    }
+  } else {
+    membership = await requireGuildAccess(session.user.id, event.guildId, 'PLAYER')
+    if (!membership) return NextResponse.json({ error: 'Must be a verified guild member' }, { status: 403 })
+  }
 
   // Parse FormData
   const formData = await req.formData()

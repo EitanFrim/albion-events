@@ -37,6 +37,7 @@ export default async function GuildEventPage({ params }: Props) {
   }) : null
 
   const isOfficerPlus = membership?.role === 'OWNER' || membership?.role === 'OFFICER'
+  const isGuest = membership?.role === 'GUEST'
 
   const event = await prisma.event.findUnique({
     where: { id: params.id },
@@ -60,6 +61,7 @@ export default async function GuildEventPage({ params }: Props) {
 
   if (!event || event.guildId !== guild.id) notFound()
   if (event.status === 'DRAFT' && !isOfficerPlus) notFound()
+  if (isGuest && event.visibility !== 'PUBLIC') notFound()
 
   const guildRoles = await prisma.guildRole2.findMany({
     where: { guildId: guild.id },
@@ -176,6 +178,14 @@ export default async function GuildEventPage({ params }: Props) {
             <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
             {sc.label}
           </span>
+          {event.visibility === 'PUBLIC' && (
+            <span className="badge badge-green">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Public
+            </span>
+          )}
           <span className="text-xs text-text-muted font-mono">{filledSlots}/{totalSlots} slots filled</span>
         </div>
         <h1 className="font-display text-3xl sm:text-4xl font-700 text-text-primary tracking-tight mb-3">{event.title}</h1>

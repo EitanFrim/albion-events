@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 
-type MemberRole = 'OWNER' | 'OFFICER' | 'PLAYER' | 'ALLIANCE'
+type MemberRole = 'OWNER' | 'OFFICER' | 'PLAYER' | 'ALLIANCE' | 'GUEST'
 type MemberStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED'
 type SortKey = 'name' | 'role' | 'balance' | 'joined'
 type SortDir = 'asc' | 'desc'
@@ -29,6 +29,7 @@ const roleConfig: Record<MemberRole, { label: string; color: string; bg: string 
   OFFICER:  { label: 'Officer',  color: 'text-purple-300', bg: 'bg-purple-500/15 border-purple-500/25' },
   PLAYER:   { label: 'Member',   color: 'text-slate-300',  bg: 'bg-slate-500/15 border-slate-500/25' },
   ALLIANCE: { label: 'Alliance', color: 'text-sky-300',    bg: 'bg-sky-500/15 border-sky-500/25' },
+  GUEST:    { label: 'Guest',    color: 'text-gray-400',   bg: 'bg-gray-500/15 border-gray-500/25' },
 }
 
 export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId }: Props) {
@@ -117,7 +118,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
   const pendingCount = members.filter(m => m.status === 'PENDING').length
   const suspendedCount = members.filter(m => m.status === 'SUSPENDED').length
 
-  const roleRank: Record<MemberRole, number> = { OWNER: 0, OFFICER: 1, PLAYER: 2, ALLIANCE: 3 }
+  const roleRank: Record<MemberRole, number> = { OWNER: 0, OFFICER: 1, PLAYER: 2, ALLIANCE: 3, GUEST: 4 }
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -424,6 +425,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                         disabled={isLoading}
                         className="bg-bg-elevated border border-border-subtle text-text-primary text-xs py-1.5 px-2 pr-7 rounded-lg focus:outline-none focus:border-accent/50 transition-colors"
                       >
+                        <option value="GUEST">Guest</option>
                         <option value="PLAYER">Member</option>
                         <option value="ALLIANCE">Alliance</option>
                         <option value="OFFICER">Officer</option>

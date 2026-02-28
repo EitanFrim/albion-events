@@ -23,14 +23,20 @@ export default async function GuildLayout({ children, params }: Props) {
 
   if (!guild) notFound()
 
-  const membership = await prisma.guildMembership.findUnique({
+  let membership = await prisma.guildMembership.findUnique({
     where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
   })
 
-  // Must be a member (any status) to see guild pages
-  // PENDING members can see the guild but get limited access
+  // Auto-create GUEST membership for non-members (e.g. arrived via public event link)
   if (!membership) {
-    redirect(`/?error=not-a-member`)
+    membership = await prisma.guildMembership.create({
+      data: {
+        userId: session.user.id,
+        guildId: guild.id,
+        role: 'GUEST',
+        status: 'ACTIVE',
+      },
+    })
   }
 
   // Query total guild balance across all active members (for officer+ nav)

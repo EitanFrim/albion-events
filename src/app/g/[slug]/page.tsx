@@ -29,12 +29,14 @@ export default async function GuildHomePage({ params }: Props) {
   })
 
   const isOfficerPlus = membership?.role === 'OWNER' || membership?.role === 'OFFICER'
+  const isGuest = membership?.role === 'GUEST'
   const isActive = membership?.status === 'ACTIVE'
 
   const events = await prisma.event.findMany({
     where: {
       guildId: guild.id,
       ...(isOfficerPlus ? {} : { status: { in: ['PUBLISHED', 'LOCKED', 'COMPLETED'] } }),
+      ...(isGuest ? { visibility: 'PUBLIC' } : {}),
     },
     include: {
       parties: { include: { roleSlots: { include: { _count: { select: { assignments: true } } } } } },
@@ -118,10 +120,15 @@ export default async function GuildHomePage({ params }: Props) {
                     <Link key={event.id} href={`/g/${params.slug}/events/${event.id}`} prefetch={false}
                       className="card p-4 hover:border-border hover:shadow-card-hover transition-all duration-200 group block">
                       <div className="flex items-center justify-between mb-3">
-                        <span className={`badge ${sc.cls}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                          {sc.label}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`badge ${sc.cls}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
+                            {sc.label}
+                          </span>
+                          {event.visibility === 'PUBLIC' && (
+                            <span className="badge badge-green text-[10px]">Public</span>
+                          )}
+                        </div>
                         <span className="text-xs text-text-muted font-mono">{format(new Date(event.startTime), 'MMM d')}</span>
                       </div>
                       <h3 className="font-display font-600 text-text-primary group-hover:text-accent transition-colors text-base leading-snug mb-1">

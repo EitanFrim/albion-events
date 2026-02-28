@@ -36,6 +36,7 @@ export default async function GuildEditEventPage({ params }: Props) {
     startTime: event.startTime.toISOString().slice(0, 16),
     timezone: event.timezone,
     locationNote: event.locationNote ?? '',
+    visibility: event.visibility,
     parties: event.parties.map(p => ({
       id: p.id,
       name: p.name,
