@@ -3,6 +3,8 @@
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
+
+const DEFAULT_GUILD_LOGO = '/images/branding/default-guild-logo.png'
 import { useState, useRef, useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
@@ -101,13 +103,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
           {/* Guild switcher */}
           <Link href="/guilds" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors flex-shrink-0 group">
             <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center overflow-hidden">
-              {guild.logoUrl ? (
-                <img src={guild.logoUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-              </svg>
-              )}
+              <img src={guild.logoUrl || DEFAULT_GUILD_LOGO} alt="" className="w-full h-full object-cover" />
             </div>
             <span className="font-display text-sm font-700 text-text-primary tracking-tight hidden sm:block truncate max-w-[120px]">
               {guild.name}

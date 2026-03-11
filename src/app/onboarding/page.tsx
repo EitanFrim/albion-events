@@ -29,8 +29,8 @@ export default async function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">⚔️</span>
+          <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+            <img src="/images/branding/logo.png" alt="AlbionHQ" className="w-12 h-12 object-contain" />
           </div>
           <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight mb-2">
             Welcome to the Guild

@@ -53,8 +53,8 @@ export default async function JoinGuildPage({ params }: Props) {
 
         {/* Guild card */}
         <div className="card p-8 text-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">⚔️</span>
+          <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+            <img src="/images/branding/default-guild-logo.png" alt="" className="w-full h-full object-cover" />
           </div>
           <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">You're invited to join</p>
           <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight mb-1">{guild.name}</h1>

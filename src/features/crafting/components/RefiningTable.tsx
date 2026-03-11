@@ -658,8 +658,14 @@ function MaterialInputCell({
   const info = getBuyPriceInfo(itemId);
   const allPrices = getAllBuyPrices(itemId);
 
-  const cityBadgeStyle = getCityColor(info.city)
-    ? { backgroundColor: getCityColor(info.city), color: '#111' }
+  // When transmutation is cheaper, show the transmuted cost as the main price
+  const isTransmuted = !!transmuteAlternative;
+  const displayPrice = isTransmuted ? transmuteAlternative.costPerUnit : info.price;
+  const sourceInfo = isTransmuted ? getBuyPriceInfo(transmuteAlternative.sourceItemId) : null;
+  const displayCity = isTransmuted ? (sourceInfo?.city ?? 'N/A') : info.city;
+
+  const cityBadgeStyle = getCityColor(displayCity)
+    ? { backgroundColor: getCityColor(displayCity), color: '#111' }
     : { color: 'var(--color-text-muted)' as const };
 
   const cityBadgeEl = (
@@ -667,33 +673,39 @@ function MaterialInputCell({
       className="text-[10px] whitespace-nowrap min-w-[60px] text-left px-1.5 py-0.5 rounded font-medium"
       style={cityBadgeStyle}
     >
-      {info.city !== 'N/A' ? info.city : '\u00A0'}
+      {displayCity !== 'N/A' ? displayCity : '\u00A0'}
     </span>
   );
 
   return (
     <td className="px-3 py-2.5 text-right">
       <div className="flex items-center justify-end gap-2">
-        <ItemIcon itemId={itemId} size={16} />
+        <ItemIcon itemId={isTransmuted ? transmuteAlternative.sourceItemId : itemId} size={16} />
         <div className="inline-flex items-center gap-1">
-          <PriceCell
-            itemId={itemId}
-            price={info.price}
-            city={info.city}
-            isOverride={info.isOverride}
-            onOverride={onOverride}
-            onClearOverride={onClearOverride}
-            hideCity
-          />
+          {isTransmuted ? (
+            <span className="text-xs tabular-nums font-medium" style={{ color: 'var(--color-accent)' }}>
+              {formatSilver(Math.round(displayPrice))}
+            </span>
+          ) : (
+            <PriceCell
+              itemId={itemId}
+              price={info.price}
+              city={info.city}
+              isOverride={info.isOverride}
+              onOverride={onOverride}
+              onClearOverride={onClearOverride}
+              hideCity
+            />
+          )}
           {qty > 1 && (
             <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>×{qty}</span>
           )}
         </div>
-        {allPrices.length > 1 || transmuteAlternative ? (
+        {allPrices.length > 1 || isTransmuted ? (
           <HoverPopover
             trigger={
               <span className="inline-flex items-center gap-0.5 cursor-default">
-                {transmuteAlternative && (
+                {isTransmuted && (
                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                   </svg>
@@ -704,14 +716,53 @@ function MaterialInputCell({
             }
           >
             <div className="min-w-[220px]">
-              {allPrices.length > 1 && (
+              {isTransmuted && (
                 <>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
+                      Cheaper via Transmute{transmuteAlternative.steps.length > 1 ? ` (${transmuteAlternative.steps.length} steps)` : ''}
+                    </span>
+                  </div>
+                  <TransmutePathDisplay alternative={transmuteAlternative} getBuyPriceInfo={getBuyPriceInfo} />
+                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                      Savings per unit
+                    </span>
+                    <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-profit)' }}>
+                      -{formatSilver(Math.round(transmuteAlternative.savingsPerUnit))}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                      Direct buy
+                    </span>
+                    <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+                      {formatSilver(transmuteAlternative.directBuyPrice)}
+                    </span>
+                  </div>
+                  {qty > 1 && (
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                        Total ({qty}x)
+                      </span>
+                      <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-accent)' }}>
+                        {formatSilver(Math.round(transmuteAlternative.costPerUnit * qty))}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              {allPrices.length > 1 && (
+                <div className={isTransmuted ? "mt-2 pt-2 border-t" : ""} style={isTransmuted ? { borderColor: 'var(--color-border-subtle)' } : {}}>
                   <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
-                    Prices by City
+                    {isTransmuted ? 'Direct Buy Prices' : 'Prices by City'}
                   </div>
                   <div className="flex flex-col gap-1">
                     {allPrices.map((p, i) => {
-                      const isBest = i === 0;
+                      const isBest = i === 0 && !isTransmuted;
                       const cityColor = getCityColor(p.city);
                       return (
                         <div
@@ -741,27 +792,6 @@ function MaterialInputCell({
                         </div>
                       );
                     })}
-                  </div>
-                </>
-              )}
-              {transmuteAlternative && (
-                <div className={allPrices.length > 1 ? "mt-2 pt-2 border-t" : ""} style={allPrices.length > 1 ? { borderColor: 'var(--color-border-subtle)' } : {}}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
-                      Cheaper via Transmute{transmuteAlternative.steps.length > 1 ? ` (${transmuteAlternative.steps.length} steps)` : ''}
-                    </span>
-                  </div>
-                  <TransmutePathDisplay alternative={transmuteAlternative} getBuyPriceInfo={getBuyPriceInfo} />
-                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-                      Savings per unit
-                    </span>
-                    <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-profit)' }}>
-                      -{formatSilver(Math.round(transmuteAlternative.savingsPerUnit))}
-                    </span>
                   </div>
                 </div>
               )}

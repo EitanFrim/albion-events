@@ -174,11 +174,7 @@ export function GuildSettingsPanel({ guild }: Props) {
             <div className="flex items-center gap-3">
               {/* Preview */}
               <div className="w-12 h-12 rounded-xl border border-border bg-bg-overlay flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {logoUrl ? (
-                  <img src={logoUrl} alt="" className="w-full h-full object-cover" onError={() => setLogoUrl('')} />
-                ) : (
-                  <span className="text-2xl">⚔️</span>
-                )}
+                <img src={logoUrl || '/images/branding/default-guild-logo.png'} alt="" className="w-full h-full object-cover" onError={() => setLogoUrl('')} />
               </div>
               <div className="flex-1 space-y-1.5">
                 <input

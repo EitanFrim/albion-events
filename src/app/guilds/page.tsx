@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import Image from 'next/image'
 import { GuildSelector } from '@/components/GuildSelector'
 
 export const dynamic = 'force-dynamic'
@@ -14,10 +15,8 @@ export default async function GuildsPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
         <div className="mb-8">
-          <Link href="/" className="text-xs font-mono text-text-muted hover:text-accent transition-colors mb-4 inline-flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+          <Link href="/" className="text-xs font-mono text-text-muted hover:text-accent transition-colors mb-4 inline-flex items-center gap-1.5">
+            <Image src="/images/branding/logo.png" alt="" width={16} height={16} className="object-contain" />
             AlbionHQ
           </Link>
           <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight mt-4">
