@@ -75,6 +75,14 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
   const [saleName, setSaleName] = useState<string | null>(null)
   const [salePreFilled, setSalePreFilled] = useState(false)
 
+  // Regear deduction state
+  const [showRegears, setShowRegears] = useState(false)
+  const [regearEvents, setRegearEvents] = useState<Array<{ eventId: string; eventTitle: string; eventDate: string; approvedCount: number; totalAmount: number }>>([])
+  const [regearEventsLoading, setRegearEventsLoading] = useState(false)
+  const [selectedRegearEventId, setSelectedRegearEventId] = useState<string | null>(null)
+  const [regearEntries, setRegearEntries] = useState<Array<{ regearId: string; membershipId: string; displayName: string; avatarUrl: string | null; amount: number }>>([])
+  const [regearEntriesLoading, setRegearEntriesLoading] = useState(false)
+
   // Fetch members on mount
   const fetchMembers = useCallback(async () => {
     setMembersLoading(true)
@@ -89,6 +97,37 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
   }, [guildSlug])
 
   useEffect(() => { fetchMembers() }, [fetchMembers])
+
+  // Fetch events with approved regears
+  const fetchRegearEvents = useCallback(async () => {
+    setRegearEventsLoading(true)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/regears`)
+      if (res.ok) setRegearEvents(await res.json())
+    } finally {
+      setRegearEventsLoading(false)
+    }
+  }, [guildSlug])
+
+  // Fetch regear entries for a selected event
+  const fetchRegearEntries = useCallback(async (eventId: string) => {
+    setRegearEntriesLoading(true)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/regears?eventId=${eventId}`)
+      if (res.ok) {
+        const data: Array<{ regearId: string; membershipId: string; displayName: string; avatarUrl: string | null; silverAmount: number }> = await res.json()
+        setRegearEntries(data.map(r => ({
+          regearId: r.regearId,
+          membershipId: r.membershipId,
+          displayName: r.displayName,
+          avatarUrl: r.avatarUrl,
+          amount: r.silverAmount,
+        })))
+      }
+    } finally {
+      setRegearEntriesLoading(false)
+    }
+  }, [guildSlug])
 
   // Pre-fill from loot tab sale
   useEffect(() => {
@@ -150,19 +189,21 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
     const net = totalSold - repair
     const taxAmount = Math.floor(net * taxPct / 100)
     const afterTax = net - taxAmount
+    const totalRegearDeduction = regearEntries.reduce((sum, r) => sum + r.amount, 0)
+    const distributable = afterTax - totalRegearDeduction
     const totalShares = players.reduce((sum, p) => sum + p.cut, 0)
 
     const perPlayer = players.map(p => ({
       ...p,
-      calculatedAmount: totalShares > 0 && afterTax > 0
-        ? Math.floor((afterTax * p.cut) / totalShares)
+      calculatedAmount: totalShares > 0 && distributable > 0
+        ? Math.floor((distributable * p.cut) / totalShares)
         : 0,
     }))
 
     const totalDistributed = perPlayer.reduce((sum, p) => sum + p.calculatedAmount, 0)
 
-    return { sold, bags, totalSold, repair, taxPct, taxAmount, net, afterTax, totalShares, perPlayer, totalDistributed }
-  }, [soldAmount, silverBags, repairCost, guildTaxPct, players])
+    return { sold, bags, totalSold, repair, taxPct, taxAmount, net, afterTax, totalRegearDeduction, distributable, totalShares, perPlayer, totalDistributed }
+  }, [soldAmount, silverBags, repairCost, guildTaxPct, players, regearEntries])
 
   // Available members (not yet added)
   const filteredAvailableMembers = useMemo(() => {
@@ -246,7 +287,7 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
     setError(null)
 
     if (!contentName.trim()) { setError('Content name is required'); return }
-    if (calculation.afterTax <= 0) { setError('After-tax amount must be positive'); return }
+    if (calculation.distributable <= 0) { setError('Distributable amount must be positive'); return }
     if (players.length === 0) { setError('Add at least one player'); return }
     if (calculation.totalShares === 0) { setError('At least one player must have a cut > 0%'); return }
 
@@ -292,6 +333,9 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
     setPlayers([])
     setResults(null)
     setError(null)
+    setShowRegears(false)
+    setSelectedRegearEventId(null)
+    setRegearEntries([])
   }
 
   // Formatted number input handler
@@ -437,10 +481,24 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
         </div>
         <div>
           <span className="text-text-muted">After Tax: </span>
-          <span className={`font-mono font-medium ${calculation.afterTax <= 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+          <span className={`font-mono font-medium ${calculation.afterTax <= 0 ? 'text-red-400' : 'text-text-primary'}`}>
             {calculation.afterTax.toLocaleString()}
           </span>
         </div>
+        {calculation.totalRegearDeduction > 0 && (
+          <div>
+            <span className="text-text-muted">Regears: </span>
+            <span className="font-mono font-medium text-amber-400">-{calculation.totalRegearDeduction.toLocaleString()}</span>
+          </div>
+        )}
+        {calculation.totalRegearDeduction > 0 && (
+          <div>
+            <span className="text-text-muted">Distributable: </span>
+            <span className={`font-mono font-medium ${calculation.distributable <= 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              {calculation.distributable.toLocaleString()}
+            </span>
+          </div>
+        )}
         <div>
           <span className="text-text-muted">Players: </span>
           <span className="font-mono font-medium text-text-primary">{players.length}</span>
@@ -449,6 +507,117 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
           <div className="ml-auto">
             <span className="text-text-muted">Distributing: </span>
             <span className="font-mono font-medium text-emerald-400">{calculation.totalDistributed.toLocaleString()}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Regear Deduction */}
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-600 text-text-primary text-sm flex items-center gap-2">
+            <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+            </svg>
+            Deduct Regears
+          </h2>
+          <button
+            onClick={() => {
+              const next = !showRegears
+              setShowRegears(next)
+              if (next && regearEvents.length === 0) fetchRegearEvents()
+              if (!next) { setSelectedRegearEventId(null); setRegearEntries([]) }
+            }}
+            className="btn-secondary text-xs"
+          >
+            {showRegears ? 'Remove' : 'Deduct Regears'}
+          </button>
+        </div>
+
+        {showRegears && (
+          <div className="space-y-3">
+            {/* Event picker */}
+            <div>
+              <label className="label">Select Event</label>
+              {regearEventsLoading ? (
+                <p className="text-text-muted text-sm">Loading events...</p>
+              ) : regearEvents.length === 0 ? (
+                <p className="text-text-muted text-sm">No events with approved regears found.</p>
+              ) : (
+                <select
+                  value={selectedRegearEventId ?? ''}
+                  onChange={e => {
+                    const id = e.target.value || null
+                    setSelectedRegearEventId(id)
+                    if (id) fetchRegearEntries(id)
+                    else setRegearEntries([])
+                  }}
+                  className="input text-sm w-full"
+                >
+                  <option value="">— Select an event —</option>
+                  {regearEvents.map(ev => (
+                    <option key={ev.eventId} value={ev.eventId}>
+                      {ev.eventTitle} — {new Date(ev.eventDate).toLocaleDateString()} ({ev.approvedCount} regear{ev.approvedCount !== 1 ? 's' : ''}, {ev.totalAmount.toLocaleString()} silver)
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Regear entries */}
+            {regearEntriesLoading ? (
+              <p className="text-text-muted text-sm">Loading regears...</p>
+            ) : regearEntries.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs text-text-muted flex items-center justify-between px-1">
+                  <span>Player</span>
+                  <span>Deduct Amount</span>
+                </div>
+                {regearEntries.map(entry => (
+                  <div
+                    key={entry.regearId}
+                    className="flex items-center gap-3 px-4 py-2.5 bg-bg-elevated rounded-lg border border-amber-500/20"
+                  >
+                    {entry.avatarUrl ? (
+                      <img src={entry.avatarUrl} alt="" className="w-6 h-6 rounded-full flex-shrink-0" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-bg-surface border border-border flex items-center justify-center flex-shrink-0">
+                        <span className="text-text-muted text-xs font-mono">{entry.displayName[0]?.toUpperCase()}</span>
+                      </div>
+                    )}
+                    <span className="text-sm text-text-primary flex-1 min-w-0 truncate">{entry.displayName}</span>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatWithCommas(String(entry.amount))}
+                        onChange={e => {
+                          const raw = parseInt(parseFormatted(e.target.value) || '0', 10)
+                          setRegearEntries(prev => prev.map(r =>
+                            r.regearId === entry.regearId ? { ...r, amount: Math.max(0, raw) } : r
+                          ))
+                        }}
+                        className="input w-28 text-right text-sm py-1"
+                      />
+                      <span className="text-xs text-text-muted">silver</span>
+                    </div>
+                    <button
+                      onClick={() => setRegearEntries(prev => prev.filter(r => r.regearId !== entry.regearId))}
+                      className="text-text-muted hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                      title="Remove from deduction"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <div className="flex justify-end px-1 pt-1">
+                  <span className="text-sm text-text-muted">
+                    Total Deduction: <span className="font-mono font-medium text-amber-400">{regearEntries.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span> silver
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -652,7 +821,7 @@ export function LootSplitForm({ guildSlug, saleId }: Props) {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={submitting || players.length === 0 || calculation.afterTax <= 0}
+          disabled={submitting || players.length === 0 || calculation.distributable <= 0}
           className="btn-primary text-sm"
         >
           {submitting ? 'Distributing\u2026' : `Add to Balance (${calculation.totalDistributed.toLocaleString()} silver)`}
