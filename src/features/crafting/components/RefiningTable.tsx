@@ -105,8 +105,8 @@ function HoverPopover({ trigger, children }: { trigger: ReactNode; children: Rea
             top: pos?.top ?? 0,
             left: pos?.left ?? 0,
             transform: 'translateX(-100%)',
-            backgroundColor: 'var(--color-surface-1)',
-            borderColor: 'var(--color-border)',
+            backgroundColor: '#111113',
+            borderColor: '#2a2a2e',
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.3)',
             visibility: pos ? 'visible' : 'hidden',
           }}
