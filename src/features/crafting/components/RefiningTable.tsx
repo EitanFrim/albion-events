@@ -55,7 +55,7 @@ function HoverPopover({ trigger, children }: { trigger: ReactNode; children: Rea
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
