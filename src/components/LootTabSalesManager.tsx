@@ -135,6 +135,11 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
   const [tagResult, setTagResult] = useState<{ added: string[]; notFound: string[]; alreadyTagged: string[] } | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
 
+  // Edit state
+  const [editingSaleId, setEditingSaleId] = useState<string | null>(null)
+  const [editFields, setEditFields] = useState({ description: '', price: '', repairCost: '', silverBags: '' })
+  const [editSaving, setEditSaving] = useState(false)
+
   // Guide state
   const [showGuide, setShowGuide] = useState(false)
 
@@ -346,6 +351,45 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
       setError('Network error deleting sale')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const startEditing = (sale: Sale) => {
+    setEditingSaleId(sale.id)
+    setEditFields({
+      description: sale.description || '',
+      price: String(sale.price),
+      repairCost: String(sale.repairCost),
+      silverBags: String(sale.silverBags),
+    })
+  }
+
+  const handleEditSave = async (saleId: string) => {
+    setEditSaving(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/loot-tab-sales/${saleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: editFields.description.trim() || null,
+          price: parseInt(parseFormatted(editFields.price) || '0', 10),
+          repairCost: parseInt(parseFormatted(editFields.repairCost) || '0', 10),
+          silverBags: parseInt(parseFormatted(editFields.silverBags) || '0', 10),
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Failed to update sale')
+        return
+      }
+      setEditingSaleId(null)
+      await refreshSales()
+      if (expandedSaleId === saleId) await refreshDetail(saleId)
+    } catch {
+      setError('Network error updating sale')
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -591,27 +635,101 @@ export function LootTabSalesManager({ guildSlug, initialSales }: Props) {
                       <p className="text-text-muted text-sm">Loading signups...</p>
                     ) : expandedDetail ? (
                       <div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
-                          <div>
-                            <span className="text-text-muted">Created by</span>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <Avatar user={sale.createdBy} size={18} />
-                              <span className="text-text-primary">{sale.createdBy.inGameName || sale.createdBy.discordName}</span>
+                        {editingSaleId === sale.id ? (
+                          <div className="space-y-3 mb-4">
+                            <div>
+                              <label className="label">Title</label>
+                              <input
+                                type="text"
+                                className="input w-full text-sm"
+                                value={editFields.description}
+                                onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
+                                placeholder="e.g. T8 Avalonian Loot Tab"
+                                maxLength={200}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              <div>
+                                <label className="label">Price (silver)</label>
+                                <input
+                                  type="text"
+                                  className="input w-full text-sm"
+                                  value={editFields.price ? formatWithCommas(editFields.price) : ''}
+                                  onChange={e => setEditFields(f => ({ ...f, price: parseFormatted(e.target.value) }))}
+                                />
+                              </div>
+                              <div>
+                                <label className="label">Repair Cost</label>
+                                <input
+                                  type="text"
+                                  className="input w-full text-sm"
+                                  value={editFields.repairCost ? formatWithCommas(editFields.repairCost) : ''}
+                                  onChange={e => setEditFields(f => ({ ...f, repairCost: parseFormatted(e.target.value) }))}
+                                />
+                              </div>
+                              <div>
+                                <label className="label">Silver Bags</label>
+                                <input
+                                  type="text"
+                                  className="input w-full text-sm"
+                                  value={editFields.silverBags ? formatWithCommas(editFields.silverBags) : ''}
+                                  onChange={e => setEditFields(f => ({ ...f, silverBags: parseFormatted(e.target.value) }))}
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                className="btn-primary text-sm px-3 py-1.5"
+                                onClick={() => handleEditSave(sale.id)}
+                                disabled={editSaving || !editFields.price}
+                              >
+                                {editSaving ? 'Saving...' : 'Save'}
+                              </button>
+                              <button
+                                className="btn-ghost text-sm px-3 py-1.5"
+                                onClick={() => setEditingSaleId(null)}
+                                disabled={editSaving}
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
-                          <div>
-                            <span className="text-text-muted">Repair Cost</span>
-                            <p className="text-text-primary font-mono">{formatSilver(sale.repairCost)}</p>
+                        ) : (
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm flex-1">
+                              <div>
+                                <span className="text-text-muted">Created by</span>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <Avatar user={sale.createdBy} size={18} />
+                                  <span className="text-text-primary">{sale.createdBy.inGameName || sale.createdBy.discordName}</span>
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-text-muted">Repair Cost</span>
+                                <p className="text-text-primary font-mono">{formatSilver(sale.repairCost)}</p>
+                              </div>
+                              <div>
+                                <span className="text-text-muted">Silver Bags</span>
+                                <p className="text-text-primary font-mono">{formatSilver(sale.silverBags)}</p>
+                              </div>
+                              <div>
+                                <span className="text-text-muted">Duration</span>
+                                <p className="text-text-primary">{sale.durationHours}h</p>
+                              </div>
+                            </div>
+                            {!sale.splitCompleted && (
+                              <button
+                                className="text-text-muted hover:text-accent transition-colors ml-2 mt-0.5"
+                                onClick={() => startEditing(sale)}
+                                title="Edit sale"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
-                          <div>
-                            <span className="text-text-muted">Silver Bags</span>
-                            <p className="text-text-primary font-mono">{formatSilver(sale.silverBags)}</p>
-                          </div>
-                          <div>
-                            <span className="text-text-muted">Duration</span>
-                            <p className="text-text-primary">{sale.durationHours}h</p>
-                          </div>
-                        </div>
+                        )}
 
                         <h3 className="text-sm font-600 text-text-secondary mb-2">
                           Signups ({expandedDetail.bids.length})
