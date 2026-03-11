@@ -1,0 +1,305 @@
+'use client'
+
+import { useState } from 'react';
+import type { Settings, SpecLevels } from '../utils/calculations';
+
+interface SettingsPanelProps {
+  settings: Settings;
+  onChange: (s: Settings) => void;
+}
+
+const inputClass = "border rounded-md px-3 py-1.5 text-sm w-full text-right focus:outline-none focus:ring-2";
+
+export default function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const update = (key: keyof Settings, value: string) => {
+    const num = parseFloat(value);
+    if (!isNaN(num)) {
+      onChange({ ...settings, [key]: num });
+    }
+  };
+
+  return (
+    <div className="border rounded-xl overflow-hidden" style={{
+      backgroundColor: 'var(--color-surface-2)',
+      borderColor: 'var(--color-border)',
+    }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-5 py-3.5 flex items-center justify-between text-left transition-colors hover:opacity-90"
+      >
+        <div className="flex items-center gap-3">
+          <svg
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            style={{ color: 'var(--color-text-muted)' }}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Settings</h2>
+        </div>
+        {!isOpen && (
+          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            Return {settings.returnRateNoFocus}% / {settings.returnRateWithFocus}%
+            &nbsp;&middot;&nbsp; Nutrition {settings.nutritionPricePer100}
+            &nbsp;&middot;&nbsp; {settings.useSellNow ? 'Sell Instantly' : `Markdown ${settings.sellMarkdown}%`}
+            {settings.useBuyOrders && (
+              <>
+                &nbsp;&middot;&nbsp; Buy Orders
+              </>
+            )}
+            {settings.specLevels.some(s => s > 0) && (
+              <>
+                &nbsp;&middot;&nbsp; Specs {settings.specLevels.join('/')}
+              </>
+            )}
+          </span>
+        )}
+      </button>
+
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+        <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pt-4">
+            <SettingField
+              label="Return Rate (No Focus)"
+              value={settings.returnRateNoFocus}
+              step="0.1"
+              unit="%"
+              onChange={(v) => update('returnRateNoFocus', v)}
+            />
+            <SettingField
+              label="Return Rate (Focus)"
+              value={settings.returnRateWithFocus}
+              step="0.1"
+              unit="%"
+              onChange={(v) => update('returnRateWithFocus', v)}
+            />
+            <SettingField
+              label="Nutrition Cost / 100"
+              value={settings.nutritionPricePer100}
+              step="1"
+              onChange={(v) => update('nutritionPricePer100', v)}
+            />
+            <div style={{ opacity: settings.useSellNow ? 0.4 : 1, pointerEvents: settings.useSellNow ? 'none' : undefined }}>
+              <SettingField
+                label="Sell Markdown"
+                value={settings.sellMarkdown}
+                step="0.5"
+                unit="%"
+                onChange={(v) => update('sellMarkdown', v)}
+              />
+            </div>
+          </div>
+
+          {/* Buy Order mode toggle */}
+          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button
+              onClick={() => onChange({ ...settings, useBuyOrders: !settings.useBuyOrders })}
+              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: settings.useBuyOrders
+                  ? 'var(--color-accent)'
+                  : 'var(--color-surface-3)',
+              }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
+                style={{
+                  backgroundColor: 'var(--color-text-primary)',
+                  transform: settings.useBuyOrders ? 'translateX(16px)' : 'translateX(0)',
+                }}
+              />
+            </button>
+            <div>
+              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                Buy via Buy Orders
+              </div>
+              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                Use highest buy order price instead of cheapest sell order for material costs
+              </div>
+            </div>
+          </div>
+
+          {/* Sell Now mode toggle */}
+          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button
+              onClick={() => onChange({ ...settings, useSellNow: !settings.useSellNow })}
+              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: settings.useSellNow
+                  ? 'var(--color-accent)'
+                  : 'var(--color-surface-3)',
+              }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
+                style={{
+                  backgroundColor: 'var(--color-text-primary)',
+                  transform: settings.useSellNow ? 'translateX(16px)' : 'translateX(0)',
+                }}
+              />
+            </button>
+            <div>
+              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                Sell Instantly
+              </div>
+              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                Sell to highest buy order instead of listing a sell order (no markdown)
+              </div>
+            </div>
+          </div>
+
+          {/* Transmute optimization toggle */}
+          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button
+              onClick={() => onChange({ ...settings, enableTransmute: !settings.enableTransmute })}
+              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: settings.enableTransmute
+                  ? 'var(--color-accent)'
+                  : 'var(--color-surface-3)',
+              }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
+                style={{
+                  backgroundColor: 'var(--color-text-primary)',
+                  transform: settings.enableTransmute ? 'translateX(16px)' : 'translateX(0)',
+                }}
+              />
+            </button>
+            <div>
+              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                Cheaper via Transmute
+              </div>
+              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                Show when transmuting a resource before refining is cheaper
+              </div>
+            </div>
+          </div>
+
+          {/* Show materials toggle */}
+          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button
+              onClick={() => onChange({ ...settings, showMaterials: !settings.showMaterials })}
+              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: settings.showMaterials
+                  ? 'var(--color-accent)'
+                  : 'var(--color-surface-3)',
+              }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
+                style={{
+                  backgroundColor: 'var(--color-text-primary)',
+                  transform: settings.showMaterials ? 'translateX(16px)' : 'translateX(0)',
+                }}
+              />
+            </button>
+            <div>
+              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                Show Materials
+              </div>
+              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                Split material cost into individual ingredient columns
+              </div>
+            </div>
+          </div>
+
+          {/* Specialization levels */}
+          <div className="pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  Specialization Levels
+                </div>
+                <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                  Reduces focus cost per craft. Set your spec for each tier (0–100).
+                </div>
+              </div>
+              {settings.specLevels.some(s => s > 0) && (
+                <button
+                  onClick={() => onChange({ ...settings, specLevels: [0, 0, 0, 0, 0] })}
+                  className="text-[10px] px-2 py-1 rounded transition-colors"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {([4, 5, 6, 7, 8] as const).map((tier, i) => (
+                <div key={tier} className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium uppercase tracking-wider text-center" style={{ color: 'var(--color-text-tertiary)' }}>
+                    T{tier}
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={settings.specLevels[i]}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (isNaN(val)) return;
+                      const clamped = Math.max(0, Math.min(100, val));
+                      const next = [...settings.specLevels] as SpecLevels;
+                      next[i] = clamped;
+                      onChange({ ...settings, specLevels: next });
+                    }}
+                    className={inputClass + " text-center"}
+                    style={{
+                      backgroundColor: 'var(--color-surface-3)',
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingField({
+  label, value, step, unit, onChange,
+}: {
+  label: string;
+  value: number;
+  step: string;
+  unit?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+        {label}
+      </label>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          step={step}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+          style={{
+            backgroundColor: 'var(--color-surface-3)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-primary)',
+          }}
+        />
+        {unit && <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{unit}</span>}
+      </div>
+    </div>
+  );
+}

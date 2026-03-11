@@ -1,0 +1,38 @@
+.crafting-root {
+  --color-surface-0: #0a0a0b;
+  --color-surface-1: #111113;
+  --color-surface-2: #18181b;
+  --color-surface-3: #27272a;
+  --color-border: #3f3f46;
+  --color-border-subtle: #27272a;
+
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+  --color-text-muted: #52525b;
+
+  --color-accent: #f59e0b;
+  --color-accent-hover: #fbbf24;
+  --color-accent-muted: #92400e;
+
+  --color-profit: #4ade80;
+  --color-loss: #f87171;
+  --color-override: #c084fc;
+
+  background-color: var(--color-surface-1);
+  color: var(--color-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.crafting-root ::-webkit-scrollbar { width: 8px; height: 8px; }
+.crafting-root ::-webkit-scrollbar-track { background: var(--color-surface-1); }
+.crafting-root ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+.crafting-root ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+.crafting-root input[type="number"]::-webkit-inner-spin-button,
+.crafting-root input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+.crafting-root input[type="number"] { -moz-appearance: textfield; }

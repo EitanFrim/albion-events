@@ -87,10 +87,19 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
     <nav className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
 
-        {/* Left: guild name + nav */}
+        {/* Left: home + guild name + nav */}
         <div className="flex items-center gap-1 flex-1 min-w-0">
+          {/* AlbionHQ home */}
+          <Link href="/" className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-bg-elevated transition-colors flex-shrink-0" title="AlbionHQ Home">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2" />
+            </svg>
+          </Link>
+
+          <span className="text-border-subtle mx-0.5 hidden sm:block">/</span>
+
           {/* Guild switcher */}
-          <Link href="/?switch=1" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors flex-shrink-0 group">
+          <Link href="/guilds" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors flex-shrink-0 group">
             <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center overflow-hidden">
               {guild.logoUrl ? (
                 <img src={guild.logoUrl} alt="" className="w-full h-full object-cover" />
@@ -274,7 +283,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
                     </svg>
                     Edit Profile
                   </Link>
-                  <Link href="/?switch=1" onClick={() => setMenuOpen(false)}
+                  <Link href="/guilds" onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-overlay transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />

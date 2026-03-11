@@ -6,8 +6,8 @@ import { NavBar } from './NavBar'
 export function ConditionalNavBar() {
   const pathname = usePathname()
 
-  // Guild pages have their own GuildNavBar in the guild layout
-  if (pathname.startsWith('/g/')) return null
+  // Landing page, guild pages, and crafting have their own layouts
+  if (pathname === '/' || pathname.startsWith('/g/') || pathname.startsWith('/crafting')) return null
 
   return <NavBar />
 }

@@ -6,8 +6,8 @@ import { SessionProvider } from './providers'
 import { ConditionalNavBar } from '@/components/ConditionalNavBar'
 
 export const metadata: Metadata = {
-  title: 'Albion Events — Guild Content Planner',
-  description: 'Guild event signup and composition planner for Albion Online',
+  title: 'AlbionHQ — Tools for Albion Online',
+  description: 'Guild management, event planning, and crafting tools for Albion Online',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

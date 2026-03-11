@@ -30,16 +30,24 @@ export function NavBar() {
       <nav className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Link href="/" className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-bg-elevated transition-colors" title="AlbionHQ Home">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2" />
               </svg>
-            </div>
-            <span className="font-display text-sm font-700 text-text-primary tracking-tight hidden sm:block">
-              Albion Events
-            </span>
-          </Link>
+            </Link>
+            <span className="text-border-subtle mx-0.5 hidden sm:block">/</span>
+            <Link href="/guilds" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="font-display text-sm font-700 text-text-primary tracking-tight hidden sm:block">
+                Guild Manager
+              </span>
+            </Link>
+          </div>
 
           {/* Nav */}
           <div className="hidden md:flex items-center gap-1 flex-1">

@@ -11,6 +11,9 @@ export default withAuth(
         const { pathname } = req.nextUrl
         // Public paths
         if (
+          pathname === '/' ||
+          pathname === '/guilds' ||
+          pathname.startsWith('/crafting') ||
           pathname.startsWith('/auth') ||
           pathname.startsWith('/api/auth') ||
           pathname.startsWith('/api/discord') ||
