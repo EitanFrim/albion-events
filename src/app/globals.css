@@ -118,3 +118,21 @@ body {
   .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
   .stagger-children > *:nth-child(6) { animation-delay: 300ms; }
 }
+
+/* Guild accent color override */
+.guild-themed {
+  --color-accent: var(--accent-override, #f97316);
+}
+.guild-themed .bg-accent { background-color: var(--color-accent) !important; }
+.guild-themed .text-accent { color: var(--color-accent) !important; }
+.guild-themed .border-accent { border-color: var(--color-accent) !important; }
+.guild-themed .hover\:brightness-110:hover { filter: brightness(1.1); }
+.guild-themed .bg-accent\/5 { background-color: color-mix(in srgb, var(--color-accent) 5%, transparent) !important; }
+.guild-themed .bg-accent\/10 { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent) !important; }
+.guild-themed .bg-accent\/20 { background-color: color-mix(in srgb, var(--color-accent) 20%, transparent) !important; }
+.guild-themed .border-accent\/15 { border-color: color-mix(in srgb, var(--color-accent) 15%, transparent) !important; }
+.guild-themed .border-accent\/20 { border-color: color-mix(in srgb, var(--color-accent) 20%, transparent) !important; }
+.guild-themed .shadow-glow-sm { box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 15%, transparent); }
+.guild-themed .shadow-glow-orange { box-shadow: 0 0 24px color-mix(in srgb, var(--color-accent) 25%, transparent); }
+.guild-themed .focus\:border-accent\/50:focus { border-color: color-mix(in srgb, var(--color-accent) 50%, transparent) !important; }
+.guild-themed .focus\:ring-accent\/10:focus { --tw-ring-color: color-mix(in srgb, var(--color-accent) 10%, transparent) !important; }

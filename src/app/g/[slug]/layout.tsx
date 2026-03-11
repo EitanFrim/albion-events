@@ -69,13 +69,21 @@ export default async function GuildLayout({ children, params }: Props) {
       })
     : []
 
+  const themeStyle = guild.accentColor ? { '--accent-override': guild.accentColor } as React.CSSProperties : undefined
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className={`min-h-screen flex flex-col ${guild.accentColor ? 'guild-themed' : ''}`} style={themeStyle}>
       <GuildNavBar
         guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl }}
         membership={{ role: membership.role, status: membership.status, balance: membership.balance }}
         totalGuildBalance={totalGuildBalance}
       />
+      {guild.bannerUrl && (
+        <div className="relative w-full h-40 overflow-hidden flex-shrink-0">
+          <img src={guild.bannerUrl} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0a0f]" />
+        </div>
+      )}
       <BalanceNotifications
         transactions={unseenTransactions.map(t => ({
           id: t.id,

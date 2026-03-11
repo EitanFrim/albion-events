@@ -3,8 +3,19 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+const PRESET_COLORS = [
+  { value: '#f97316', label: 'Orange' },
+  { value: '#ef4444', label: 'Red' },
+  { value: '#10b981', label: 'Emerald' },
+  { value: '#3b82f6', label: 'Blue' },
+  { value: '#8b5cf6', label: 'Purple' },
+  { value: '#eab308', label: 'Amber' },
+  { value: '#06b6d4', label: 'Cyan' },
+  { value: '#ec4899', label: 'Pink' },
+]
+
 interface Props {
-  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean; serverRegion: string | null }
+  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; bannerUrl: string | null; accentColor: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean; serverRegion: string | null }
 }
 
 export function GuildSettingsPanel({ guild }: Props) {
@@ -26,6 +37,14 @@ export function GuildSettingsPanel({ guild }: Props) {
   const [logoSaved, setLogoSaved] = useState(false)
   const [discordLinked, setDiscordLinked] = useState(guild.discordBotInstalled)
   const [unlinking, setUnlinking] = useState(false)
+  const [bannerUrl, setBannerUrl] = useState(guild.bannerUrl ?? '')
+  const [bannerSaving, setBannerSaving] = useState(false)
+  const [bannerError, setBannerError] = useState('')
+  const [bannerSaved, setBannerSaved] = useState(false)
+  const [accentColor, setAccentColor] = useState(guild.accentColor ?? '')
+  const [accentSaving, setAccentSaving] = useState(false)
+  const [accentSaved, setAccentSaved] = useState(false)
+  const [customHex, setCustomHex] = useState(guild.accentColor && !PRESET_COLORS.some(c => c.value === guild.accentColor) ? guild.accentColor : '')
   const [serverRegion, setServerRegion] = useState(guild.serverRegion ?? '')
   const [regionSaving, setRegionSaving] = useState(false)
   const [regionSaved, setRegionSaved] = useState(false)
@@ -40,6 +59,29 @@ export function GuildSettingsPanel({ guild }: Props) {
     setLogoSaving(false)
     if (res.ok) { setLogoSaved(true); setTimeout(() => setLogoSaved(false), 2000); router.refresh() }
     else { const d = await res.json(); setLogoError(d.error ?? 'Save failed') }
+  }
+
+  async function saveBanner(url: string) {
+    setBannerSaving(true); setBannerError(''); setBannerSaved(false)
+    const res = await fetch(`/api/guilds/${guild.slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bannerUrl: url }),
+    })
+    setBannerSaving(false)
+    if (res.ok) { setBannerSaved(true); setTimeout(() => setBannerSaved(false), 2000); router.refresh() }
+    else { const d = await res.json(); setBannerError(d.error ?? 'Save failed') }
+  }
+
+  async function saveAccentColor(color: string) {
+    setAccentSaving(true); setAccentSaved(false)
+    const res = await fetch(`/api/guilds/${guild.slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accentColor: color || null }),
+    })
+    setAccentSaving(false)
+    if (res.ok) { setAccentColor(color); setAccentSaved(true); setTimeout(() => setAccentSaved(false), 2000); router.refresh() }
   }
 
   const [origin, setOrigin] = useState('')
@@ -215,6 +257,107 @@ export function GuildSettingsPanel({ guild }: Props) {
             <div className="pt-2 border-t border-border-subtle">
               <span className="text-text-muted block mb-1">Description</span>
               <p className="text-text-secondary text-xs">{guild.description}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Appearance */}
+      <div className="card p-5 space-y-4">
+        <div>
+          <h2 className="font-display font-600 text-text-primary mb-1">Appearance</h2>
+          <p className="text-text-secondary text-sm">Customize your guild&apos;s look with a banner image and accent color.</p>
+        </div>
+
+        {/* Banner URL */}
+        <div className="space-y-2">
+          <span className="text-text-muted text-sm block">Banner Image</span>
+          {bannerUrl && (
+            <div className="w-full h-32 rounded-lg border border-border bg-bg-overlay overflow-hidden">
+              <img src={bannerUrl} alt="" className="w-full h-full object-cover" onError={() => setBannerUrl('')} />
+            </div>
+          )}
+          <input
+            type="url"
+            value={bannerUrl}
+            onChange={e => { setBannerUrl(e.target.value); setBannerSaved(false) }}
+            placeholder="https://i.imgur.com/yourbanner.png"
+            className="input text-xs py-1.5 w-full"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => saveBanner(bannerUrl)}
+              disabled={bannerSaving}
+              className="btn-primary text-xs py-1 px-2.5"
+            >
+              {bannerSaving ? '…' : bannerSaved ? '✓ Saved' : 'Save Banner'}
+            </button>
+            {bannerUrl && (
+              <button
+                onClick={() => { setBannerUrl(''); saveBanner('') }}
+                className="btn-ghost text-xs py-1 px-2 text-text-muted"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {bannerError && <p className="text-red-400 text-xs">{bannerError}</p>}
+          <p className="text-xs text-text-muted">Paste a direct image URL. Recommended: 1200×300 or wider.</p>
+        </div>
+
+        {/* Accent Color */}
+        <div className="pt-3 border-t border-border-subtle space-y-2">
+          <span className="text-text-muted text-sm block">Accent Color</span>
+          <div className="flex flex-wrap gap-2">
+            {PRESET_COLORS.map(c => (
+              <button
+                key={c.value}
+                onClick={() => { setAccentColor(c.value); setCustomHex(''); saveAccentColor(c.value) }}
+                title={c.label}
+                className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                  accentColor === c.value ? 'border-white scale-110' : 'border-transparent hover:border-white/30'
+                }`}
+                style={{ backgroundColor: c.value }}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={customHex}
+              onChange={e => { setCustomHex(e.target.value) }}
+              placeholder="#custom hex"
+              maxLength={7}
+              className="input text-xs py-1.5 w-28 font-mono"
+            />
+            <button
+              onClick={() => {
+                if (/^#[0-9a-fA-F]{6}$/.test(customHex)) {
+                  setAccentColor(customHex)
+                  saveAccentColor(customHex)
+                }
+              }}
+              disabled={accentSaving || !/^#[0-9a-fA-F]{6}$/.test(customHex)}
+              className="btn-primary text-xs py-1 px-2.5"
+            >
+              Apply
+            </button>
+            {accentColor && accentColor !== '#f97316' && (
+              <button
+                onClick={() => { setAccentColor(''); setCustomHex(''); saveAccentColor('') }}
+                className="btn-ghost text-xs py-1 px-2 text-text-muted"
+              >
+                Reset to Default
+              </button>
+            )}
+            {accentSaving && <span className="text-xs text-text-muted">Saving…</span>}
+            {accentSaved && <span className="text-xs text-emerald-400">✓ Saved</span>}
+          </div>
+          {accentColor && (
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <span>Current:</span>
+              <span className="w-4 h-4 rounded" style={{ backgroundColor: accentColor }} />
+              <span className="font-mono">{accentColor}</span>
             </div>
           )}
         </div>

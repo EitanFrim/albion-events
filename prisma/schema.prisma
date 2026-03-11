@@ -90,6 +90,8 @@ model Guild {
   slug        String   @unique
   description String?
   logoUrl     String?  @map("logo_url")
+  bannerUrl   String?  @map("banner_url")
+  accentColor String?  @map("accent_color")
   inviteCode          String   @unique @map("invite_code")
   ownerId             String   @map("owner_id")
   discordGuildId      String?  @unique @map("discord_guild_id")

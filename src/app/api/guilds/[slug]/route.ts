@@ -37,10 +37,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   const body = await req.json()
   const name = body.name?.trim()
   const logoUrl = body.logoUrl !== undefined ? (body.logoUrl?.trim() || null) : undefined
+  const bannerUrl = body.bannerUrl !== undefined ? (body.bannerUrl?.trim() || null) : undefined
+  const accentColor = body.accentColor !== undefined ? (body.accentColor?.trim() || null) : undefined
   const serverRegion = body.serverRegion !== undefined ? body.serverRegion : undefined
 
   if (name !== undefined && (name.length < 2 || name.length > 64)) {
     return NextResponse.json({ error: 'Name must be 2–64 characters' }, { status: 400 })
+  }
+
+  if (accentColor !== null && accentColor !== undefined && !/^#[0-9a-fA-F]{6}$/.test(accentColor)) {
+    return NextResponse.json({ error: 'Invalid color format (use #RRGGBB)' }, { status: 400 })
   }
 
   const validRegions = ['americas', 'europe', 'asia', null]
@@ -51,6 +57,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   const data: Record<string, unknown> = {}
   if (name !== undefined) data.name = name
   if (logoUrl !== undefined) data.logoUrl = logoUrl
+  if (bannerUrl !== undefined) data.bannerUrl = bannerUrl
+  if (accentColor !== undefined) data.accentColor = accentColor
   if (serverRegion !== undefined) data.serverRegion = serverRegion
 
   if (Object.keys(data).length === 0) {
