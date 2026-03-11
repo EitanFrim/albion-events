@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 const PRESET_COLORS = [
@@ -15,7 +15,7 @@ const PRESET_COLORS = [
 ]
 
 interface Props {
-  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; bannerUrl: string | null; accentColor: string | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean; serverRegion: string | null }
+  guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; bannerUrl: string | null; accentColor: string | null; bannerPositionY: number | null; logoZoom: number | null; logoPositionX: number | null; logoPositionY: number | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean; serverRegion: string | null }
 }
 
 export function GuildSettingsPanel({ guild }: Props) {
@@ -45,6 +45,16 @@ export function GuildSettingsPanel({ guild }: Props) {
   const [accentSaving, setAccentSaving] = useState(false)
   const [accentSaved, setAccentSaved] = useState(false)
   const [customHex, setCustomHex] = useState(guild.accentColor && !PRESET_COLORS.some(c => c.value === guild.accentColor) ? guild.accentColor : '')
+  const [bannerPosY, setBannerPosY] = useState(guild.bannerPositionY ?? 50)
+  const [bannerPosSaving, setBannerPosSaving] = useState(false)
+  const [bannerPosSaved, setBannerPosSaved] = useState(false)
+  const [lgZoom, setLgZoom] = useState(guild.logoZoom ?? 1)
+  const [lgPosX, setLgPosX] = useState(guild.logoPositionX ?? 50)
+  const [lgPosY, setLgPosY] = useState(guild.logoPositionY ?? 50)
+  const [logoPosSaving, setLogoPosSaving] = useState(false)
+  const [logoPosSaved, setLogoPosSaved] = useState(false)
+  const bannerDragRef = useRef<HTMLDivElement>(null)
+  const logoDragRef = useRef<HTMLDivElement>(null)
   const [serverRegion, setServerRegion] = useState(guild.serverRegion ?? '')
   const [regionSaving, setRegionSaving] = useState(false)
   const [regionSaved, setRegionSaved] = useState(false)
@@ -83,6 +93,68 @@ export function GuildSettingsPanel({ guild }: Props) {
     setAccentSaving(false)
     if (res.ok) { setAccentColor(color); setAccentSaved(true); setTimeout(() => setAccentSaved(false), 2000); router.refresh() }
   }
+
+  async function saveBannerPosition(y: number) {
+    setBannerPosSaving(true); setBannerPosSaved(false)
+    const res = await fetch(`/api/guilds/${guild.slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bannerPositionY: Math.round(y) }),
+    })
+    setBannerPosSaving(false)
+    if (res.ok) { setBannerPosSaved(true); setTimeout(() => setBannerPosSaved(false), 2000); router.refresh() }
+  }
+
+  async function saveLogoPosition(zoom: number, x: number, y: number) {
+    setLogoPosSaving(true); setLogoPosSaved(false)
+    const res = await fetch(`/api/guilds/${guild.slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logoZoom: zoom, logoPositionX: Math.round(x), logoPositionY: Math.round(y) }),
+    })
+    setLogoPosSaving(false)
+    if (res.ok) { setLogoPosSaved(true); setTimeout(() => setLogoPosSaved(false), 2000); router.refresh() }
+  }
+
+  // Banner drag handler
+  const handleBannerDrag = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const el = bannerDragRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const update = (ev: MouseEvent) => {
+      const y = Math.max(0, Math.min(100, ((ev.clientY - rect.top) / rect.height) * 100))
+      setBannerPosY(y)
+    }
+    const stop = () => {
+      window.removeEventListener('mousemove', update)
+      window.removeEventListener('mouseup', stop)
+    }
+    window.addEventListener('mousemove', update)
+    window.addEventListener('mouseup', stop)
+    update(e.nativeEvent)
+  }, [])
+
+  // Logo drag handler
+  const handleLogoDrag = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const el = logoDragRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const update = (ev: MouseEvent) => {
+      const x = Math.max(0, Math.min(100, ((ev.clientX - rect.left) / rect.width) * 100))
+      const y = Math.max(0, Math.min(100, ((ev.clientY - rect.top) / rect.height) * 100))
+      setLgPosX(x)
+      setLgPosY(y)
+    }
+    const stop = () => {
+      window.removeEventListener('mousemove', update)
+      window.removeEventListener('mouseup', stop)
+    }
+    window.addEventListener('mousemove', update)
+    window.addEventListener('mouseup', stop)
+    update(e.nativeEvent)
+  }, [])
 
   const [origin, setOrigin] = useState('')
   useEffect(() => { setOrigin(window.location.origin) }, [])
@@ -213,10 +285,37 @@ export function GuildSettingsPanel({ guild }: Props) {
           {/* Logo row */}
           <div className="pt-2 border-t border-border-subtle space-y-2">
             <span className="text-text-muted text-sm block">Guild Icon</span>
-            <div className="flex items-center gap-3">
-              {/* Preview */}
-              <div className="w-12 h-12 rounded-xl border border-border bg-bg-overlay flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <img src={logoUrl || '/images/branding/default-guild-logo.png'} alt="" className="w-full h-full object-cover" onError={() => setLogoUrl('')} />
+            <div className="flex items-start gap-3">
+              {/* Preview with zoom/drag */}
+              <div className="flex-shrink-0 space-y-1.5">
+                <div
+                  ref={logoDragRef}
+                  className="w-24 h-24 rounded-xl border border-border bg-bg-overlay overflow-hidden cursor-move select-none"
+                  onMouseDown={logoUrl ? handleLogoDrag : undefined}
+                  title={logoUrl ? 'Drag to reposition' : ''}
+                >
+                  <img
+                    src={logoUrl || '/images/branding/default-guild-logo.png'} alt=""
+                    className="w-full h-full object-cover pointer-events-none"
+                    style={{
+                      objectPosition: `${lgPosX}% ${lgPosY}%`,
+                      transform: `scale(${lgZoom})`,
+                    }}
+
+                  />
+                </div>
+                {logoUrl && (
+                  <div className="flex items-center gap-1.5 w-24">
+                    <span className="text-[10px] text-text-muted">1x</span>
+                    <input
+                      type="range" min="1" max="3" step="0.1"
+                      value={lgZoom}
+                      onChange={e => setLgZoom(parseFloat(e.target.value))}
+                      className="flex-1 h-1 accent-accent"
+                    />
+                    <span className="text-[10px] text-text-muted">3x</span>
+                  </div>
+                )}
               </div>
               <div className="flex-1 space-y-1.5">
                 <input
@@ -226,7 +325,7 @@ export function GuildSettingsPanel({ guild }: Props) {
                   placeholder="https://i.imgur.com/yourimage.png"
                   className="input text-xs py-1.5 w-full"
                 />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => saveLogo(logoUrl)}
                     disabled={logoSaving}
@@ -234,6 +333,15 @@ export function GuildSettingsPanel({ guild }: Props) {
                   >
                     {logoSaving ? '…' : logoSaved ? '✓ Saved' : 'Save Icon'}
                   </button>
+                  {logoUrl && (lgZoom !== 1 || lgPosX !== 50 || lgPosY !== 50) && (
+                    <button
+                      onClick={() => saveLogoPosition(lgZoom, lgPosX, lgPosY)}
+                      disabled={logoPosSaving}
+                      className="btn-secondary text-xs py-1 px-2.5"
+                    >
+                      {logoPosSaving ? '…' : logoPosSaved ? '✓ Saved' : 'Save Crop'}
+                    </button>
+                  )}
                   {logoUrl && (
                     <button
                       onClick={() => { setLogoUrl(''); saveLogo('') }}
@@ -244,7 +352,7 @@ export function GuildSettingsPanel({ guild }: Props) {
                   )}
                 </div>
                 {logoError && <p className="text-red-400 text-xs">{logoError}</p>}
-                <p className="text-xs text-text-muted">Paste a direct image URL (Imgur, Discord CDN, etc.)</p>
+                <p className="text-xs text-text-muted">Paste a direct image URL. Drag to reposition, use slider to zoom.</p>
               </div>
             </div>
           </div>
@@ -273,9 +381,33 @@ export function GuildSettingsPanel({ guild }: Props) {
         <div className="space-y-2">
           <span className="text-text-muted text-sm block">Banner Image</span>
           {bannerUrl && (
-            <div className="w-full h-32 rounded-lg border border-border bg-bg-overlay overflow-hidden">
-              <img src={bannerUrl} alt="" className="w-full h-full object-cover" onError={() => setBannerUrl('')} />
-            </div>
+            <>
+              <div
+                ref={bannerDragRef}
+                className="relative w-full h-32 rounded-lg border border-border bg-bg-overlay overflow-hidden cursor-ns-resize select-none"
+                onMouseDown={handleBannerDrag}
+                title="Drag up/down to adjust position"
+              >
+                <img
+                  src={bannerUrl} alt=""
+                  className="w-full h-full object-cover pointer-events-none"
+                  style={{ objectPosition: `center ${bannerPosY}%` }}
+                />
+                <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black/30 to-transparent flex items-center justify-center">
+                  <span className="text-[10px] text-white/70 font-mono">Drag to reposition</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => saveBannerPosition(bannerPosY)}
+                  disabled={bannerPosSaving}
+                  className="btn-primary text-xs py-1 px-2.5"
+                >
+                  {bannerPosSaving ? '…' : bannerPosSaved ? '✓ Saved' : 'Save Position'}
+                </button>
+                <span className="text-[10px] text-text-muted font-mono">{Math.round(bannerPosY)}%</span>
+              </div>
+            </>
           )}
           <input
             type="url"

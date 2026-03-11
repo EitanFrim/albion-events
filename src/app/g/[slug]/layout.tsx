@@ -74,13 +74,13 @@ export default async function GuildLayout({ children, params }: Props) {
   return (
     <div className={`min-h-screen flex flex-col ${guild.accentColor ? 'guild-themed' : ''}`} style={themeStyle}>
       <GuildNavBar
-        guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl }}
+        guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl, logoZoom: guild.logoZoom, logoPositionX: guild.logoPositionX, logoPositionY: guild.logoPositionY }}
         membership={{ role: membership.role, status: membership.status, balance: membership.balance }}
         totalGuildBalance={totalGuildBalance}
       />
       {guild.bannerUrl && (
         <div className="relative w-full h-40 overflow-hidden flex-shrink-0">
-          <img src={guild.bannerUrl} alt="" className="w-full h-full object-cover" />
+          <img src={guild.bannerUrl} alt="" className="w-full h-full object-cover" style={{ objectPosition: `center ${guild.bannerPositionY ?? 50}%` }} />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0a0f]" />
         </div>
       )}

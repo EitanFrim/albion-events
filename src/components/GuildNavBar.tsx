@@ -9,7 +9,7 @@ import { useState, useRef, useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 interface Props {
-  guild: { id: string; name: string; slug: string; logoUrl?: string | null }
+  guild: { id: string; name: string; slug: string; logoUrl?: string | null; logoZoom?: number | null; logoPositionX?: number | null; logoPositionY?: number | null }
   membership: { role: string; status: string; balance: number }
   totalGuildBalance?: number
 }
@@ -103,7 +103,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0 }: Props)
           {/* Guild switcher */}
           <Link href="/guilds" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors flex-shrink-0 group">
             <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center overflow-hidden">
-              <img src={guild.logoUrl || DEFAULT_GUILD_LOGO} alt="" className="w-full h-full object-cover" />
+              <img src={guild.logoUrl || DEFAULT_GUILD_LOGO} alt="" className="w-full h-full object-cover" style={{ objectPosition: `${guild.logoPositionX ?? 50}% ${guild.logoPositionY ?? 50}%`, transform: `scale(${guild.logoZoom ?? 1})` }} />
             </div>
             <span className="font-display text-sm font-700 text-text-primary tracking-tight hidden sm:block truncate max-w-[120px]">
               {guild.name}
