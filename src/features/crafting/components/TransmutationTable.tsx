@@ -7,7 +7,7 @@ import { getCityColor } from '../data/items';
 import PriceCell from './PriceCell';
 import ItemIcon from './ItemIcon';
 
-type SortKey = 'path' | 'profitLoss';
+type SortKey = 'from' | 'to' | 'profitLoss';
 
 interface TransmutationTableProps {
   transmutations: Transmutation[];
@@ -41,8 +41,12 @@ export default function TransmutationTable({
   const sorted = useMemo(() => {
     const arr = [...results];
     arr.sort((a, b) => {
-      if (sortKey === 'path') {
-        const cmp = a.transmutation.id.localeCompare(b.transmutation.id);
+      if (sortKey === 'from') {
+        const cmp = a.transmutation.fromId.localeCompare(b.transmutation.fromId);
+        return sortAsc ? cmp : -cmp;
+      }
+      if (sortKey === 'to') {
+        const cmp = a.transmutation.toId.localeCompare(b.transmutation.toId);
         return sortAsc ? cmp : -cmp;
       }
       return sortAsc ? a.profitLoss - b.profitLoss : b.profitLoss - a.profitLoss;
@@ -55,7 +59,7 @@ export default function TransmutationTable({
       setSortAsc(!sortAsc);
     } else {
       setSortKey(key);
-      setSortAsc(key === 'profitLoss');
+      setSortAsc(key === 'profitLoss' ? true : true);
     }
   };
 
@@ -93,8 +97,11 @@ export default function TransmutationTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}>
-              <th className={thSortable + " text-left"} onClick={() => toggleSort('path')}>
-                From / To{sortIcon('path')}
+              <th className={thSortable + " text-left"} onClick={() => toggleSort('from')}>
+                From{sortIcon('from')}
+              </th>
+              <th className={thSortable + " text-left"} onClick={() => toggleSort('to')}>
+                To{sortIcon('to')}
               </th>
               <th className={thClass + " text-right"}>Transmute Cost</th>
               <th className={thClass + " text-right"}>Source Price</th>
@@ -108,7 +115,7 @@ export default function TransmutationTable({
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-16 text-center" style={{ color: 'var(--color-text-muted)' }}>
+                <td colSpan={7} className="px-4 py-16 text-center" style={{ color: 'var(--color-text-muted)' }}>
                   No transmutation paths available.
                 </td>
               </tr>
@@ -159,20 +166,17 @@ function TransmuteRow({
         e.currentTarget.style.backgroundColor = '';
       }}
     >
-      {/* From → To */}
+      {/* From */}
       <td className="px-4 py-3 font-medium" style={{ color: 'var(--color-text-primary)' }}>
         <div className="flex items-center gap-2">
           <ItemIcon itemId={tx.fromId} size={28} />
           <span>{tx.fromLabel}</span>
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            style={{ color: 'var(--color-text-muted)' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
+        </div>
+      </td>
+
+      {/* To */}
+      <td className="px-4 py-3 font-medium" style={{ color: 'var(--color-text-primary)' }}>
+        <div className="flex items-center gap-2">
           <ItemIcon itemId={tx.toId} size={28} />
           <span>{tx.toLabel}</span>
         </div>

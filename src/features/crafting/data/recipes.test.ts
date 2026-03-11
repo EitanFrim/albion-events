@@ -142,19 +142,15 @@ describe('recipe inputs', () => {
       expect(t8e3.inputs[1].itemId).toBe(config.heartId);
       expect(t7e3.inputs[1].itemId).toBe(config.heartId);
 
-      // .4 enchant heart recipes (not stone — stone has no .4)
+      // .4 enchant recipes should NOT require hearts (not stone — stone has no .4)
       if (type !== 'stone') {
         const t8e4 = RECIPES_BY_RESOURCE[type].find(r => r.tier === 8 && r.enchant === 4)!;
         const t7e4 = RECIPES_BY_RESOURCE[type].find(r => r.tier === 7 && r.enchant === 4)!;
         const t6e4 = RECIPES_BY_RESOURCE[type].find(r => r.tier === 6 && r.enchant === 4)!;
 
-        expect(t8e4.inputs).toHaveLength(3);
-        expect(t7e4.inputs).toHaveLength(3);
-        expect(t6e4.inputs).toHaveLength(3);
-
-        expect(t8e4.inputs[1].itemId).toBe(config.heartId);
-        expect(t7e4.inputs[1].itemId).toBe(config.heartId);
-        expect(t6e4.inputs[1].itemId).toBe(config.heartId);
+        expect(t8e4.inputs).toHaveLength(2);
+        expect(t7e4.inputs).toHaveLength(2);
+        expect(t6e4.inputs).toHaveLength(2);
       }
     }
   });

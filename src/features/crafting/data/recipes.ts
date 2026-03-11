@@ -43,8 +43,9 @@ function getNutrition(tier: number, enchant: number): number {
 
 // Raw resource required per refine — same for all resource types
 function getRawCount(tier: number, enchant: number): { raws: number; hearts: number } {
-  // High tier + high enchant require hearts (T8.2, T8.3, T8.4, T7.3, T7.4, T6.4)
-  if (tier + enchant >= 10) return { raws: 4, hearts: 1 };
+  // High tier + high enchant require hearts (T8.2, T8.3, T7.3)
+  // x.4 refined materials cannot be made from hearts
+  if (tier + enchant >= 10 && enchant < 4) return { raws: 4, hearts: 1 };
 
   // Standard counts by tier
   const rawsByTier: Record<number, number> = { 4: 2, 5: 3, 6: 4, 7: 5, 8: 5 };

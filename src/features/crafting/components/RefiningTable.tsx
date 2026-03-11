@@ -100,7 +100,7 @@ function HoverPopover({ trigger, children }: { trigger: ReactNode; children: Rea
       {open && createPortal(
         <div
           ref={popoverRef}
-          className="fixed z-50 border rounded-lg shadow-xl p-3 min-w-[220px]"
+          className="fixed z-50 border rounded-lg shadow-xl p-4 min-w-[240px]"
           style={{
             top: pos?.top ?? 0,
             left: pos?.left ?? 0,
@@ -125,7 +125,7 @@ function HoverPopover({ trigger, children }: { trigger: ReactNode; children: Rea
 
 function PopoverRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="flex justify-between gap-4">
+    <div className="flex justify-between gap-4 text-xs">
       <span style={{ color: 'var(--color-text-muted)' }}>{label}</span>
       <span className="tabular-nums font-medium" style={{ color: accent ? 'var(--color-accent)' : 'var(--color-text-primary)' }}>
         {value}
@@ -445,7 +445,7 @@ function MaterialCostTooltip({
   return (
     <HoverPopover trigger={trigger}>
       <div className="min-w-[280px]">
-        <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+        <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
           Material Breakdown
         </div>
 
@@ -464,7 +464,7 @@ function MaterialCostTooltip({
                     {inp.label}
                   </div>
                   <span
-                    className="text-[10px] inline-block px-1 py-0.5 rounded font-medium"
+                    className="text-[11px] inline-block px-1 py-0.5 rounded font-medium"
                     style={getCityColor(info.city) ? {
                       backgroundColor: getCityColor(info.city),
                       color: '#111',
@@ -475,7 +475,7 @@ function MaterialCostTooltip({
                     {info.city !== 'N/A' ? info.city : 'No data'}
                   </span>
                 </div>
-                <div className="text-[10px] whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
+                <div className="text-[11px] whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
                   {inp.quantity}x
                 </div>
                 <div className="text-right">
@@ -495,10 +495,10 @@ function MaterialCostTooltip({
         </div>
 
         <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
             Total
           </span>
-          <span className="text-xs tabular-nums font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          <span className="text-sm tabular-nums font-medium" style={{ color: 'var(--color-text-primary)' }}>
             {formatSilver(Math.round(result.materialCost))}
           </span>
         </div>
@@ -547,13 +547,13 @@ function TransmutePathDisplay({ alternative, getBuyPriceInfo }: {
       </div>
 
       {/* Cost breakdown */}
-      <div className="flex flex-col gap-1 text-[11px] px-1">
+      <div className="flex flex-col gap-1 text-xs px-1">
         <div className="flex justify-between">
           <span style={{ color: 'var(--color-text-muted)' }}>Source price</span>
           <span className="tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
             {formatSilver(alternative.sourceBuyPrice)}
             {sourceInfo.city !== 'N/A' && (
-              <span className="ml-1 text-[10px]" style={{ color: 'var(--color-text-muted)' }}>({sourceInfo.city})</span>
+              <span className="ml-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>({sourceInfo.city})</span>
             )}
           </span>
         </div>
@@ -608,7 +608,7 @@ function TransmuteAltSection({
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
         </svg>
-        <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
+        <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
           Cheaper via Transmute{alternative.steps.length > 1 ? ` (${alternative.steps.length} steps)` : ''}
         </span>
       </div>
@@ -616,19 +616,19 @@ function TransmuteAltSection({
       <TransmutePathDisplay alternative={alternative} getBuyPriceInfo={getBuyPriceInfo} />
 
       <div className="flex items-center justify-between mt-2 pt-1.5 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-        <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
           Save ({quantity}x)
         </span>
-        <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-profit)' }}>
+        <span className="text-sm tabular-nums font-semibold" style={{ color: 'var(--color-profit)' }}>
           -{formatSilver(Math.round(totalSavings))}
         </span>
       </div>
 
       <div className="flex items-center justify-between mt-1">
-        <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
           Adjusted Total
         </span>
-        <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-accent)' }}>
+        <span className="text-sm tabular-nums font-semibold" style={{ color: 'var(--color-accent)' }}>
           {formatSilver(Math.round(adjustedMaterialCost))}
         </span>
       </div>
@@ -722,21 +722,21 @@ function MaterialInputCell({
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                     </svg>
-                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
+                    <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
                       Cheaper via Transmute{transmuteAlternative.steps.length > 1 ? ` (${transmuteAlternative.steps.length} steps)` : ''}
                     </span>
                   </div>
                   <TransmutePathDisplay alternative={transmuteAlternative} getBuyPriceInfo={getBuyPriceInfo} />
                   <div className="flex items-center justify-between mt-2 pt-1.5 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                    <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                       Savings per unit
                     </span>
-                    <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-profit)' }}>
+                    <span className="text-sm tabular-nums font-semibold" style={{ color: 'var(--color-profit)' }}>
                       -{formatSilver(Math.round(transmuteAlternative.savingsPerUnit))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                    <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                       Direct buy
                     </span>
                     <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
@@ -745,10 +745,10 @@ function MaterialInputCell({
                   </div>
                   {qty > 1 && (
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                      <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                         Total ({qty}x)
                       </span>
-                      <span className="text-xs tabular-nums font-semibold" style={{ color: 'var(--color-accent)' }}>
+                      <span className="text-sm tabular-nums font-semibold" style={{ color: 'var(--color-accent)' }}>
                         {formatSilver(Math.round(transmuteAlternative.costPerUnit * qty))}
                       </span>
                     </div>
@@ -757,7 +757,7 @@ function MaterialInputCell({
               )}
               {allPrices.length > 1 && (
                 <div className={isTransmuted ? "mt-2 pt-2 border-t" : ""} style={isTransmuted ? { borderColor: 'var(--color-border-subtle)' } : {}}>
-                  <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                  <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
                     {isTransmuted ? 'Direct Buy Prices' : 'Prices by City'}
                   </div>
                   <div className="flex flex-col gap-1">
@@ -924,10 +924,10 @@ function RefiningRow({
               </span>
             }
           >
-            <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+            <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
               Estimated Return
             </div>
-            <div className="flex flex-col gap-1.5 text-[11px]">
+            <div className="flex flex-col gap-1.5 text-xs">
               <PopoverRow label={`No Focus (${settings.returnRateNoFocus}%)`} value={formatSilver(Math.round(estReturnNoFocus))} />
               <PopoverRow label={`With Focus (${settings.returnRateWithFocus}%)`} value={formatSilver(Math.round(estReturnWithFocus))} />
               <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border-subtle)' }}>
@@ -958,10 +958,10 @@ function RefiningRow({
               </span>
             }
           >
-            <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+            <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
               Nutrition Details
             </div>
-            <div className="flex flex-col gap-1.5 text-[11px]">
+            <div className="flex flex-col gap-1.5 text-xs">
               <PopoverRow label="Nutrition" value={String(recipe.nutrition)} />
               <PopoverRow label="Cost per 100" value={formatSilver(settings.nutritionPricePer100)} />
               <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border-subtle)' }}>
@@ -1063,15 +1063,15 @@ function RefiningRow({
                 </span>
               }
             >
-              <div className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
                 Focus Cost
               </div>
-              <div className="flex flex-col gap-1.5 text-[11px]">
+              <div className="flex flex-col gap-1.5 text-xs">
                 {result.actualFocusCost !== recipe.focusCost ? (
                   <>
                     <PopoverRow label="Actual focus cost" value={String(result.actualFocusCost)} accent />
                     <PopoverRow label="Base focus cost" value={String(recipe.focusCost)} />
-                    <div className="text-[10px] mt-1 italic" style={{ color: 'var(--color-text-muted)' }}>
+                    <div className="text-[11px] mt-1 italic" style={{ color: 'var(--color-text-muted)' }}>
                       Reduced by specialization
                     </div>
                   </>
