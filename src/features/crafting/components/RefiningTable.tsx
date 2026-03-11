@@ -670,7 +670,7 @@ function MaterialInputCell({
 
   const cityBadgeEl = (
     <span
-      className="text-[10px] whitespace-nowrap min-w-[60px] text-left px-1.5 py-0.5 rounded font-medium"
+      className="text-[10px] whitespace-nowrap w-[80px] text-center px-1.5 py-0.5 rounded font-medium"
       style={cityBadgeStyle}
     >
       {displayCity !== 'N/A' ? displayCity : '\u00A0'}
@@ -680,8 +680,16 @@ function MaterialInputCell({
   return (
     <td className="px-3 py-2.5 text-right">
       <div className="flex items-center justify-end gap-2">
+        {qty > 1 && (
+          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>×{qty}</span>
+        )}
         <ItemIcon itemId={isTransmuted ? transmuteAlternative.sourceItemId : itemId} size={16} />
         <div className="inline-flex items-center gap-1">
+          {isTransmuted && (
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          )}
           {isTransmuted ? (
             <span className="text-xs tabular-nums font-medium" style={{ color: 'var(--color-accent)' }}>
               {formatSilver(Math.round(displayPrice))}
@@ -697,19 +705,11 @@ function MaterialInputCell({
               hideCity
             />
           )}
-          {qty > 1 && (
-            <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>×{qty}</span>
-          )}
         </div>
         {allPrices.length > 1 || isTransmuted ? (
           <HoverPopover
             trigger={
               <span className="inline-flex items-center gap-0.5 cursor-default">
-                {isTransmuted && (
-                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                )}
                 {cityBadgeEl}
                 <InfoIcon />
               </span>
@@ -773,7 +773,7 @@ function MaterialInputCell({
                           }}
                         >
                           <span
-                            className="text-[10px] px-1.5 py-0.5 rounded font-medium min-w-[70px]"
+                            className="text-[10px] px-1.5 py-0.5 rounded font-medium w-[80px] text-center"
                             style={cityColor ? {
                               backgroundColor: cityColor,
                               color: '#111',
@@ -861,20 +861,7 @@ function RefiningRow({
       <td className="px-4 py-3 font-medium" style={{ color: 'var(--color-text-primary)' }}>
         <div className="flex items-center gap-2">
           <ItemIcon itemId={recipe.productId} size={36} />
-          <span>
-            {recipe.productLabel}
-            {isBest && (
-              <span
-                className="ml-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded"
-                style={{
-                  backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                  color: 'var(--color-accent)',
-                }}
-              >
-                Best
-              </span>
-            )}
-          </span>
+          <span>{recipe.productLabel}</span>
         </div>
       </td>
 
@@ -1012,7 +999,7 @@ function RefiningRow({
             )}
           </div>
           <span
-            className="text-[10px] whitespace-nowrap min-w-[60px] text-left px-1.5 py-0.5 rounded font-medium"
+            className="text-[10px] whitespace-nowrap w-[80px] text-center px-1.5 py-0.5 rounded font-medium"
             style={getCityColor(productInfo.city) ? {
               backgroundColor: getCityColor(productInfo.city),
               color: '#111',

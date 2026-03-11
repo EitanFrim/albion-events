@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { format } from 'date-fns'
 import { EventStatus } from '@prisma/client'
 
@@ -89,11 +90,7 @@ export default async function GuildHomePage({ params }: Props) {
 
       {isActive && active.length === 0 && past.length === 0 && (
         <div className="text-center py-24">
-          <div className="w-16 h-16 rounded-2xl bg-bg-surface border border-border-subtle flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
+          <Image src="/images/ui/empty-events.png" alt="" width={120} height={120} className="mx-auto mb-4 opacity-60" />
           <p className="text-text-secondary text-sm">No events scheduled yet.</p>
           {isOfficerPlus && (
             <Link href={`/g/${params.slug}/admin/events/new`} className="btn-primary mt-4 inline-flex">

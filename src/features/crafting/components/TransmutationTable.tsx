@@ -196,7 +196,7 @@ function TransmuteRow({
             hideCity
           />
           <span
-            className="text-[10px] whitespace-nowrap min-w-[60px] text-left px-1.5 py-0.5 rounded font-medium"
+            className="text-[10px] whitespace-nowrap w-[80px] text-center px-1.5 py-0.5 rounded font-medium"
             style={getCityColor(fromInfo.city) ? {
               backgroundColor: getCityColor(fromInfo.city),
               color: '#111',
@@ -227,7 +227,7 @@ function TransmuteRow({
             hideCity
           />
           <span
-            className="text-[10px] whitespace-nowrap min-w-[60px] text-left px-1.5 py-0.5 rounded font-medium"
+            className="text-[10px] whitespace-nowrap w-[80px] text-center px-1.5 py-0.5 rounded font-medium"
             style={getCityColor(toInfo.city) ? {
               backgroundColor: getCityColor(toInfo.city),
               color: '#111',

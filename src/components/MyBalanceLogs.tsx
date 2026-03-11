@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 
 interface Transaction {
   id: string
@@ -97,6 +98,7 @@ export function MyBalanceLogs({ guildSlug, currentBalance }: Props) {
 
       {filtered.length === 0 ? (
         <div className="card p-8 text-center text-text-muted text-sm">
+          <Image src="/images/ui/empty-events.png" alt="" width={80} height={80} className="mx-auto mb-3 opacity-50" />
           {transactions.length === 0 ? 'No balance transactions yet.' : 'No matching transactions.'}
         </div>
       ) : (
