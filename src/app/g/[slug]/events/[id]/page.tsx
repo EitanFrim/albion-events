@@ -32,9 +32,18 @@ export default async function GuildEventPage({ params }: Props) {
   const guild = await prisma.guild.findUnique({ where: { slug: params.slug } })
   if (!guild) notFound()
 
-  const membership = session ? await prisma.guildMembership.findUnique({
+  let membership = session ? await prisma.guildMembership.findUnique({
     where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
   }) : null
+
+  // Ensure GUEST membership exists (layout may not have created it yet due to concurrent rendering)
+  if (!membership && session) {
+    membership = await prisma.guildMembership.upsert({
+      where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
+      create: { userId: session.user.id, guildId: guild.id, role: 'GUEST', status: 'ACTIVE' },
+      update: {},
+    })
+  }
 
   const isOfficerPlus = membership?.role === 'OWNER' || membership?.role === 'OFFICER'
   const isGuest = membership?.role === 'GUEST'
