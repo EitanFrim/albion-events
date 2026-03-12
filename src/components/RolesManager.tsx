@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { RoleSpecialistsPanel } from '@/components/RoleSpecialistsPanel'
+import { SlotNoteEditor, type SlotNote, NOTE_FIELDS, hasNote } from '@/components/SlotNoteEditor'
 
 export interface GuildCategory {
   id: string
@@ -10,11 +11,18 @@ export interface GuildCategory {
   displayOrder: number
 }
 
+export interface BuildSetup {
+  id: string
+  name: string
+  data: SlotNote
+}
+
 export interface GuildRole {
   id: string
   name: string
   categoryId: string | null
   category: GuildCategory | null
+  buildSetups?: BuildSetup[]
 }
 
 const PRESET_COLORS = [
@@ -199,7 +207,7 @@ export function RolesManager({ initialCategories, initialRoles, onPick, compact 
             {catRoles.length === 0 && <span className="text-xs text-text-muted italic">No roles yet</span>}
           </div>
         ) : (
-          // Full mode: each role as a row with specialists
+          // Full mode: each role as a row with specialists + build setups
           <div className="space-y-2 mb-2">
             {catRoles.map(role => (
               <div key={role.id} className="group rounded-lg border border-border-subtle bg-bg-overlay p-2.5">
@@ -218,6 +226,17 @@ export function RolesManager({ initialCategories, initialRoles, onPick, compact 
                 </div>
                 <div className="mt-2 ml-1">
                   <RoleSpecialistsPanel roleId={role.id} roleName={role.name} color={color} guildSlug={guildSlug} />
+                </div>
+                <div className="mt-2 ml-1">
+                  <RoleBuildSetupsPanel
+                    roleId={role.id}
+                    roleName={role.name}
+                    color={color}
+                    initialSetups={role.buildSetups ?? []}
+                    onSetupsChange={(setups) => {
+                      setRoles(prev => prev.map(r => r.id === role.id ? { ...r, buildSetups: setups } : r))
+                    }}
+                  />
                 </div>
               </div>
             ))}
@@ -354,6 +373,174 @@ export function RolesManager({ initialCategories, initialRoles, onPick, compact 
           {importMsg && <span className={`text-xs ${importMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{importMsg}</span>}
         </div>
       )}
+    </div>
+  )
+}
+
+
+// ── Build Setups Panel ──────────────────────────────────────
+function RoleBuildSetupsPanel({ roleId, roleName, color, initialSetups, onSetupsChange }: {
+  roleId: string; roleName: string; color: string
+  initialSetups: BuildSetup[]
+  onSetupsChange: (setups: BuildSetup[]) => void
+}) {
+  const [setups, setSetups] = useState<BuildSetup[]>(initialSetups)
+  const [expanded, setExpanded] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newNote, setNewNote] = useState<SlotNote>({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { if (adding) setTimeout(() => nameInputRef.current?.focus(), 50) }, [adding])
+
+  function updateSetups(updated: BuildSetup[]) {
+    setSetups(updated)
+    onSetupsChange(updated)
+  }
+
+  async function addSetup() {
+    if (!newName.trim()) { setError('Enter a name'); return }
+    setLoading(true); setError('')
+    try {
+      const res = await fetch(`/api/guild-roles2/${roleId}/build-setups`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim(), data: newNote }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error)
+      const setup: BuildSetup = await res.json()
+      updateSetups([...setups, setup])
+      setNewName(''); setNewNote({}); setAdding(false)
+    } catch (e: any) { setError(e.message) }
+    finally { setLoading(false) }
+  }
+
+  async function saveEdit(setupId: string, name: string, data: SlotNote) {
+    setLoading(true); setError('')
+    try {
+      const res = await fetch(`/api/guild-roles2/${roleId}/build-setups`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setupId, name, data }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error)
+      const updated: BuildSetup = await res.json()
+      updateSetups(setups.map(s => s.id === setupId ? updated : s))
+      setEditingId(null)
+    } catch (e: any) { setError(e.message) }
+    finally { setLoading(false) }
+  }
+
+  async function deleteSetup(setupId: string) {
+    if (!confirm('Delete this build setup?')) return
+    await fetch(`/api/guild-roles2/${roleId}/build-setups`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setupId }),
+    })
+    updateSetups(setups.filter(s => s.id !== setupId))
+  }
+
+  function summarizeNote(note: SlotNote): string {
+    return NOTE_FIELDS
+      .filter(f => f.key !== 'general' && f.key !== 'regearValue' && note[f.key]?.trim())
+      .map(f => `${f.icon} ${note[f.key]}`)
+      .join(' · ') || 'Empty build'
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+      >
+        <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+        <span>📋 {setups.length} build setup{setups.length !== 1 ? 's' : ''}</span>
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-2 pl-2">
+          {setups.map(setup => (
+            <div key={setup.id} className="rounded-lg border border-border-subtle bg-bg-base p-2.5">
+              {editingId === setup.id ? (
+                <BuildSetupEditForm
+                  initial={setup}
+                  onSave={(name, data) => saveEdit(setup.id, name, data)}
+                  onCancel={() => setEditingId(null)}
+                  loading={loading}
+                />
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-text-primary">{setup.name}</span>
+                    <div className="flex gap-1">
+                      <button onClick={() => setEditingId(setup.id)}
+                        className="btn-ghost text-xs py-0.5 px-2">Edit</button>
+                      <button onClick={() => deleteSetup(setup.id)}
+                        className="text-xs text-text-muted hover:text-red-400 transition-colors px-1">×</button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1 truncate">{summarizeNote(setup.data as SlotNote)}</p>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {adding ? (
+            <div className="rounded-lg border border-accent/20 bg-bg-base p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <input ref={nameInputRef} type="text" value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Escape') { setAdding(false); setNewName(''); setNewNote({}) } }}
+                  placeholder="Build setup name..." className="input text-sm py-1.5 flex-1" maxLength={64} />
+              </div>
+              <SlotNoteEditor note={newNote} onChange={setNewNote} />
+              {error && <p className="text-red-400 text-xs">{error}</p>}
+              <div className="flex gap-2">
+                <button onClick={addSetup} disabled={loading} className="btn-primary text-xs py-1.5">
+                  {loading ? 'Adding…' : 'Add Build Setup'}
+                </button>
+                <button onClick={() => { setAdding(false); setNewName(''); setNewNote({}); setError('') }}
+                  className="btn-ghost text-xs py-1.5">Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setAdding(true)}
+              className="text-xs text-text-muted hover:text-accent transition-colors flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add build setup
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BuildSetupEditForm({ initial, onSave, onCancel, loading }: {
+  initial: BuildSetup
+  onSave: (name: string, data: SlotNote) => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  const [name, setName] = useState(initial.name)
+  const [note, setNote] = useState<SlotNote>(initial.data as SlotNote)
+
+  return (
+    <div className="space-y-3">
+      <input type="text" value={name} onChange={e => setName(e.target.value)}
+        className="input text-sm py-1.5 w-full" placeholder="Build setup name..." />
+      <SlotNoteEditor note={note} onChange={setNote} />
+      <div className="flex gap-2">
+        <button onClick={() => onSave(name, note)} disabled={loading || !name.trim()}
+          className="btn-primary text-xs py-1.5">{loading ? 'Saving…' : 'Save'}</button>
+        <button onClick={onCancel} className="btn-ghost text-xs py-1.5">Cancel</button>
+      </div>
     </div>
   )
 }

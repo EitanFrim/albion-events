@@ -96,7 +96,18 @@ export function SiphonedEnergyImport({ guildSlug, onImportComplete }: Props) {
     <div className="card p-5 space-y-4">
       <div>
         <h3 className="font-display font-600 text-text-primary text-sm mb-1">Import Siphoned Energy Logs</h3>
-        <p className="text-xs text-text-muted">Paste TSV data with columns: Date, Player, Reason, Amount. Duplicates are automatically skipped.</p>
+        <p className="text-xs text-text-muted">Paste the siphoned energy logs from the game. Duplicates are automatically skipped.</p>
+      </div>
+
+      <div className="bg-bg-elevated/60 border border-border-subtle rounded-lg px-4 py-3 space-y-2">
+        <p className="text-xs font-medium text-text-secondary">How to copy logs from the game:</p>
+        <ol className="text-xs text-text-muted space-y-1.5 list-decimal list-inside">
+          <li>Open your guild panel in Albion Online</li>
+          <li>Go to the <span className="text-text-secondary font-medium">Siphoned Energy</span> tab</li>
+          <li>Click the <span className="text-text-secondary font-medium">Log</span> sub-tab to see the transaction history</li>
+          <li>Select all rows (<span className="font-mono text-text-secondary">Ctrl+A</span>), then copy (<span className="font-mono text-text-secondary">Ctrl+C</span>)</li>
+          <li>Paste (<span className="font-mono text-text-secondary">Ctrl+V</span>) into the text box below</li>
+        </ol>
       </div>
 
       <textarea

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { GuildCategory, GuildRole } from '@/components/RolesManager'
 import { SlotNoteEditor, type SlotNote, hasNote, serializeSlotNote } from '@/components/SlotNoteEditor'
+import { BuildSetupPicker } from '@/components/BuildSetupPicker'
 
 // Renders dropdown at fixed screen coords — escapes any overflow:hidden parent
 function PickerDropdown({ anchorId, guildRoles, guildCategories, filter, onFilterChange, onSelect, onClose }: {
@@ -104,7 +105,7 @@ function PickerDropdown({ anchorId, guildRoles, guildCategories, filter, onFilte
   )
 }
 
-interface RoleSlotInput { roleName: string; color: string; capacity: number; minIp: string; note: SlotNote }
+interface RoleSlotInput { roleName: string; color: string; capacity: number; note: SlotNote }
 interface PartyInput { id?: string; name: string; roleSlots: RoleSlotInput[] }
 interface Template { id: string; name: string; data: { parties: { name: string; slots: { roleName: string; capacity: number; note?: SlotNote }[] }[] } }
 
@@ -210,7 +211,7 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
   function applyTemplate(tpl: Template) {
     setParties(tpl.data.parties.map(p => ({
       name: p.name,
-      roleSlots: p.slots.map(s => ({ roleName: s.roleName, color: getRoleColor(s.roleName), capacity: s.capacity, minIp: '', note: s.note ?? {} })),
+      roleSlots: p.slots.map(s => ({ roleName: s.roleName, color: getRoleColor(s.roleName), capacity: s.capacity, note: s.note ?? {} })),
     })))
   }
 
@@ -222,13 +223,13 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
 
   function addSlot(pi: number, role: GuildRole) {
     setParties(prev => prev.map((p, i) => i === pi
-      ? { ...p, roleSlots: [...p.roleSlots, { roleName: role.name, color: role.category?.color ?? '#6b7280', capacity: 1, minIp: '', note: {} }] }
+      ? { ...p, roleSlots: [...p.roleSlots, { roleName: role.name, color: role.category?.color ?? '#6b7280', capacity: 1, note: {} }] }
       : p))
     setPickerOpen(null); setPickerFilter('')
   }
   function removeSlot(pi: number, si: number) { setParties(prev => prev.map((p, i) => i === pi ? { ...p, roleSlots: p.roleSlots.filter((_, j) => j !== si) } : p)) }
-  function updateSlotField(pi: number, si: number, field: 'capacity' | 'minIp', value: string | number) {
-    setParties(prev => prev.map((p, i) => i === pi ? { ...p, roleSlots: p.roleSlots.map((s, j) => j === si ? { ...s, [field]: value } : s) } : p))
+  function updateSlotCapacity(pi: number, si: number, value: number) {
+    setParties(prev => prev.map((p, i) => i === pi ? { ...p, roleSlots: p.roleSlots.map((s, j) => j === si ? { ...s, capacity: value } : s) } : p))
   }
   function updateSlotNote(pi: number, si: number, note: SlotNote) {
     setParties(prev => prev.map((p, i) => i === pi ? { ...p, roleSlots: p.roleSlots.map((s, j) => j === si ? { ...s, note } : s) } : p))
@@ -256,7 +257,7 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
         for (const party of parties) {
           await fetch(`/api/events/${savedEventId}/parties`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: party.name, roleSlots: party.roleSlots.filter(s => s.roleName).map(s => ({ roleName: s.roleName, capacity: Number(s.capacity), tags: [], minIp: s.minIp ? Number(s.minIp) : null, notes: serializeSlotNote(s.note ?? {}) })) }),
+            body: JSON.stringify({ name: party.name, roleSlots: party.roleSlots.filter(s => s.roleName).map(s => ({ roleName: s.roleName, capacity: Number(s.capacity), tags: [], notes: serializeSlotNote(s.note ?? {}) })) }),
           })
         }
       } else {
@@ -284,7 +285,7 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
         for (const party of parties) {
           const slots = party.roleSlots.filter(s => s.roleName).map(s => ({
             roleName: s.roleName, capacity: Number(s.capacity), tags: [],
-            minIp: s.minIp ? Number(s.minIp) : null, notes: serializeSlotNote(s.note ?? {}),
+            notes: serializeSlotNote(s.note ?? {}),
           }))
           if (party.id) {
             // Update existing party's slots
@@ -487,12 +488,12 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
             <div className="p-3">
               {party.roleSlots.length > 0 && (
                 <div className="space-y-2 mb-3">
-                  <div className="grid grid-cols-[1fr,60px,80px,28px,20px] gap-2 px-1 text-xs font-mono text-text-muted">
-                    <span>Role</span><span className="text-center">Count</span><span>Min IP</span><span /><span />
+                  <div className="grid grid-cols-[1fr,60px,28px,20px] gap-2 px-1 text-xs font-mono text-text-muted">
+                    <span>Role</span><span className="text-center">Count</span><span /><span />
                   </div>
                   {party.roleSlots.map((slot, si) => (
                     <div key={si}>
-                      <div className="grid grid-cols-[1fr,60px,80px,28px,20px] gap-2 items-center">
+                      <div className="grid grid-cols-[1fr,60px,28px,20px] gap-2 items-center">
                         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium truncate"
                           style={{ backgroundColor: slot.color + '22', color: slot.color, border: `1px solid ${slot.color}44` }}>
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: slot.color }} />
@@ -500,11 +501,8 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
                           {hasNote(slot.note) && <span className="text-xs opacity-60 flex-shrink-0">📋</span>}
                         </div>
                         <input type="number" value={slot.capacity} min={1}
-                          onChange={e => updateSlotField(pi, si, 'capacity', Number(e.target.value))}
+                          onChange={e => updateSlotCapacity(pi, si, Number(e.target.value))}
                           className="input py-1.5 text-xs text-center" />
-                        <input type="number" value={slot.minIp}
-                          onChange={e => updateSlotField(pi, si, 'minIp', e.target.value)}
-                          placeholder="1300" className="input py-1.5 text-xs" />
                         <button type="button"
                           onClick={() => setNoteOpen(noteOpen === `${pi}-${si}` ? null : `${pi}-${si}`)}
                           title="Build note"
@@ -517,6 +515,10 @@ export function EventBuilderForm({ initialData, eventId, guildSlug }: Props) {
                       </div>
                       {noteOpen === `${pi}-${si}` && (
                         <div className="mt-2 ml-1 p-3 bg-bg-overlay rounded-lg border border-border-subtle">
+                          <BuildSetupPicker
+                            setups={(guildRoles.find(r => r.name === slot.roleName) as any)?.buildSetups ?? []}
+                            onSelect={data => updateSlotNote(pi, si, data)}
+                          />
                           <SlotNoteEditor
                             note={slot.note ?? {}}
                             onChange={n => updateSlotNote(pi, si, n)}

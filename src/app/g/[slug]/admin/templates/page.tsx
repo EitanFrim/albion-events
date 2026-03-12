@@ -32,7 +32,7 @@ export default async function GuildTemplatesPage({ params }: Props) {
   const roles = await prisma.guildRole2.findMany({
     where: { guildId: guild.id },
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
-    include: { category: true },
+    include: { category: true, buildSetups: { orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }] } },
   })
 
   return (

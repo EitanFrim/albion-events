@@ -43,7 +43,7 @@ export default async function GuildEditEventPage({ params }: Props) {
       name: p.name,
       roleSlots: p.roleSlots.map(s => ({
         roleName: s.roleName, capacity: s.capacity,
-        tags: s.tags.join(', '), minIp: s.minIp?.toString() ?? '',
+        tags: s.tags.join(', '),
         note: parseSlotNote(s.notes),
       })),
     })),

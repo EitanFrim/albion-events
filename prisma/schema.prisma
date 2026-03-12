@@ -286,9 +286,24 @@ model GuildRole2 {
   guild       Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
   category    GuildCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   specialists PlayerRoleSpec[]
+  buildSetups RoleBuildSetup[]
 
   @@unique([guildId, name])
   @@map("guild_roles2")
+}
+
+model RoleBuildSetup {
+  id           String   @id @default(cuid())
+  roleId       String   @map("role_id")
+  name         String
+  data         Json
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  role GuildRole2 @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, name])
+  @@map("role_build_setups")
 }
 
 model PlayerRoleSpec {

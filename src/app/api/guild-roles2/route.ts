@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     // Legacy: return all (for backwards compat with existing components)
     const roles = await prisma.guildRole2.findMany({
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
-      include: { category: true },
+      include: { category: true, buildSetups: { orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }] } },
     })
     return NextResponse.json(roles)
   }
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const roles = await prisma.guildRole2.findMany({
     where: { guildId: guild.id },
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
-    include: { category: true },
+    include: { category: true, buildSetups: { orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }] } },
   })
   return NextResponse.json(roles)
 }
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   try {
     const role = await prisma.guildRole2.create({
       data: { name: name.trim(), categoryId: categoryId ?? null, guildId: guild.id },
-      include: { category: true },
+      include: { category: true, buildSetups: true },
     })
     return NextResponse.json(role, { status: 201 })
   } catch {

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { GuildCategory, GuildRole } from '@/components/RolesManager'
 import { SlotNoteEditor, type SlotNote, parseSlotNote, serializeSlotNote, hasNote } from '@/components/SlotNoteEditor'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
+import { BuildSetupPicker, type BuildSetupOption } from '@/components/BuildSetupPicker'
 
 interface TemplateSlot { roleName: string; capacity: number; note?: SlotNote }
 interface TemplateParty { name: string; slots: TemplateSlot[] }
@@ -564,6 +565,10 @@ function TemplateEditor({ template, roles, categories, onChange, onSaved, onCanc
                     {/* Structured note editor — expands when toggled */}
                     {noteOpen === `${pi}-${si}` && (
                       <div className="mt-2 ml-8 mr-2 mb-2 p-3 bg-bg-overlay rounded-lg border border-border-subtle" onMouseDown={e => e.stopPropagation()}>
+                        <BuildSetupPicker
+                          setups={(roles.find(r => r.name === slot.roleName) as any)?.buildSetups ?? []}
+                          onSelect={data => updateNote(pi, si, data)}
+                        />
                         <SlotNoteEditor
                           note={slot.note ?? {}}
                           onChange={n => updateNote(pi, si, n)}
