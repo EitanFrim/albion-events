@@ -190,8 +190,8 @@ export default function RefiningTable({
           vb = effectiveProfitWithFocus(b);
           break;
         case 'focusEfficiency':
-          va = a.focusEfficiency;
-          vb = b.focusEfficiency;
+          va = a.actualFocusCost > 0 ? Math.round(effectiveProfitWithFocus(a) / a.actualFocusCost) : 0;
+          vb = b.actualFocusCost > 0 ? Math.round(effectiveProfitWithFocus(b) / b.actualFocusCost) : 0;
           break;
       }
       return sortAsc ? va - vb : vb - va;
@@ -1053,12 +1053,15 @@ function RefiningRow({
       <td className="px-4 py-3 text-right">
         {result.incomplete ? (
           <span className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>N/A</span>
-        ) : (
+        ) : (() => {
+          const effProfit = effectiveProfitWithFocus(result)
+          const effFocusEff = result.actualFocusCost > 0 ? Math.round(effProfit / result.actualFocusCost) : 0
+          return (
           <div className="flex justify-end">
             <HoverPopover
               trigger={
-                <span className="tabular-nums cursor-default flex items-center gap-1" style={{ color: profitColor(result.focusEfficiency) }}>
-                  {result.focusEfficiency}
+                <span className="tabular-nums cursor-default flex items-center gap-1" style={{ color: profitColor(effFocusEff) }}>
+                  {effFocusEff}
                   <InfoIcon />
                 </span>
               }
@@ -1067,10 +1070,10 @@ function RefiningRow({
                 Focus Efficiency
               </div>
               <div className="flex flex-col gap-1.5 text-xs">
-                <PopoverRow label="Profit (Focus)" value={formatSilver(result.profitWithFocus)} accent />
+                <PopoverRow label="Profit (Focus)" value={formatSilver(Math.round(effProfit))} accent />
                 <PopoverRow label={result.actualFocusCost !== recipe.focusCost ? "Actual focus cost" : "Focus cost"} value={String(result.actualFocusCost)} />
                 <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border)' }}>
-                  <PopoverRow label="Focus Eff." value={`${formatSilver(result.profitWithFocus)} / ${result.actualFocusCost} = ${result.focusEfficiency}`} accent />
+                  <PopoverRow label="Focus Eff." value={`${formatSilver(Math.round(effProfit))} / ${result.actualFocusCost} = ${effFocusEff}`} accent />
                 </div>
                 {result.actualFocusCost !== recipe.focusCost && (
                   <div className="text-[11px] mt-0.5 italic" style={{ color: 'var(--color-text-muted)' }}>
@@ -1080,7 +1083,8 @@ function RefiningRow({
               </div>
             </HoverPopover>
           </div>
-        )}
+          )
+        })()}
       </td>
     </tr>
   );
