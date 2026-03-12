@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { requireGuildAccess } from '@/lib/guild'
-import { importSiphonedEnergyLogs } from '@/lib/siphoned-energy'
+import { importSiphonedEnergyLogs, notifyNegativeEnergyPlayers } from '@/lib/siphoned-energy'
 import { z } from 'zod'
 
 const entrySchema = z.object({
@@ -37,6 +37,9 @@ export async function POST(
   if (!parsed.success) return NextResponse.json({ error: 'Invalid data', details: parsed.error.message }, { status: 400 })
 
   const result = await importSiphonedEnergyLogs(guild.id, session.user.id, parsed.data.entries)
+
+  // Fire-and-forget: DM players who ended up with negative energy
+  notifyNegativeEnergyPlayers(guild.id, result.affectedMembershipIds).catch(() => {})
 
   return NextResponse.json(result)
 }

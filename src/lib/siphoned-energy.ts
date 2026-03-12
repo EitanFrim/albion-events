@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import { sendDirectMessage } from './discord'
 
 /* ─── Manual adjust (mirrors adjustBalance) ─── */
 
@@ -55,6 +56,7 @@ interface ImportResult {
   imported: number
   skipped: number
   orphaned: number
+  affectedMembershipIds: string[]
 }
 
 export async function importSiphonedEnergyLogs(
@@ -149,8 +151,67 @@ export async function importSiphonedEnergyLogs(
       })
     }
 
-    return { imported, skipped, orphaned }
+    return { imported, skipped, orphaned, affectedMembershipIds: [...membershipIncrements.keys()] }
   })
+}
+
+/* ─── Notify players with negative energy via Discord DM ─── */
+
+export async function notifyNegativeEnergyPlayers(
+  guildId: string,
+  membershipIds: string[],
+): Promise<{ notified: number; failed: number }> {
+  if (membershipIds.length === 0) return { notified: 0, failed: 0 }
+
+  try {
+    const memberships = await prisma.guildMembership.findMany({
+      where: {
+        id: { in: membershipIds },
+        guildId,
+        siphonedEnergy: { lt: 0 },
+      },
+      include: {
+        user: { select: { discordUserId: true, inGameName: true } },
+        guild: { select: { name: true } },
+      },
+    })
+
+    let notified = 0
+    let failed = 0
+
+    for (const m of memberships) {
+      if (!m.user.discordUserId) {
+        failed++
+        continue
+      }
+
+      const debt = Math.abs(m.siphonedEnergy)
+      const playerLabel = m.user.inGameName ?? 'Unknown'
+
+      const result = await sendDirectMessage(m.user.discordUserId, {
+        embeds: [
+          {
+            title: '⚡ Siphoned Energy Debt',
+            description: `Hey **${playerLabel}**, you currently owe **${debt.toLocaleString()}** siphoned energy to **${m.guild.name}**.`,
+            color: 0x2dd4bf, // teal-400
+            footer: { text: m.guild.name },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      })
+
+      if (result) {
+        notified++
+      } else {
+        failed++
+      }
+    }
+
+    return { notified, failed }
+  } catch (err) {
+    console.error('notifyNegativeEnergyPlayers error:', err)
+    return { notified: 0, failed: 0 }
+  }
 }
 
 /* ─── Link orphaned transactions when a player sets/changes IGN ─── */

@@ -44,6 +44,36 @@ export function modalResponse(customId: string, title: string, components: any[]
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10'
 
+/**
+ * Open (or reuse) a DM channel with a user, then send a message.
+ * Returns the message object on success, null on failure (e.g. DMs disabled).
+ */
+export async function sendDirectMessage(
+  discordUserId: string,
+  payload: { content?: string; embeds?: any[]; components?: any[] },
+): Promise<{ id: string } | null> {
+  // 1. Create / fetch the DM channel
+  const channelRes = await fetch(`${DISCORD_API_BASE}/users/@me/channels`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+    },
+    body: JSON.stringify({ recipient_id: discordUserId }),
+  })
+
+  if (!channelRes.ok) {
+    const err = await channelRes.text()
+    console.error(`Discord DM channel creation failed (${channelRes.status}):`, err)
+    return null
+  }
+
+  const channel: { id: string } = await channelRes.json()
+
+  // 2. Send the message in the DM channel
+  return sendChannelMessage(channel.id, payload)
+}
+
 export async function sendChannelMessage(
   channelId: string,
   payload: {
