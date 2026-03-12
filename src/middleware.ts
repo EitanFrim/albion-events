@@ -14,6 +14,7 @@ export default withAuth(
           pathname === '/' ||
           pathname === '/guilds' ||
           pathname.startsWith('/crafting') ||
+          pathname.startsWith('/patch-notes') ||
           pathname.startsWith('/auth') ||
           pathname.startsWith('/api/auth') ||
           pathname.startsWith('/api/discord') ||
