@@ -157,6 +157,50 @@ export async function importSiphonedEnergyLogs(
 
 /* ─── Notify players with negative energy via Discord DM ─── */
 
+type MemberWithDebt = {
+  siphonedEnergy: number
+  user: { discordUserId: string | null; inGameName: string | null }
+  guild: { name: string }
+}
+
+async function sendDebtNotifications(
+  members: MemberWithDebt[],
+): Promise<{ notified: number; failed: number }> {
+  let notified = 0
+  let failed = 0
+
+  for (const m of members) {
+    if (!m.user.discordUserId) {
+      failed++
+      continue
+    }
+
+    const debt = Math.abs(m.siphonedEnergy)
+    const playerLabel = m.user.inGameName ?? 'Unknown'
+
+    const result = await sendDirectMessage(m.user.discordUserId, {
+      embeds: [
+        {
+          title: '⚡ Siphoned Energy Debt',
+          description: `Hey **${playerLabel}**, you currently owe **${debt.toLocaleString()}** siphoned energy to **${m.guild.name}**.`,
+          color: 0x2dd4bf, // teal-400
+          footer: { text: m.guild.name },
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    })
+
+    if (result) {
+      notified++
+    } else {
+      failed++
+    }
+  }
+
+  return { notified, failed }
+}
+
+/** Notify specific members (after import) that ended up with negative energy */
 export async function notifyNegativeEnergyPlayers(
   guildId: string,
   membershipIds: string[],
@@ -176,40 +220,33 @@ export async function notifyNegativeEnergyPlayers(
       },
     })
 
-    let notified = 0
-    let failed = 0
-
-    for (const m of memberships) {
-      if (!m.user.discordUserId) {
-        failed++
-        continue
-      }
-
-      const debt = Math.abs(m.siphonedEnergy)
-      const playerLabel = m.user.inGameName ?? 'Unknown'
-
-      const result = await sendDirectMessage(m.user.discordUserId, {
-        embeds: [
-          {
-            title: '⚡ Siphoned Energy Debt',
-            description: `Hey **${playerLabel}**, you currently owe **${debt.toLocaleString()}** siphoned energy to **${m.guild.name}**.`,
-            color: 0x2dd4bf, // teal-400
-            footer: { text: m.guild.name },
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      })
-
-      if (result) {
-        notified++
-      } else {
-        failed++
-      }
-    }
-
-    return { notified, failed }
+    return sendDebtNotifications(memberships)
   } catch (err) {
     console.error('notifyNegativeEnergyPlayers error:', err)
+    return { notified: 0, failed: 0 }
+  }
+}
+
+/** Notify ALL guild members with negative energy (manual trigger) */
+export async function notifyAllNegativeEnergyPlayers(
+  guildId: string,
+): Promise<{ notified: number; failed: number }> {
+  try {
+    const memberships = await prisma.guildMembership.findMany({
+      where: {
+        guildId,
+        status: 'ACTIVE',
+        siphonedEnergy: { lt: 0 },
+      },
+      include: {
+        user: { select: { discordUserId: true, inGameName: true } },
+        guild: { select: { name: true } },
+      },
+    })
+
+    return sendDebtNotifications(memberships)
+  } catch (err) {
+    console.error('notifyAllNegativeEnergyPlayers error:', err)
     return { notified: 0, failed: 0 }
   }
 }

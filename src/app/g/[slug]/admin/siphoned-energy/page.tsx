@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { SiphonedEnergyLogs } from '@/components/SiphonedEnergyLogs'
 import { SiphonedEnergyImport } from '@/components/SiphonedEnergyImport'
+import { NotifyDebtButton } from '@/components/NotifyDebtButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,11 @@ export default async function SiphonedEnergyPage({ params }: Props) {
     redirect(`/g/${params.slug}`)
   }
 
+  // Count members with negative energy for display
+  const debtCount = await prisma.guildMembership.count({
+    where: { guildId: guild.id, status: 'ACTIVE', siphonedEnergy: { lt: 0 } },
+  })
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-6">
@@ -33,6 +39,7 @@ export default async function SiphonedEnergyPage({ params }: Props) {
       </div>
       <div className="space-y-6">
         <SiphonedEnergyImport guildSlug={params.slug} />
+        <NotifyDebtButton guildSlug={params.slug} debtCount={debtCount} />
         <SiphonedEnergyLogs guildSlug={params.slug} />
       </div>
     </div>

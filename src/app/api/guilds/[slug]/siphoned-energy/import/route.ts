@@ -17,6 +17,7 @@ const entrySchema = z.object({
 
 const importSchema = z.object({
   entries: z.array(entrySchema).min(1).max(5000),
+  notify: z.boolean().optional().default(false),
 })
 
 export async function POST(
@@ -38,8 +39,10 @@ export async function POST(
 
   const result = await importSiphonedEnergyLogs(guild.id, session.user.id, parsed.data.entries)
 
-  // Fire-and-forget: DM players who ended up with negative energy
-  notifyNegativeEnergyPlayers(guild.id, result.affectedMembershipIds).catch(() => {})
+  // Fire-and-forget: DM players who ended up with negative energy (only if checkbox enabled)
+  if (parsed.data.notify) {
+    notifyNegativeEnergyPlayers(guild.id, result.affectedMembershipIds).catch(() => {})
+  }
 
   return NextResponse.json(result)
 }

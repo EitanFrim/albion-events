@@ -20,6 +20,7 @@ export function SiphonedEnergyImport({ guildSlug, onImportComplete }: Props) {
   const [parseError, setParseError] = useState('')
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<{ imported: number; skipped: number; orphaned: number } | null>(null)
+  const [notifyOnImport, setNotifyOnImport] = useState(false)
 
   function handleParse() {
     setParseError('')
@@ -72,7 +73,7 @@ export function SiphonedEnergyImport({ guildSlug, onImportComplete }: Props) {
       const res = await fetch(`/api/guilds/${guildSlug}/siphoned-energy/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entries: parsed }),
+        body: JSON.stringify({ entries: parsed, notify: notifyOnImport }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -105,7 +106,7 @@ export function SiphonedEnergyImport({ guildSlug, onImportComplete }: Props) {
         className="input w-full h-32 font-mono text-xs resize-y"
       />
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={handleParse}
           disabled={!raw.trim()}
@@ -123,6 +124,16 @@ export function SiphonedEnergyImport({ guildSlug, onImportComplete }: Props) {
             {importing ? 'Importing…' : `Import ${parsed.length} entries`}
           </button>
         )}
+
+        <label className="flex items-center gap-2 cursor-pointer ml-auto">
+          <input
+            type="checkbox"
+            checked={notifyOnImport}
+            onChange={e => setNotifyOnImport(e.target.checked)}
+            className="w-3.5 h-3.5 rounded border-border bg-bg-elevated accent-teal-400"
+          />
+          <span className="text-xs text-text-secondary">Notify players in debt via Discord DM</span>
+        </label>
       </div>
 
       {parseError && (
