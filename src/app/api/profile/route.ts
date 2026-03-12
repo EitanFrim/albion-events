@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { verifyAlbionName } from '@/lib/albion'
+import { linkOrphanedEnergyTransactions } from '@/lib/siphoned-energy'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -67,6 +68,13 @@ export async function PUT(req: NextRequest) {
     where: { id: session.user.id },
     data: { inGameName: finalName },
   })
+
+  // Link orphaned siphoned energy transactions matching this IGN
+  try {
+    await linkOrphanedEnergyTransactions(session.user.id, finalName)
+  } catch {
+    // Non-critical — don't block profile update
+  }
 
   return NextResponse.json({ inGameName: user.inGameName })
 }

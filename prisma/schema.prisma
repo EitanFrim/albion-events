@@ -80,6 +80,7 @@ model User {
   lootTabBids         LootTabBid[]
   lootTabParticipations    LootTabParticipant[]
   lootTabParticipantsAdded LootTabParticipant[] @relation("ParticipantAddedBy")
+  energyActions            SiphonedEnergyTransaction[] @relation("EnergyPerformer")
 
   @@map("users")
 }
@@ -112,6 +113,7 @@ model Guild {
   categories GuildCategory[]
   templates  GuildTemplate[]
   lootTabSales LootTabSale[]
+  siphonedEnergyTransactions SiphonedEnergyTransaction[]
 
   @@map("guilds")
 }
@@ -123,6 +125,7 @@ model GuildMembership {
   role         MemberRole   @default(PLAYER)
   status       MemberStatus @default(PENDING)
   balance           Int          @default(0)
+  siphonedEnergy    Int          @default(0) @map("siphoned_energy")
   lastSeenBalanceAt DateTime     @default(now()) @map("last_seen_balance_at")
   verifiedById      String?      @map("verified_by_id")
   verifiedAt   DateTime?    @map("verified_at")
@@ -132,6 +135,7 @@ model GuildMembership {
   guild        Guild               @relation(fields: [guildId], references: [id], onDelete: Cascade)
   transactions     BalanceTransaction[]
   regearRequests   RegearRequest[]
+  siphonedEnergyTransactions SiphonedEnergyTransaction[]
 
   @@unique([userId, guildId])
   @@map("guild_memberships")
@@ -402,4 +406,24 @@ model LootTabParticipant {
 
   @@unique([saleId, userId])
   @@map("loot_tab_participants")
+}
+
+model SiphonedEnergyTransaction {
+  id            String    @id @default(cuid())
+  guildId       String    @map("guild_id")
+  membershipId  String?   @map("membership_id")
+  playerName    String    @map("player_name")
+  amount        Int
+  energyAfter   Int?      @map("energy_after")
+  reason        String?
+  logDate       DateTime  @map("log_date")
+  performedById String    @map("performed_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  guild       Guild               @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  membership  GuildMembership?    @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  performedBy User                @relation("EnergyPerformer", fields: [performedById], references: [id])
+
+  @@unique([guildId, playerName, logDate, amount], name: "dedup_key")
+  @@map("siphoned_energy_transactions")
 }

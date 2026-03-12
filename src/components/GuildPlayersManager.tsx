@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 
 type MemberRole = 'OWNER' | 'OFFICER' | 'PLAYER' | 'ALLIANCE' | 'GUEST'
 type MemberStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED'
-type SortKey = 'name' | 'role' | 'balance' | 'joined'
+type SortKey = 'name' | 'role' | 'balance' | 'energy' | 'joined'
 type SortDir = 'asc' | 'desc'
 
 interface Member {
@@ -12,6 +12,7 @@ interface Member {
   role: MemberRole
   status: MemberStatus
   balance: number
+  siphonedEnergy: number
   joinedAt: string
   verifiedAt: string | null
   user: { id: string; discordName: string; inGameName: string | null; avatarUrl: string | null }
@@ -47,6 +48,14 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
   const [balanceAmount, setBalanceAmount] = useState('')
   const [balanceMode, setBalanceMode] = useState<'add' | 'deduct'>('add')
   const [balanceReason, setBalanceReason] = useState('')
+  const [energyModal, setEnergyModal] = useState<{
+    userId: string
+    name: string
+    currentEnergy: number
+  } | null>(null)
+  const [energyAmount, setEnergyAmount] = useState('')
+  const [energyMode, setEnergyMode] = useState<'add' | 'deduct'>('add')
+  const [energyReason, setEnergyReason] = useState('')
 
   async function updateMember(userId: string, data: { status?: MemberStatus; role?: MemberRole }) {
     setLoading(userId)
@@ -106,6 +115,40 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
     }
   }
 
+  async function submitEnergyAdjustment() {
+    if (!energyModal) return
+    const raw = parseInt(energyAmount, 10)
+    if (!raw || raw <= 0) { alert('Enter a valid positive amount'); return }
+    if (!energyReason.trim()) { alert('Please provide a reason'); return }
+    const amount = energyMode === 'deduct' ? -raw : raw
+
+    setLoading(energyModal.userId)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/members/${energyModal.userId}/siphoned-energy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, reason: energyReason.trim() }),
+      })
+      if (!res.ok) { alert('Failed to adjust energy'); return }
+      const data = await res.json()
+      setMembers(prev => prev.map(m =>
+        m.user.id === energyModal.userId ? { ...m, siphonedEnergy: data.siphonedEnergy } : m
+      ))
+      setEnergyModal(null)
+      setEnergyAmount('')
+      setEnergyReason('')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  function openEnergyModal(userId: string, name: string, currentEnergy: number) {
+    setEnergyModal({ userId, name, currentEnergy })
+    setEnergyAmount('')
+    setEnergyMode('add')
+    setEnergyReason('')
+  }
+
   function openBalanceModal(userId: string, name: string, currentBalance: number) {
     setBalanceModal({ userId, name, currentBalance })
     setBalanceAmount('')
@@ -125,7 +168,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
       setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     } else {
       setSortKey(key)
-      setSortDir(key === 'balance' ? 'desc' : 'asc')
+      setSortDir(key === 'balance' || key === 'energy' ? 'desc' : 'asc')
     }
   }
 
@@ -154,6 +197,9 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
         case 'balance':
           cmp = a.balance - b.balance
           break
+        case 'energy':
+          cmp = a.siphonedEnergy - b.siphonedEnergy
+          break
         case 'joined':
           cmp = new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
           break
@@ -168,6 +214,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
     { key: 'name', label: 'Name', icon: 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z' },
     { key: 'role', label: 'Role', icon: 'M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z' },
     { key: 'balance', label: 'Balance', icon: 'M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' },
+    { key: 'energy', label: 'Energy', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
     { key: 'joined', label: 'Joined', icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 9v9.75' },
   ]
 
@@ -384,6 +431,20 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                     <span className="text-[10px] text-text-muted font-mono group-hover/bal:text-accent transition-colors">silver</span>
                   </button>
 
+                  {/* Siphoned Energy */}
+                  <button
+                    onClick={() => openEnergyModal(member.user.id, displayName, member.siphonedEnergy)}
+                    disabled={isLoading}
+                    className="flex-shrink-0 group/nrg px-3 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors text-right"
+                  >
+                    <span className={`text-sm font-mono font-medium block ${
+                      member.siphonedEnergy > 0 ? 'text-teal-400' : member.siphonedEnergy < 0 ? 'text-red-400' : 'text-text-muted'
+                    }`}>
+                      {member.siphonedEnergy.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-text-muted font-mono group-hover/nrg:text-teal-400 transition-colors">energy</span>
+                  </button>
+
                   {/* Actions */}
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {/* Verify buttons for pending */}
@@ -548,6 +609,92 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                     : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:shadow-[0_0_16px_rgba(239,68,68,0.15)]'
                 } disabled:opacity-40 disabled:cursor-not-allowed`}>
                 {loading === balanceModal.userId ? '...' : balanceMode === 'add' ? 'Add Silver' : 'Deduct Silver'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Energy adjustment modal */}
+      {energyModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4"
+          onClick={() => setEnergyModal(null)}>
+          <div
+            className="card w-full max-w-md p-6 space-y-5"
+            onClick={e => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="font-display font-700 text-text-primary text-lg">Adjust Siphoned Energy</h3>
+              <p className="text-text-secondary text-sm mt-1">
+                {energyModal.name} — current:{' '}
+                <span className={`font-mono font-medium ${energyModal.currentEnergy < 0 ? 'text-red-400' : 'text-teal-400'}`}>
+                  {energyModal.currentEnergy.toLocaleString()} energy
+                </span>
+              </p>
+            </div>
+
+            {/* Mode toggle */}
+            <div className="flex rounded-lg overflow-hidden border border-border">
+              <button
+                onClick={() => setEnergyMode('add')}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  energyMode === 'add' ? 'bg-emerald-500/20 text-emerald-400' : 'text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                + Add
+              </button>
+              <button
+                onClick={() => setEnergyMode('deduct')}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  energyMode === 'deduct' ? 'bg-red-500/20 text-red-400' : 'text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                − Deduct
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-text-muted font-mono uppercase tracking-wider mb-1.5 block">Amount</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={energyAmount}
+                  onChange={e => setEnergyAmount(e.target.value)}
+                  placeholder="0"
+                  className="input w-full text-lg font-mono py-2.5"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="text-xs text-text-muted font-mono uppercase tracking-wider mb-1.5 block">Reason</label>
+                <input
+                  type="text"
+                  value={energyReason}
+                  onChange={e => setEnergyReason(e.target.value)}
+                  placeholder="Reason for adjustment…"
+                  className="input w-full text-sm"
+                  maxLength={200}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setEnergyModal(null)}
+                className="flex-1 btn-ghost text-sm py-2.5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitEnergyAdjustment}
+                disabled={loading === energyModal.userId || !energyAmount || !energyReason.trim()}
+                className={`flex-1 text-sm py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                  energyMode === 'add'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}>
+                {loading === energyModal.userId ? '...' : energyMode === 'add' ? 'Add Energy' : 'Deduct Energy'}
               </button>
             </div>
           </div>

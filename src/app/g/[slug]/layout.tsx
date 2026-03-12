@@ -39,12 +39,14 @@ export default async function GuildLayout({ children, params }: Props) {
   // Query total guild balance across all active members (for officer+ nav)
   const isOfficerPlus = membership.role === 'OWNER' || membership.role === 'OFFICER'
   let totalGuildBalance = 0
+  let totalGuildEnergy = 0
   if (isOfficerPlus) {
     const agg = await prisma.guildMembership.aggregate({
       where: { guildId: guild.id, status: 'ACTIVE' },
-      _sum: { balance: true },
+      _sum: { balance: true, siphonedEnergy: true },
     })
     totalGuildBalance = agg._sum.balance ?? 0
+    totalGuildEnergy = agg._sum.siphonedEnergy ?? 0
   }
 
   // Query unseen balance transactions for notifications (active members only)
@@ -72,8 +74,9 @@ export default async function GuildLayout({ children, params }: Props) {
     <div className={`min-h-screen flex flex-col ${guild.accentColor ? 'guild-themed' : ''}`} style={themeStyle}>
       <GuildNavBar
         guild={{ id: guild.id, name: guild.name, slug: guild.slug, logoUrl: guild.logoUrl, logoZoom: guild.logoZoom, logoPositionX: guild.logoPositionX, logoPositionY: guild.logoPositionY }}
-        membership={{ role: membership.role, status: membership.status, balance: membership.balance }}
+        membership={{ role: membership.role, status: membership.status, balance: membership.balance, siphonedEnergy: membership.siphonedEnergy }}
         totalGuildBalance={totalGuildBalance}
+        totalGuildEnergy={totalGuildEnergy}
       />
       {guild.bannerUrl && (
         <div className="relative w-full h-40 overflow-hidden flex-shrink-0">
