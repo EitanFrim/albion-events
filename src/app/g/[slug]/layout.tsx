@@ -29,13 +29,10 @@ export default async function GuildLayout({ children, params }: Props) {
 
   // Auto-create GUEST membership for non-members (e.g. arrived via public event link)
   if (!membership) {
-    membership = await prisma.guildMembership.create({
-      data: {
-        userId: session.user.id,
-        guildId: guild.id,
-        role: 'GUEST',
-        status: 'ACTIVE',
-      },
+    membership = await prisma.guildMembership.upsert({
+      where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
+      create: { userId: session.user.id, guildId: guild.id, role: 'GUEST', status: 'ACTIVE' },
+      update: {},
     })
   }
 

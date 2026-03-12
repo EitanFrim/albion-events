@@ -1064,19 +1064,18 @@ function RefiningRow({
               }
             >
               <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
-                Focus Cost
+                Focus Efficiency
               </div>
               <div className="flex flex-col gap-1.5 text-xs">
-                {result.actualFocusCost !== recipe.focusCost ? (
-                  <>
-                    <PopoverRow label="Actual focus cost" value={String(result.actualFocusCost)} accent />
-                    <PopoverRow label="Base focus cost" value={String(recipe.focusCost)} />
-                    <div className="text-[11px] mt-1 italic" style={{ color: 'var(--color-text-muted)' }}>
-                      Reduced by specialization
-                    </div>
-                  </>
-                ) : (
-                  <PopoverRow label="Focus cost" value={String(recipe.focusCost)} />
+                <PopoverRow label="Profit (Focus)" value={formatSilver(result.profitWithFocus)} accent />
+                <PopoverRow label={result.actualFocusCost !== recipe.focusCost ? "Actual focus cost" : "Focus cost"} value={String(result.actualFocusCost)} />
+                <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border)' }}>
+                  <PopoverRow label="Focus Eff." value={`${formatSilver(result.profitWithFocus)} / ${result.actualFocusCost} = ${result.focusEfficiency}`} accent />
+                </div>
+                {result.actualFocusCost !== recipe.focusCost && (
+                  <div className="text-[11px] mt-0.5 italic" style={{ color: 'var(--color-text-muted)' }}>
+                    Focus reduced by specialization (base: {recipe.focusCost})
+                  </div>
                 )}
               </div>
             </HoverPopover>
