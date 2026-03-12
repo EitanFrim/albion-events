@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import { EventBuilderForm } from '@/components/EventBuilderForm'
+import { parseSlotNote } from '@/components/SlotNoteEditor'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -43,6 +44,7 @@ export default async function GuildEditEventPage({ params }: Props) {
       roleSlots: p.roleSlots.map(s => ({
         roleName: s.roleName, capacity: s.capacity,
         tags: s.tags.join(', '), minIp: s.minIp?.toString() ?? '',
+        note: parseSlotNote(s.notes),
       })),
     })),
   }
