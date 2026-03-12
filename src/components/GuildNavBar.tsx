@@ -35,7 +35,11 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const [mgmtOpen, setMgmtOpen] = useState(false)
+  const [contentsOpen, setContentsOpen] = useState(false)
+  const [buildsOpen, setBuildsOpen] = useState(false)
   const mgmtRef = useRef<HTMLDivElement>(null)
+  const contentsRef = useRef<HTMLDivElement>(null)
+  const buildsRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const router = useRouter()
   const [isRefreshing, startRefresh] = useTransition()
@@ -46,19 +50,19 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
   const isGuest = membership.role === 'GUEST'
   const isPending = membership.status === 'PENDING'
 
-  // Close management dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (mgmtRef.current && !mgmtRef.current.contains(e.target as Node)) {
-        setMgmtOpen(false)
-      }
+      if (mgmtRef.current && !mgmtRef.current.contains(e.target as Node)) setMgmtOpen(false)
+      if (contentsRef.current && !contentsRef.current.contains(e.target as Node)) setContentsOpen(false)
+      if (buildsRef.current && !buildsRef.current.contains(e.target as Node)) setBuildsOpen(false)
     }
-    if (mgmtOpen) document.addEventListener('mousedown', handleClick)
+    if (mgmtOpen || contentsOpen || buildsOpen) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [mgmtOpen])
+  }, [mgmtOpen, contentsOpen, buildsOpen])
 
-  // Close management dropdown on route change
-  useEffect(() => { setMgmtOpen(false) }, [pathname])
+  // Close all dropdowns on route change
+  useEffect(() => { setMgmtOpen(false); setContentsOpen(false); setBuildsOpen(false) }, [pathname])
 
   function navLink(href: string, label: string) {
     const active = pathname === href || (href !== base && pathname.startsWith(href))
@@ -122,16 +126,107 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
           {/* Nav links */}
           {!isPending && (
             <div className="hidden md:flex items-center gap-1">
-              {navLink(base, 'Contents')}
-              {isOfficerPlus && navLink(`${base}/admin/events/new`, '+ New Content')}
-              {isOfficerPlus && navLink(`${base}/admin/roles`, 'Roles')}
-              {!isGuest && navLink(`${base}/admin/templates`, 'Builds')}
+              {navLink(`${base}/home`, 'Home')}
+
+              {/* Contents — plain link for non-officers, dropdown for officers */}
+              {isOfficerPlus ? (
+                <div ref={contentsRef} className="relative">
+                  <button
+                    onClick={() => { setContentsOpen(!contentsOpen); setBuildsOpen(false); setMgmtOpen(false) }}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
+                      contentsOpen || pathname === base || pathname.startsWith(`${base}/events`) || pathname.startsWith(`${base}/admin/events`)
+                        ? 'text-text-primary bg-bg-elevated'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                    }`}
+                  >
+                    Contents
+                    <svg className={`w-3 h-3 text-text-muted transition-transform ${contentsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {contentsOpen && (
+                    <div className="absolute left-0 top-full pt-1.5 z-50">
+                      <div className="w-48 rounded-xl bg-bg-surface border border-border shadow-[0_16px_48px_rgba(0,0,0,0.4)] animate-fade-in overflow-hidden py-1.5">
+                        <Link href={base}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                            pathname === base || pathname.startsWith(`${base}/events`)
+                              ? 'text-accent bg-accent/5' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                          }`}>
+                          <svg className={`w-4 h-4 flex-shrink-0 ${pathname === base || pathname.startsWith(`${base}/events`) ? 'text-accent' : 'text-text-muted'}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                          </svg>
+                          View Contents
+                        </Link>
+                        <Link href={`${base}/admin/events/new`}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                            pathname.startsWith(`${base}/admin/events`)
+                              ? 'text-accent bg-accent/5' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                          }`}>
+                          <svg className={`w-4 h-4 flex-shrink-0 ${pathname.startsWith(`${base}/admin/events`) ? 'text-accent' : 'text-text-muted'}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          New Content
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                navLink(base, 'Contents')
+              )}
+
+              {/* Builds dropdown */}
+              {!isGuest && (
+                <div ref={buildsRef} className="relative">
+                  <button
+                    onClick={() => { setBuildsOpen(!buildsOpen); setContentsOpen(false); setMgmtOpen(false) }}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
+                      buildsOpen || pathname.startsWith(`${base}/admin/templates`) || pathname.startsWith(`${base}/admin/roles`)
+                        ? 'text-text-primary bg-bg-elevated'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                    }`}
+                  >
+                    Builds
+                    <svg className={`w-3 h-3 text-text-muted transition-transform ${buildsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {buildsOpen && (
+                    <div className="absolute left-0 top-full pt-1.5 z-50">
+                      <div className="w-48 rounded-xl bg-bg-surface border border-border shadow-[0_16px_48px_rgba(0,0,0,0.4)] animate-fade-in overflow-hidden py-1.5">
+                        <Link href={`${base}/admin/templates`}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                            pathname.startsWith(`${base}/admin/templates`)
+                              ? 'text-accent bg-accent/5' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                          }`}>
+                          <svg className={`w-4 h-4 flex-shrink-0 ${pathname.startsWith(`${base}/admin/templates`) ? 'text-accent' : 'text-text-muted'}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                          </svg>
+                          Comps
+                        </Link>
+                        {isOfficerPlus && (
+                          <Link href={`${base}/admin/roles`}
+                            className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                              pathname.startsWith(`${base}/admin/roles`)
+                                ? 'text-accent bg-accent/5' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                            }`}>
+                            <svg className={`w-4 h-4 flex-shrink-0 ${pathname.startsWith(`${base}/admin/roles`) ? 'text-accent' : 'text-text-muted'}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                            </svg>
+                            Roles
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Management dropdown */}
               {isOfficerPlus && (
                 <div ref={mgmtRef} className="relative">
                   <button
-                    onClick={() => setMgmtOpen(!mgmtOpen)}
+                    onClick={() => { setMgmtOpen(!mgmtOpen); setContentsOpen(false); setBuildsOpen(false) }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
                       mgmtActive || mgmtOpen
                         ? 'text-text-primary bg-bg-elevated'
