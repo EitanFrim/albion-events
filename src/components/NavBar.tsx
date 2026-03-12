@@ -57,6 +57,14 @@ export function NavBar() {
             >
               Events
             </Link>
+            <Link
+              href="/patch-notes"
+              className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
+                pathname === '/patch-notes' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+              }`}
+            >
+              Patch Notes
+            </Link>
             {session?.user.role === 'ADMIN' && (
               <Link
                 href="/admin/events/new"
