@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     icon: '/images/branding/favicon.png',
     apple: '/images/branding/logo.png',
   },
+  metadataBase: new URL('https://albionhq.app'),
   openGraph: {
     title: 'AlbionHQ — Tools for Albion Online',
     description: 'Guild management, event planning, and crafting tools for Albion Online',
