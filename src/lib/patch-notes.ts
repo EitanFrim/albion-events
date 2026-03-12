@@ -12,6 +12,23 @@ export interface PatchNote {
 
 export const patchNotes: PatchNote[] = [
   {
+    version: '0.10.0',
+    date: '2026-03-13',
+    title: 'Role Build Setups & Guild Nav Overhaul',
+    changes: [
+      { type: 'added', text: 'Build Setups per role — officers can pre-define multiple gear configurations for each weapon role' },
+      { type: 'added', text: 'Build Setup Picker in comps and events — load a predefined setup when assigning a role' },
+      { type: 'added', text: 'Guild homepage with member list, upcoming events, weekly attendance leaderboard, and activity feed' },
+      { type: 'added', text: 'Patch Notes page — viewable without sign-in' },
+      { type: 'added', text: 'Optional auto-notify checkbox on siphoned energy import to DM players in debt' },
+      { type: 'added', text: '"Notify All In Debt" button on siphoned energy admin page' },
+      { type: 'added', text: 'Step-by-step instructions for copying siphoned energy logs from game' },
+      { type: 'improved', text: 'Guild nav restructured — Builds and Contents are now dropdowns with sub-links' },
+      { type: 'improved', text: 'Global NavBar cleaned up — My Guilds, Crafting, and Patch Notes links' },
+      { type: 'improved', text: 'Removed min IP requirement from event/content creation' },
+    ],
+  },
+  {
     version: '0.9.0',
     date: '2026-03-12',
     title: 'Siphoned Energy & Discord DMs',
