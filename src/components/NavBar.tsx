@@ -49,13 +49,23 @@ export function NavBar() {
 
           {/* Nav */}
           <div className="hidden md:flex items-center gap-1 flex-1">
+            {session && (
+              <Link
+                href="/guilds"
+                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
+                  pathname === '/guilds' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                }`}
+              >
+                My Guilds
+              </Link>
+            )}
             <Link
-              href="/"
+              href="/crafting"
               className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
-                pathname === '/' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                pathname.startsWith('/crafting') ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
               }`}
             >
-              Events
+              Crafting
             </Link>
             <Link
               href="/patch-notes"
@@ -65,32 +75,6 @@ export function NavBar() {
             >
               Patch Notes
             </Link>
-            {session?.user.role === 'ADMIN' && (
-              <Link
-                href="/admin/events/new"
-                className="px-3 py-1.5 rounded-lg text-sm font-body text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                + New Content
-              </Link>
-            )}
-            {session?.user.role === 'ADMIN' && (
-              <Link href="/admin/roles"
-                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${pathname === '/admin/roles' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'}`}>
-                Roles
-              </Link>
-            )}
-            {session?.user.role === 'ADMIN' && (
-              <Link href="/admin/templates"
-                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${pathname === '/admin/templates' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'}`}>
-                Templates
-              </Link>
-            )}
-            {(session?.user.role === 'ADMIN') && (
-              <Link href="/admin/players"
-                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${pathname === '/admin/players' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'}`}>
-                Players
-              </Link>
-            )}
           </div>
 
           {/* Right */}
