@@ -130,7 +130,7 @@ export default function HomePage() {
           {features.map((f) => (
             <div
               key={f.title}
-              className="rounded-xl border border-border bg-bg-surface p-6 transition-all duration-300 hover:border-border-strong hover:bg-bg-elevated"
+              className="rounded-xl border border-border bg-bg-surface p-6 transition-all duration-300 hover:border-border-strong hover:bg-bg-elevated cursor-default"
             >
               <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent mb-4">
                 {f.icon}
@@ -168,7 +168,7 @@ export default function HomePage() {
           {/* Guild Management Card */}
           <Link
             href="/guilds"
-            className="group block rounded-xl border border-border bg-bg-surface overflow-hidden shadow-card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-border-strong hover:-translate-y-1"
+            className="group block rounded-xl border border-border bg-bg-surface overflow-hidden shadow-card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-border-strong cursor-pointer"
           >
             <div className="relative h-40 overflow-hidden">
               <Image
@@ -205,7 +205,7 @@ export default function HomePage() {
           {/* Crafting Calculator Card */}
           <Link
             href="/crafting"
-            className="group block rounded-xl border border-border bg-bg-surface overflow-hidden shadow-card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-border-strong hover:-translate-y-1"
+            className="group block rounded-xl border border-border bg-bg-surface overflow-hidden shadow-card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-border-strong cursor-pointer"
           >
             <div className="relative h-40 overflow-hidden">
               <Image
@@ -243,7 +243,7 @@ export default function HomePage() {
         <section className="max-w-5xl mx-auto px-4 pb-20">
           <Link
             href="/patch-notes"
-            className="group block rounded-xl border border-border bg-bg-surface p-6 sm:p-8 transition-all duration-300 hover:border-border-strong"
+            className="group block rounded-xl border border-border bg-bg-surface p-6 sm:p-8 transition-all duration-300 hover:border-border-strong cursor-pointer"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
