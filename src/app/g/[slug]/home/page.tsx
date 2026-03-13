@@ -178,95 +178,134 @@ export default async function GuildHomePage({ params }: Props) {
         </div>
       </div>
 
-      {/* Onboarding Checklist — shown to owners until guild is set up */}
-      {isOwner && (activeCount < 3 || roleCount === 0 || templateCount === 0 || totalEventCount === 0) && (
-        <div className="card p-6 mb-6 border-accent/20">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+      {/* Onboarding Checklist — shown to owners until guild is fully set up */}
+      {isOwner && (!guild.discordBotInstalled || !guild.discordGuildId || activeCount < 3 || roleCount === 0 || templateCount === 0 || totalEventCount === 0) && (() => {
+        const botInstalled = guild.discordBotInstalled
+        const botLinked = !!guild.discordGuildId
+        const hasMembers = activeCount >= 3
+        const hasRoles = roleCount > 0
+        const hasTemplates = templateCount > 0
+        const hasEvents = totalEventCount > 0
+        const steps = [botInstalled, botLinked, hasMembers, hasRoles, hasTemplates, hasEvents]
+        const done = steps.filter(Boolean).length
+        const total = steps.length
+        const botInviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID}&scope=bot+applications.commands&permissions=8`
+
+        return (
+          <div className="card p-6 mb-6 border-accent/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
+                <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="font-display text-lg font-700 text-text-primary">Get your guild set up</h2>
+                <p className="text-text-muted text-xs">Complete these steps to get the most out of AlbionHQ</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-display text-lg font-700 text-text-primary">Get your guild set up</h2>
-              <p className="text-text-muted text-xs">Complete these steps to get the most out of AlbionHQ</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {/* Step 1: Invite members */}
-            <Link href={`${base}/admin/players`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${activeCount >= 3 ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
-                {activeCount >= 3 && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium ${activeCount >= 3 ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
-                  Invite members to your guild
-                </span>
-                <p className="text-xs text-text-muted">Share the guild link or have members join via Discord</p>
-              </div>
-              <span className="text-xs font-mono text-text-muted">{activeCount}/3+</span>
-            </Link>
-
-            {/* Step 2: Create roles */}
-            <Link href={`${base}/admin/roles`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${roleCount > 0 ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
-                {roleCount > 0 && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium ${roleCount > 0 ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
-                  Create weapon roles
-                </span>
-                <p className="text-xs text-text-muted">Set up role categories (Tank, Healer, DPS) and add weapons to each</p>
-              </div>
-              {roleCount > 0 && <span className="text-xs font-mono text-emerald-400">{roleCount}</span>}
-            </Link>
-
-            {/* Step 3: Build a comp template */}
-            <Link href={`${base}/admin/templates`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${templateCount > 0 ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
-                {templateCount > 0 && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium ${templateCount > 0 ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
-                  Build a composition template
-                </span>
-                <p className="text-xs text-text-muted">Create reusable party compositions like &quot;10v10 ZvZ&quot; or &quot;5v5 HG&quot;</p>
-              </div>
-              {templateCount > 0 && <span className="text-xs font-mono text-emerald-400">{templateCount}</span>}
-            </Link>
-
-            {/* Step 4: Create first event */}
-            <Link href={`${base}/admin/events/new`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${totalEventCount > 0 ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
-                {totalEventCount > 0 && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium ${totalEventCount > 0 ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
-                  Create your first event
-                </span>
-                <p className="text-xs text-text-muted">Schedule a ZvZ, ganking session, or any content for your guild</p>
-              </div>
-              {totalEventCount > 0 && <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-            </Link>
-          </div>
-
-          {/* Progress bar */}
-          {(() => {
-            const done = [activeCount >= 3, roleCount > 0, templateCount > 0, totalEventCount > 0].filter(Boolean).length
-            return (
-              <div className="mt-4 pt-4 border-t border-border-subtle">
-                <div className="flex items-center justify-between text-xs text-text-muted mb-2">
-                  <span>{done}/4 completed</span>
-                  <span className="font-mono">{Math.round((done / 4) * 100)}%</span>
+            <div className="space-y-2">
+              {/* Step 1: Install Discord Bot */}
+              <a href={botInviteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${botInstalled ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  {botInstalled && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </div>
-                <div className="h-1.5 bg-bg-overlay rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${(done / 4) * 100}%` }} />
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${botInstalled ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
+                    Install the Discord bot
+                  </span>
+                  <p className="text-xs text-text-muted">Add the AlbionHQ bot to your Discord server</p>
+                </div>
+                {!botInstalled && (
+                  <svg className="w-4 h-4 text-text-muted group-hover:text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                )}
+              </a>
+
+              {/* Step 2: Link with /setup */}
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${botLinked ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  {botLinked && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${botLinked ? 'text-text-muted line-through' : 'text-text-primary'}`}>
+                    Run <code className="px-1.5 py-0.5 rounded bg-bg-overlay text-accent text-xs font-mono">/setup</code> in Discord
+                  </span>
+                  <p className="text-xs text-text-muted">Link your Discord server and set the member role for registration</p>
                 </div>
               </div>
-            )
-          })()}
-        </div>
-      )}
+
+              {/* Step 3: Post registration button */}
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${hasMembers ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  {hasMembers && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${hasMembers ? 'text-text-muted line-through' : 'text-text-primary'}`}>
+                    Run <code className="px-1.5 py-0.5 rounded bg-bg-overlay text-accent text-xs font-mono">/verify-message</code> to post registration button
+                  </span>
+                  <p className="text-xs text-text-muted">Members click the button in Discord to register to the guild</p>
+                </div>
+                {hasMembers && <span className="text-xs font-mono text-emerald-400">{activeCount} members</span>}
+              </div>
+
+              {/* Step 4: Create roles */}
+              <Link href={`${base}/admin/roles`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${hasRoles ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  {hasRoles && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${hasRoles ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
+                    Create weapon roles
+                  </span>
+                  <p className="text-xs text-text-muted">Set up role categories (Tank, Healer, DPS) and add weapons to each</p>
+                </div>
+                {hasRoles && <span className="text-xs font-mono text-emerald-400">{roleCount}</span>}
+              </Link>
+
+              {/* Step 5: Build a comp template */}
+              <Link href={`${base}/admin/templates`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${hasTemplates ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  {hasTemplates && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${hasTemplates ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
+                    Build a composition template
+                  </span>
+                  <p className="text-xs text-text-muted">Create reusable party compositions like &quot;10v10 ZvZ&quot; or &quot;5v5 HG&quot;</p>
+                </div>
+                {hasTemplates && <span className="text-xs font-mono text-emerald-400">{templateCount}</span>}
+              </Link>
+
+              {/* Step 6: Create first event */}
+              <Link href={`${base}/admin/events/new`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-elevated transition-colors group">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${hasEvents ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  {hasEvents && <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm font-medium ${hasEvents ? 'text-text-muted line-through' : 'text-text-primary group-hover:text-accent'}`}>
+                    Create your first event
+                  </span>
+                  <p className="text-xs text-text-muted">Schedule a ZvZ, ganking session, or any content for your guild</p>
+                </div>
+                {hasEvents && <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </Link>
+            </div>
+
+            {/* Progress bar */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <div className="flex items-center justify-between text-xs text-text-muted mb-2">
+                <span>{done}/{total} completed</span>
+                <span className="font-mono">{Math.round((done / total) * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-bg-overlay rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${(done / total) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left column — events + leaderboard */}
