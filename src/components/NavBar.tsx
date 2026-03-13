@@ -75,6 +75,16 @@ export function NavBar() {
             >
               Patch Notes
             </Link>
+            {session?.user?.role === 'ADMIN' && (
+              <Link
+                href="/admin/stats"
+                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
+                  pathname === '/admin/stats' ? 'text-accent bg-accent/10' : 'text-accent/70 hover:text-accent hover:bg-accent/10'
+                }`}
+              >
+                Stats
+              </Link>
+            )}
           </div>
 
           {/* Right */}
@@ -149,6 +159,19 @@ export function NavBar() {
                       </svg>
                       {inGameName ? 'Edit Profile' : 'Set In-Game Name'}
                     </Link>
+                    {session.user.role === 'ADMIN' && (
+                      <Link
+                        href="/admin/stats"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-accent/70 hover:text-accent hover:bg-bg-overlay transition-colors md:hidden"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Stats
+                      </Link>
+                    )}
+
                     <button
                       onClick={() => signOut()}
                       className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-overlay transition-colors"
