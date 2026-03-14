@@ -149,7 +149,7 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
                 Sell Instantly
               </div>
               <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                Sell to highest buy order instead of listing a sell order (no markdown)
+                Sell to highest buy order instead of listing a sell order (4% market tax applied)
               </div>
             </div>
           </div>

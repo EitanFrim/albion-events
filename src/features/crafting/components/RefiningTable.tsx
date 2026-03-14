@@ -154,12 +154,16 @@ export default function RefiningTable({
   const [filterEnchants, setFilterEnchants] = useState<Set<number>>(new Set(ENCHANTS));
   const [quantity, setQuantity] = useState(1);
 
+  const isSellOverride = useMemo(() => {
+    return (itemId: string) => getSellPriceInfo(itemId).isOverride;
+  }, [getSellPriceInfo]);
+
   const results = useMemo(() => {
     if (settings.enableTransmute) {
-      return recipes.map((recipe) => calculateRefineWithTransmute(recipe, getBuyPrice, getSellPrice, settings, transmutations));
+      return recipes.map((recipe) => calculateRefineWithTransmute(recipe, getBuyPrice, getSellPrice, settings, transmutations, isSellOverride));
     }
-    return recipes.map((recipe) => ({ ...calculateRefine(recipe, getBuyPrice, getSellPrice, settings), transmuteAlt: null }) as RefineResultWithTransmute);
-  }, [recipes, getBuyPrice, getSellPrice, settings, transmutations]);
+    return recipes.map((recipe) => ({ ...calculateRefine(recipe, getBuyPrice, getSellPrice, settings, isSellOverride), transmuteAlt: null }) as RefineResultWithTransmute);
+  }, [recipes, getBuyPrice, getSellPrice, settings, transmutations, isSellOverride]);
 
   const filtered = useMemo(() => {
     return results.filter(
@@ -357,7 +361,7 @@ export default function RefiningTable({
               <th className={thClass + " text-right"}>Nutrition Cost</th>
               <th className={thClass + " text-right"}>Product Price</th>
               <th className={thClass + " text-right"}>
-                {settings.useSellNow ? 'Sell Price (instant)' : `Sell Price (-${settings.sellMarkdown}%)`}
+                {settings.useSellNow ? 'Sell Price (-4% tax)' : `Sell Price (-${settings.sellMarkdown}%)`}
               </th>
               <th className={thSortable + " text-right"} onClick={() => toggleSort('profitNoFocus')}>
                 Profit (No Focus){sortIcon('profitNoFocus')}

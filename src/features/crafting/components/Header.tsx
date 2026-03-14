@@ -1,14 +1,10 @@
 'use client'
 
-import { SERVERS, CITIES, type ServerKey, type City, getCityColor } from '../data/items';
+import { SERVERS, type ServerKey } from '../data/items';
 
 interface HeaderProps {
   server: ServerKey;
   setServer: (s: ServerKey) => void;
-  buyCities: Set<City>;
-  toggleBuyCity: (c: City) => void;
-  sellCities: Set<City>;
-  toggleSellCity: (c: City) => void;
   maxAgeHours: number;
   setMaxAgeHours: (h: number) => void;
   loading: boolean;
@@ -21,20 +17,9 @@ interface HeaderProps {
 
 const inputClass = "border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2";
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 export default function Header({
   server,
   setServer,
-  buyCities,
-  toggleBuyCity,
-  sellCities,
-  toggleSellCity,
   maxAgeHours,
   setMaxAgeHours,
   loading,
@@ -152,65 +137,6 @@ export default function Header({
                 {overrideCount} Override{overrideCount > 1 ? 's' : ''} - Clear
               </button>
             )}
-          </div>
-        </div>
-
-        {/* Second row: buy/sell cities */}
-        <div className="mt-4 flex flex-wrap items-center gap-6">
-          {/* Buy cities */}
-          <div className="flex items-center gap-2.5">
-            <label className="text-xs font-medium uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--color-text-tertiary)' }}>
-              Buy From
-            </label>
-            <div className="flex gap-1.5 flex-wrap">
-              {CITIES.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => toggleBuyCity(city)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                    buyCities.has(city) ? 'ring-1' : 'hover:opacity-80'
-                  }`}
-                  style={buyCities.has(city) ? {
-                    backgroundColor: hexToRgba(getCityColor(city) || '#34d399', 0.2),
-                    color: getCityColor(city) || '#34d399',
-                    boxShadow: `inset 0 0 0 1px ${hexToRgba(getCityColor(city) || '#34d399', 0.4)}`,
-                  } : {
-                    backgroundColor: 'var(--color-surface-3)',
-                    color: 'var(--color-text-muted)',
-                  }}
-                >
-                  {city.replace('Fort Sterling', 'Ft. Sterling')}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sell cities */}
-          <div className="flex items-center gap-2.5">
-            <label className="text-xs font-medium uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--color-text-tertiary)' }}>
-              Sell In
-            </label>
-            <div className="flex gap-1.5 flex-wrap">
-              {CITIES.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => toggleSellCity(city)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                    sellCities.has(city) ? 'ring-1' : 'hover:opacity-80'
-                  }`}
-                  style={sellCities.has(city) ? {
-                    backgroundColor: hexToRgba(getCityColor(city) || '#34d399', 0.2),
-                    color: getCityColor(city) || '#34d399',
-                    boxShadow: `inset 0 0 0 1px ${hexToRgba(getCityColor(city) || '#34d399', 0.4)}`,
-                  } : {
-                    backgroundColor: 'var(--color-surface-3)',
-                    color: 'var(--color-text-muted)',
-                  }}
-                >
-                  {city.replace('Fort Sterling', 'Ft. Sterling')}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 

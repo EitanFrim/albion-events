@@ -7,7 +7,7 @@ import RefiningTable from './components/RefiningTable';
 import TransmutationTable from './components/TransmutationTable';
 import { usePrices } from './hooks/usePrices';
 import { DEFAULT_SETTINGS, type Settings } from './utils/calculations';
-import { RESOURCE_TYPES, RESOURCES, type ResourceType } from './data/items';
+import { RESOURCE_TYPES, RESOURCES, CITIES, type ResourceType, type City, getCityColor } from './data/items';
 import { RECIPES_BY_RESOURCE } from './data/recipes';
 import { TRANSMUTATIONS_BY_RESOURCE } from './data/transmutations';
 import { preloadAllIcons } from './components/ItemIcon';
@@ -77,15 +77,79 @@ export default function App() {
   const recipes = RECIPES_BY_RESOURCE[resourceType];
   const transmutations = TRANSMUTATIONS_BY_RESOURCE[resourceType];
 
+  const hexToRgba = (hex: string, alpha: number): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const CitySelector = ({ buyCities: bc, toggleBuyCity: tbc, sellCities: sc, toggleSellCity: tsc }: {
+    buyCities: Set<City>; toggleBuyCity: (c: City) => void;
+    sellCities: Set<City>; toggleSellCity: (c: City) => void;
+  }) => (
+    <div className="border rounded-xl overflow-hidden px-5 py-4" style={{
+      backgroundColor: 'var(--color-surface-2)',
+      borderColor: 'var(--color-border)',
+    }}>
+      <div className="flex flex-wrap items-center gap-6">
+        <div className="flex items-center gap-2.5">
+          <label className="text-xs font-medium uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--color-text-tertiary)' }}>
+            Buy From
+          </label>
+          <div className="flex gap-1.5 flex-wrap">
+            {CITIES.map((city) => (
+              <button
+                key={city}
+                onClick={() => tbc(city)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${bc.has(city) ? 'ring-1' : 'hover:opacity-80'}`}
+                style={bc.has(city) ? {
+                  backgroundColor: hexToRgba(getCityColor(city) || '#34d399', 0.2),
+                  color: getCityColor(city) || '#34d399',
+                  boxShadow: `inset 0 0 0 1px ${hexToRgba(getCityColor(city) || '#34d399', 0.4)}`,
+                } : {
+                  backgroundColor: 'var(--color-surface-3)',
+                  color: 'var(--color-text-muted)',
+                }}
+              >
+                {city.replace('Fort Sterling', 'Ft. Sterling')}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <label className="text-xs font-medium uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--color-text-tertiary)' }}>
+            Sell In
+          </label>
+          <div className="flex gap-1.5 flex-wrap">
+            {CITIES.map((city) => (
+              <button
+                key={city}
+                onClick={() => tsc(city)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${sc.has(city) ? 'ring-1' : 'hover:opacity-80'}`}
+                style={sc.has(city) ? {
+                  backgroundColor: hexToRgba(getCityColor(city) || '#34d399', 0.2),
+                  color: getCityColor(city) || '#34d399',
+                  boxShadow: `inset 0 0 0 1px ${hexToRgba(getCityColor(city) || '#34d399', 0.4)}`,
+                } : {
+                  backgroundColor: 'var(--color-surface-3)',
+                  color: 'var(--color-text-muted)',
+                }}
+              >
+                {city.replace('Fort Sterling', 'Ft. Sterling')}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="crafting-root min-h-screen" style={{ backgroundColor: 'var(--color-surface-0)' }}>
       <Header
         server={server}
         setServer={setServer}
-        buyCities={buyCities}
-        toggleBuyCity={toggleBuyCity}
-        sellCities={sellCities}
-        toggleSellCity={toggleSellCity}
         maxAgeHours={maxAgeHours}
         setMaxAgeHours={setMaxAgeHours}
         loading={loading}
@@ -98,6 +162,14 @@ export default function App() {
 
       <main className="max-w-[1600px] mx-auto px-8 py-8 space-y-6">
         <SettingsPanel settings={settings} onChange={handleSettingsChange} />
+
+        {/* City selection */}
+        <CitySelector
+          buyCities={buyCities}
+          toggleBuyCity={toggleBuyCity}
+          sellCities={sellCities}
+          toggleSellCity={toggleSellCity}
+        />
 
         {/* Resource type selector */}
         <div className="flex items-center gap-3">

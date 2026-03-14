@@ -62,7 +62,8 @@ export function calculateRefine(
   recipe: Recipe,
   getBuyPrice: (itemId: string) => number,
   getSellPrice: (itemId: string) => number,
-  settings: Settings
+  settings: Settings,
+  isSellOverride?: (itemId: string) => boolean,
 ): RefineResult {
   let materialCost = 0;
   let hasMissingBuy = false;
@@ -83,7 +84,8 @@ export function calculateRefine(
   const effectiveCostWithFocus = keepRateWithFocus * materialCost + nutritionCost;
 
   const productPrice = getSellPrice(recipe.productId);
-  const markdownMultiplier = settings.useSellNow ? 1.0 : (100 - settings.sellMarkdown) / 100;
+  const isOverridden = isSellOverride?.(recipe.productId) ?? false;
+  const markdownMultiplier = isOverridden ? 1.0 : settings.useSellNow ? 0.96 : (100 - settings.sellMarkdown) / 100;
   const estimatedSellPrice = productPrice * markdownMultiplier * recipe.outputQuantity;
 
   const incomplete = hasMissingBuy || productPrice === 0;
@@ -269,8 +271,9 @@ export function calculateRefineWithTransmute(
   getSellPrice: (id: string) => number,
   settings: Settings,
   transmutations: Transmutation[],
+  isSellOverride?: (itemId: string) => boolean,
 ): RefineResultWithTransmute {
-  const base = calculateRefine(recipe, getBuyPrice, getSellPrice, settings);
+  const base = calculateRefine(recipe, getBuyPrice, getSellPrice, settings, isSellOverride);
 
   // Only the first input is a raw resource eligible for transmutation
   const rawInput = recipe.inputs[0];
