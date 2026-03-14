@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import Link from 'next/link'
 import { SignupForm } from '@/components/SignupForm'
 import { SignupModal } from '@/components/SignupModal'
+import { PostToDiscordButton } from '@/components/PostToDiscordButton'
 import { DeleteEventButton } from '@/components/DeleteEventButton'
 import { CompleteEventButton } from '@/components/CompleteEventButton'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
@@ -184,6 +185,9 @@ export default async function GuildEventPage({ params }: Props) {
               )}
             </Link>
             <DeleteEventButton eventId={params.id} eventTitle={event.title} guildSlug={params.slug} />
+            {event.status === 'PUBLISHED' && guild.discordGuildId && (
+              <PostToDiscordButton eventId={params.id} guildSlug={params.slug} />
+            )}
           </>
         )}
       </div>
