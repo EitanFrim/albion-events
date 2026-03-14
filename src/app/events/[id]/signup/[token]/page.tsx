@@ -48,22 +48,7 @@ export default async function TokenSignupPage({ params }: Props) {
     )
   }
 
-  // Check if already used — but show a friendly message
-  if (signupToken.usedAt) {
-    return (
-      <div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
-        <div className="card p-8 text-center max-w-sm">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h1 className="font-display font-700 text-text-primary text-lg mb-2">Already Signed Up</h1>
-          <p className="text-text-secondary text-sm">You&apos;ve already used this link to sign up. See you at the event!</p>
-        </div>
-      </div>
-    )
-  }
+  const alreadyUsed = !!signupToken.usedAt
 
   // Fetch event with parties
   const event = await prisma.event.findUnique({
@@ -76,7 +61,9 @@ export default async function TokenSignupPage({ params }: Props) {
           roleSlots: {
             orderBy: { displayOrder: 'asc' },
             include: {
-              assignments: true,
+              assignments: {
+                include: { user: { select: { id: true, discordName: true } } },
+              },
             },
           },
         },
@@ -86,15 +73,45 @@ export default async function TokenSignupPage({ params }: Props) {
 
   if (!event) notFound()
 
-  if (event.status !== 'PUBLISHED') {
+  if (event.status !== 'PUBLISHED' && event.status !== 'LOCKED' && event.status !== 'COMPLETED') {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
         <div className="card p-8 text-center max-w-sm">
-          <h1 className="font-display font-700 text-text-primary text-lg mb-2">Event Closed</h1>
-          <p className="text-text-secondary text-sm">This event is no longer open for signups.</p>
+          <h1 className="font-display font-700 text-text-primary text-lg mb-2">Event Not Available</h1>
+          <p className="text-text-secondary text-sm">This event is not open yet.</p>
         </div>
       </div>
     )
+  }
+
+  // Find the user's assignment (if any) by matching discordUserId → user
+  const tokenUser = await prisma.user.findFirst({
+    where: { discordUserId: signupToken.discordUserId },
+    select: { id: true },
+  })
+
+  let userAssignment: { roleName: string; partyName: string } | null = null
+  let userSignup: { preferredRoles: string[] } | null = null
+
+  if (tokenUser) {
+    // Find signup
+    const signup = await prisma.signup.findUnique({
+      where: { eventId_userId: { eventId: params.id, userId: tokenUser.id } },
+      select: { preferredRoles: true },
+    })
+    if (signup) userSignup = signup
+
+    // Find assignment
+    for (const party of event.parties) {
+      for (const slot of party.roleSlots) {
+        const match = slot.assignments.find(a => a.user.id === tokenUser.id)
+        if (match) {
+          userAssignment = { roleName: slot.roleName, partyName: party.name }
+          break
+        }
+      }
+      if (userAssignment) break
+    }
   }
 
   // Fetch role colors
@@ -167,7 +184,76 @@ export default async function TokenSignupPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-[1fr,300px] gap-6 items-start">
+        {/* Assignment / signup status card (shown when already signed up) */}
+        {alreadyUsed && (
+          <div className="mb-6">
+            {userAssignment ? (
+              <div className="card p-5 border-emerald-500/30">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display font-600 text-text-primary text-sm mb-1">You&apos;re assigned!</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold"
+                        style={{
+                          backgroundColor: getRoleColor(userAssignment.roleName) + '25',
+                          color: getRoleColor(userAssignment.roleName),
+                          border: `1px solid ${getRoleColor(userAssignment.roleName)}55`,
+                        }}
+                      >
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getRoleColor(userAssignment.roleName) }} />
+                        {userAssignment.roleName}
+                      </span>
+                      <span className="text-text-muted text-xs">in</span>
+                      <span className="text-text-secondary text-sm font-medium">{userAssignment.partyName}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="card p-5 border-amber-500/30">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display font-600 text-text-primary text-sm mb-1">Signed up — waiting for assignment</h3>
+                    <p className="text-text-secondary text-xs">Officers will assign you to a role before the event starts.</p>
+                    {userSignup && userSignup.preferredRoles.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {userSignup.preferredRoles.map((role, i) => {
+                          const color = getRoleColor(role)
+                          return (
+                            <span
+                              key={role}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
+                              style={{ backgroundColor: color + '20', color }}
+                            >
+                              <span
+                                className="w-3 h-3 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                                style={{ backgroundColor: color }}
+                              >{i + 1}</span>
+                              {role}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={`grid ${alreadyUsed ? '' : 'md:grid-cols-[1fr,300px]'} gap-6 items-start`}>
           {/* Party grid */}
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-3 min-w-max">
@@ -184,12 +270,18 @@ export default async function TokenSignupPage({ params }: Props) {
                       {party.roleSlots.map((slot) => {
                         const color = getRoleColor(slot.roleName)
                         const isFilled = slot.assignments.length >= slot.capacity
+                        const isMySlot = userAssignment?.roleName === slot.roleName && userAssignment?.partyName === party.name
                         return (
                           <div key={slot.id}>
-                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
-                              style={{ backgroundColor: color + '18', borderLeft: `2px solid ${color}` }}>
+                            <div
+                              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs ${isMySlot ? 'ring-1 ring-emerald-500/50' : ''}`}
+                              style={{ backgroundColor: color + '18', borderLeft: `2px solid ${color}` }}
+                            >
                               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isFilled ? 'opacity-60' : ''}`} style={{ backgroundColor: color }} />
                               <span className={`font-mono font-semibold truncate ${isFilled ? 'opacity-60' : ''}`} style={{ color }}>{slot.roleName}</span>
+                              {isMySlot && (
+                                <span className="text-emerald-400 text-[10px] font-bold flex-shrink-0">YOU</span>
+                              )}
                               <span className={`font-mono text-text-muted ml-auto flex-shrink-0 text-xs ${isFilled ? 'opacity-60' : ''}`}>
                                 {slot.assignments.length}/{slot.capacity}
                               </span>
@@ -204,14 +296,16 @@ export default async function TokenSignupPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Signup form */}
-          <TokenSignupForm
-            eventId={params.id}
-            token={params.token}
-            parties={event.parties}
-            discordUsername={signupToken.discordUsername}
-            roleColors={roleColorMap}
-          />
+          {/* Signup form — only show if token not yet used */}
+          {!alreadyUsed && (
+            <TokenSignupForm
+              eventId={params.id}
+              token={params.token}
+              parties={event.parties}
+              discordUsername={signupToken.discordUsername}
+              roleColors={roleColorMap}
+            />
+          )}
         </div>
       </div>
     </div>

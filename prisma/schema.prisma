@@ -239,7 +239,7 @@ model Assignment {
 
   event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user       User     @relation("AssignedTo", fields: [userId], references: [id])
-  roleSlot   RoleSlot @relation(fields: [roleSlotId], references: [id])
+  roleSlot   RoleSlot @relation(fields: [roleSlotId], references: [id], onDelete: Cascade)
   signup     Signup   @relation(fields: [signupId], references: [id])
   assignedBy User     @relation("AssignedBy", fields: [assignedById], references: [id])
 
