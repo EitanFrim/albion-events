@@ -12,6 +12,19 @@ export interface PatchNote {
 
 export const patchNotes: PatchNote[] = [
   {
+    version: '0.11.0',
+    date: '2026-03-15',
+    title: 'Discord Signup, Admin Stats & Crafting Polish',
+    changes: [
+      { type: 'added', text: 'Discord event signup — officers can post events with /post-event, players click Sign Up to get a private link (no login required)' },
+      { type: 'added', text: 'Admin stats dashboard — monitor total users, guilds, events, signups, and growth metrics' },
+      { type: 'added', text: 'Auto-popup signup modal — when players visit an event page, the signup form opens immediately' },
+      { type: 'improved', text: 'Crafting calculator: Sell Instantly now correctly applies 4% market tax to profit calculations' },
+      { type: 'added', text: 'Crafting calculator: sell price can now be overridden (skips tax when manually set)' },
+      { type: 'improved', text: 'Crafting calculator: city selection panel moved below Settings for better UX' },
+    ],
+  },
+  {
     version: '0.10.0',
     date: '2026-03-13',
     title: 'Role Build Setups & Guild Nav Overhaul',

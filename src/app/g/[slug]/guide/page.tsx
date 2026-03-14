@@ -225,6 +225,8 @@ export default async function GuidePage({ params }: Props) {
               { cmd: '/balance add', desc: 'Add silver to a player\'s balance with a reason. Officer only.' },
               { cmd: '/balance deduct', desc: 'Deduct silver from a player\'s balance. Officer only.' },
               { cmd: '/balance check', desc: 'Check a specific player\'s balance. Officer only.' },
+              { cmd: '/post-event', desc: 'Post an event signup embed with a Sign Up button. Players get a private link — no login needed. Officer only.', options: 'event-id' },
+              { cmd: '/loot-tab-sale', desc: 'Create a loot tab sale for guild members to bid on. Officer only.', options: 'title, price, duration, repair-cost, silver-bags' },
             ].map((item, i, arr) => (
               <div key={item.cmd} className={`flex items-start gap-3 py-2.5 ${i < arr.length - 1 ? 'border-b border-border-subtle' : ''}`}>
                 <code className="text-accent font-mono text-xs bg-bg-base border border-border rounded px-2 py-1 flex-shrink-0">{item.cmd}</code>
@@ -332,9 +334,9 @@ export default async function GuidePage({ params }: Props) {
                   <h3 className="font-display font-700 text-text-primary">Publish &amp; Share</h3>
                 </div>
                 <p className="text-text-secondary text-sm leading-relaxed">
-                  Open the content, hit Publish, then copy the link and drop it in your Discord. Players click the link, pick their preferred weapon roles (up to 3 in priority order), and sign up. You assign slots from the Assign page.
+                  Open the content and hit Publish. Then use the <code className="text-accent font-mono text-xs bg-bg-base border border-border rounded px-1.5 py-0.5">/post-event</code> command in Discord to post an embed with a <span className="text-emerald-400 font-semibold">Sign Up</span> button. Players click the button, get a private link, and sign up — <span className="text-text-primary font-medium">no login required</span>. You assign slots from the Assign page.
                 </p>
-                {tip('Players can sign up on any device — they just need their Discord login.')}
+                {tip('Players who sign up via Discord are automatically linked to their Discord account and appear in the players list.')}
               </div>
             </div>
           </div>

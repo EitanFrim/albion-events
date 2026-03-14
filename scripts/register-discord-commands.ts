@@ -167,6 +167,20 @@ const commands = [
     ],
   },
   {
+    name: 'post-event',
+    description: 'Post an event signup embed in this channel (Officers only)',
+    type: 1,
+    default_member_permissions: null, // officer check done server-side
+    options: [
+      {
+        name: 'event-id',
+        description: 'The event ID (from the event URL on the web app)',
+        type: 3, // STRING
+        required: true,
+      },
+    ],
+  },
+  {
     name: 'loot-tab-draw',
     description: 'Manually draw a winner for an active loot tab sale (Officers only)',
     type: 1,

@@ -10,6 +10,8 @@ import { handleBalanceCommand } from './commands/balance'
 import { handleLootTabSaleCommand } from './commands/loot-tab-sale'
 import { handleLootTabDrawCommand, handleLootTabDrawAutocomplete } from './commands/loot-tab-draw'
 import { handleLootTabSignup } from './commands/loot-tab-signup'
+import { handlePostEventCommand } from './commands/post-event'
+import { handleEventSignupButton } from './commands/event-signup-button'
 
 // Fire-and-forget: draw any expired loot tab sales
 async function processExpiredSales() {
@@ -69,6 +71,8 @@ export async function POST(req: NextRequest) {
         return handleLootTabSaleCommand(interaction)
       case 'loot-tab-draw':
         return handleLootTabDrawCommand(interaction)
+      case 'post-event':
+        return handlePostEventCommand(interaction)
       default:
         return NextResponse.json(ephemeralMessage(`Unknown command: ${commandName}`))
     }
@@ -95,6 +99,10 @@ export async function POST(req: NextRequest) {
 
     if (customId.startsWith('loot_tab_signup:')) {
       return handleLootTabSignup(interaction, customId)
+    }
+
+    if (customId.startsWith('event_signup:')) {
+      return handleEventSignupButton(interaction, customId)
     }
 
     // Silently acknowledge unknown components (e.g. gateway bot select menus)

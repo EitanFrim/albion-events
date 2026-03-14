@@ -177,6 +177,7 @@ model Event {
   assignments Assignment[]
   auditLogs       AuditLog[]
   regearRequests  RegearRequest[]
+  signupTokens    EventSignupToken[]
 
   @@map("events")
 }
@@ -441,4 +442,19 @@ model SiphonedEnergyTransaction {
 
   @@unique([guildId, playerName, logDate, amount], name: "dedup_key")
   @@map("siphoned_energy_transactions")
+}
+
+model EventSignupToken {
+  id              String    @id @default(cuid())
+  token           String    @unique
+  eventId         String    @map("event_id")
+  discordUserId   String    @map("discord_user_id")
+  discordUsername  String    @map("discord_username")
+  expiresAt       DateTime  @map("expires_at")
+  usedAt          DateTime? @map("used_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_signup_tokens")
 }
