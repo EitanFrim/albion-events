@@ -22,6 +22,7 @@ interface RefiningTableProps {
   settings: Settings;
   onOverride: (itemId: string, price: number) => void;
   onClearOverride: (itemId: string) => void;
+  overrides: Record<string, number>;
 }
 
 const TIERS = [4, 5, 6, 7, 8] as const;
@@ -147,6 +148,7 @@ export default function RefiningTable({
   settings,
   onOverride,
   onClearOverride,
+  overrides,
 }: RefiningTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('tier');
   const [sortAsc, setSortAsc] = useState(true);
@@ -395,6 +397,7 @@ export default function RefiningTable({
                   getAllBuyPrices={getAllBuyPrices}
                   onOverride={onOverride}
                   onClearOverride={onClearOverride}
+                  overrides={overrides}
                 />
               ))
             )}
@@ -822,6 +825,7 @@ function RefiningRow({
   getAllBuyPrices,
   onOverride,
   onClearOverride,
+  overrides,
 }: {
   result: RefineResultWithTransmute;
   isBest: boolean;
@@ -833,9 +837,17 @@ function RefiningRow({
   getAllBuyPrices: (itemId: string) => { price: number; city: string; date: string }[];
   onOverride: (itemId: string, price: number) => void;
   onClearOverride: (itemId: string) => void;
+  overrides: Record<string, number>;
 }) {
   const { recipe } = result;
   const productInfo = getSellPriceInfo(recipe.productId);
+
+  // Sell price override: use `sell:productId` key to allow overriding the final sell price independently
+  const sellKey = `sell:${recipe.productId}`;
+  const hasSellOverride = overrides[sellKey] !== undefined;
+  const effectiveSellPrice = hasSellOverride ? overrides[sellKey] : result.estimatedSellPrice;
+  const displayProfitNoFocus = result.incomplete ? 0 : effectiveSellPrice - result.effectiveCostNoFocus;
+  const displayProfitWithFocus = result.incomplete ? 0 : effectiveSellPrice - result.effectiveCostWithFocus;
   const matCost = result.transmuteAlt ? result.transmuteAlt.adjustedMaterialCost : result.materialCost;
   const estCostNoFocus = matCost * (100 - settings.returnRateNoFocus) / 100;
   const estCostWithFocus = matCost * (100 - settings.returnRateWithFocus) / 100;
@@ -1016,39 +1028,47 @@ function RefiningRow({
         </div>
       </td>
 
-      {/* Estimated sell price */}
-      <td className="px-4 py-3 text-right tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
-        {formatSilver(Math.round(result.estimatedSellPrice))}
+      {/* Estimated sell price — overridable */}
+      <td className="px-4 py-3 text-right">
+        <PriceCell
+          itemId={sellKey}
+          price={Math.round(effectiveSellPrice)}
+          city={hasSellOverride ? 'Manual' : ''}
+          isOverride={hasSellOverride}
+          onOverride={onOverride}
+          onClearOverride={onClearOverride}
+          hideCity
+        />
       </td>
 
       {/* Profit no focus */}
-      <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(effectiveProfitNoFocus(result)) }}>
+      <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) }}>
         {result.incomplete ? (
           <span className="text-[10px] italic">N/A</span>
         ) : (
           <span className="inline-flex items-center justify-end gap-1">
-            {result.transmuteAlt && (
+            {result.transmuteAlt && !hasSellOverride && (
               <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
               </svg>
             )}
-            {formatSilver(Math.round(effectiveProfitNoFocus(result) * quantity))}
+            {formatSilver(Math.round((hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) * quantity))}
           </span>
         )}
       </td>
 
       {/* Profit with focus */}
-      <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(effectiveProfitWithFocus(result)) }}>
+      <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) }}>
         {result.incomplete ? (
           <span className="text-[10px] italic">N/A</span>
         ) : (
           <span className="inline-flex items-center justify-end gap-1">
-            {result.transmuteAlt && (
+            {result.transmuteAlt && !hasSellOverride && (
               <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
               </svg>
             )}
-            {formatSilver(Math.round(effectiveProfitWithFocus(result) * quantity))}
+            {formatSilver(Math.round((hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) * quantity))}
           </span>
         )}
       </td>
@@ -1058,7 +1078,7 @@ function RefiningRow({
         {result.incomplete ? (
           <span className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>N/A</span>
         ) : (() => {
-          const effProfit = effectiveProfitWithFocus(result)
+          const effProfit = hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)
           const effFocusEff = result.actualFocusCost > 0 ? Math.round(effProfit / result.actualFocusCost) : 0
           return (
           <div className="flex justify-end">

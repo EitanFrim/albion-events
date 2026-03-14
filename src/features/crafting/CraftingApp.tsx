@@ -163,14 +163,6 @@ export default function App() {
       <main className="max-w-[1600px] mx-auto px-8 py-8 space-y-6">
         <SettingsPanel settings={settings} onChange={handleSettingsChange} />
 
-        {/* City selection */}
-        <CitySelector
-          buyCities={buyCities}
-          toggleBuyCity={toggleBuyCity}
-          sellCities={sellCities}
-          toggleSellCity={toggleSellCity}
-        />
-
         {/* Resource type selector */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -242,6 +234,14 @@ export default function App() {
           </button>
         </div>
 
+        {/* City selection */}
+        <CitySelector
+          buyCities={buyCities}
+          toggleBuyCity={toggleBuyCity}
+          sellCities={sellCities}
+          toggleSellCity={toggleSellCity}
+        />
+
         <div
           key={`${activeTab}-${resourceType}`}
           style={{ animation: 'fadeIn 0.25s ease-out' }}
@@ -258,6 +258,7 @@ export default function App() {
               settings={settings}
               onOverride={setOverride}
               onClearOverride={clearOverride}
+              overrides={overrides}
             />
           ) : (
             <TransmutationTable
@@ -268,6 +269,7 @@ export default function App() {
               getSellPriceInfo={getSellPriceInfo}
               onOverride={setOverride}
               onClearOverride={clearOverride}
+              overrides={overrides}
             />
           )}
         </div>

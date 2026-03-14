@@ -17,6 +17,7 @@ interface TransmutationTableProps {
   getSellPriceInfo: (itemId: string) => { price: number; city: string; date: string; isOverride: boolean };
   onOverride: (itemId: string, price: number) => void;
   onClearOverride: (itemId: string) => void;
+  overrides: Record<string, number>;
 }
 
 const profitColor = (val: number) =>
@@ -30,6 +31,7 @@ export default function TransmutationTable({
   getSellPriceInfo,
   onOverride,
   onClearOverride,
+  overrides: _overrides,
 }: TransmutationTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('profitLoss');
   const [sortAsc, setSortAsc] = useState(true);
