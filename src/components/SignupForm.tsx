@@ -11,11 +11,12 @@ interface Props {
   parties: Party[]
   existingSignup: { preferredRoles: string[]; note: string } | null
   isLocked: boolean
+  onSignupComplete?: () => void
 }
 
 interface GuildRole { id: string; name: string; categoryId: string | null; category: { id: string; name: string; color: string } | null }
 
-export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props) {
+export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignupComplete }: Props) {
   const router = useRouter()
   const allRoles = Array.from(new Set(parties.flatMap(p => p.roleSlots.map(s => s.roleName))))
 
@@ -81,6 +82,7 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked }: Props
       setIsSignedUp(true)
       setEditing(false)
       setSuccess(isSignedUp ? 'Updated!' : 'Signed up!')
+      onSignupComplete?.()
       router.refresh()
     } catch (err: any) { setError(err.message) }
     finally { setLoading(false) }

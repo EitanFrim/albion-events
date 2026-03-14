@@ -58,6 +58,7 @@ export function SignupModal({ eventId, parties, existingSignup, isLocked }: Prop
           parties={parties}
           existingSignup={existingSignup}
           isLocked={isLocked}
+          onSignupComplete={handleClose}
         />
       </div>
     </div>
