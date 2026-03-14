@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { SignupForm } from '@/components/SignupForm'
+import { SignupModal } from '@/components/SignupModal'
 import { DeleteEventButton } from '@/components/DeleteEventButton'
 import { CompleteEventButton } from '@/components/CompleteEventButton'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
@@ -427,6 +428,16 @@ export default async function GuildEventPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Auto-popup signup modal for new visitors */}
+      {event.status === 'PUBLISHED' && session && membership?.status === 'ACTIVE' && (
+        <SignupModal
+          eventId={params.id}
+          parties={event.parties}
+          existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
+          isLocked={false}
+        />
+      )}
     </div>
   )
 }
