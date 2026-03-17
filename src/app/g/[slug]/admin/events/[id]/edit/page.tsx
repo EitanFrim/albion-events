@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import { EventBuilderForm } from '@/components/EventBuilderForm'
-import { parseSlotNote } from '@/components/SlotNoteEditor'
+import { parseSlotNote } from '@/lib/slot-note'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
