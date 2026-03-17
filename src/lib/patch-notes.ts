@@ -12,6 +12,20 @@ export interface PatchNote {
 
 export const patchNotes: PatchNote[] = [
   {
+    version: '0.12.0',
+    date: '2026-03-17',
+    title: 'Permanent Discord Links, Balance Import & Bug Fixes',
+    changes: [
+      { type: 'added', text: 'Permanent Discord event links — players always get the same reusable URL from the bot, with full feature parity (edit/withdraw signup, regear requests, signups list, status badges)' },
+      { type: 'added', text: 'Silver balance import from external systems — officers can bulk-import player balances via TSV paste' },
+      { type: 'added', text: 'Discord signup slots now show assigned player names directly in the embed' },
+      { type: 'added', text: 'Officers can setup the Discord bot and manage guild settings from the app' },
+      { type: 'fixed', text: 'Edit Event page crash — server-side exception when clicking Edit on a published event' },
+      { type: 'fixed', text: 'Crafting calculator profit calculation when sell price is overridden with transmute alternative' },
+      { type: 'fixed', text: 'Removed duplicate API route that could cause conflicts' },
+    ],
+  },
+  {
     version: '0.11.0',
     date: '2026-03-15',
     title: 'Discord Signup, Admin Stats & Crafting Polish',
