@@ -23,13 +23,63 @@ export default async function GuildPlayersPage({ params }: Props) {
     redirect(`/g/${params.slug}`)
   }
 
-  const members = await prisma.guildMembership.findMany({
-    where: { guildId: guild.id },
-    include: {
-      user: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } },
-    },
-    orderBy: [{ status: 'asc' }, { joinedAt: 'asc' }],
-  })
+  // Fetch registered members + unlinked player data in parallel
+  const [members, pendingBalances, orphanedEnergy] = await Promise.all([
+    prisma.guildMembership.findMany({
+      where: { guildId: guild.id },
+      include: {
+        user: { select: { id: true, discordName: true, inGameName: true, avatarUrl: true } },
+      },
+      orderBy: [{ status: 'asc' }, { joinedAt: 'asc' }],
+    }),
+    // Pending balance imports (unlinked players with silver)
+    prisma.pendingBalanceImport.findMany({
+      where: { guildId: guild.id, appliedAt: null },
+      select: { playerName: true, amount: true, createdAt: true },
+    }),
+    // Orphaned siphoned energy transactions (no membership link)
+    prisma.siphonedEnergyTransaction.groupBy({
+      by: ['playerName'],
+      where: { guildId: guild.id, membershipId: null },
+      _sum: { amount: true },
+    }),
+  ])
+
+  // Merge unlinked data by playerName (case-insensitive)
+  const unlinkedMap = new Map<string, { playerName: string; balance: number; siphonedEnergy: number; importedAt: string | null }>()
+
+  for (const pb of pendingBalances) {
+    const key = pb.playerName.toLowerCase()
+    const existing = unlinkedMap.get(key)
+    if (existing) {
+      existing.balance += pb.amount
+    } else {
+      unlinkedMap.set(key, {
+        playerName: pb.playerName,
+        balance: pb.amount,
+        siphonedEnergy: 0,
+        importedAt: pb.createdAt.toISOString(),
+      })
+    }
+  }
+
+  for (const oe of orphanedEnergy) {
+    const key = oe.playerName.toLowerCase()
+    const existing = unlinkedMap.get(key)
+    if (existing) {
+      existing.siphonedEnergy += oe._sum.amount ?? 0
+    } else {
+      unlinkedMap.set(key, {
+        playerName: oe.playerName,
+        balance: 0,
+        siphonedEnergy: oe._sum.amount ?? 0,
+        importedAt: null,
+      })
+    }
+  }
+
+  const unlinkedPlayers = Array.from(unlinkedMap.values())
+    .sort((a, b) => a.playerName.localeCompare(b.playerName))
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
@@ -43,6 +93,7 @@ export default async function GuildPlayersPage({ params }: Props) {
         guildSlug={params.slug}
         isOwner={myMembership.role === 'OWNER'}
         currentUserId={session.user.id}
+        unlinkedPlayers={unlinkedPlayers}
       />
     </div>
   )

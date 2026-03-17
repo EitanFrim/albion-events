@@ -18,11 +18,19 @@ interface Member {
   user: { id: string; discordName: string; inGameName: string | null; avatarUrl: string | null }
 }
 
+interface UnlinkedPlayer {
+  playerName: string
+  balance: number
+  siphonedEnergy: number
+  importedAt: string | null
+}
+
 interface Props {
   members: Member[]
   guildSlug: string
   isOwner: boolean
   currentUserId: string
+  unlinkedPlayers?: UnlinkedPlayer[]
 }
 
 const roleConfig: Record<MemberRole, { label: string; color: string; bg: string }> = {
@@ -33,7 +41,7 @@ const roleConfig: Record<MemberRole, { label: string; color: string; bg: string 
   GUEST:    { label: 'Guest',    color: 'text-gray-400',   bg: 'bg-gray-500/15 border-gray-500/25' },
 }
 
-export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId }: Props) {
+export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId, unlinkedPlayers = [] }: Props) {
   const [members, setMembers] = useState<Member[]>(initial)
   const [loading, setLoading] = useState<string | null>(null)
   const [filter, setFilter] = useState<MemberStatus | 'ALL'>('ACTIVE')
@@ -611,6 +619,78 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                 {loading === balanceModal.userId ? '...' : balanceMode === 'add' ? 'Add Silver' : 'Deduct Silver'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unlinked Players Section */}
+      {unlinkedPlayers.length > 0 && (
+        <div className="mt-8 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+              </svg>
+              <h2 className="font-display text-lg font-700 text-text-primary">Unlinked Players</h2>
+            </div>
+            <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+              {unlinkedPlayers.length}
+            </span>
+          </div>
+          <p className="text-xs text-text-muted">
+            These players have imported balances or siphoned energy but haven&apos;t registered yet. Their data will be automatically applied when they sign up.
+          </p>
+
+          <div className="rounded-xl bg-bg-surface border border-amber-500/15 overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] gap-2 px-4 py-2.5 border-b border-border-subtle bg-bg-elevated/50">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">Player Name</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted text-right">Silver</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted text-right">Energy</span>
+            </div>
+
+            {/* Rows */}
+            {unlinkedPlayers.map(player => (
+              <div
+                key={player.playerName}
+                className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] gap-2 px-4 py-3 border-b border-border-subtle/50 last:border-0 hover:bg-bg-elevated/30 transition-colors"
+              >
+                {/* Name */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center ring-1 ring-amber-500/20 flex-shrink-0">
+                    <span className="text-amber-400 text-xs font-display font-600">
+                      {player.playerName[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-sm font-medium text-text-primary truncate block">{player.playerName}</span>
+                    <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">
+                      unlinked
+                    </span>
+                  </div>
+                </div>
+
+                {/* Balance */}
+                <div className="text-right self-center">
+                  <span className={`text-sm font-mono font-medium ${
+                    player.balance > 0 ? 'text-amber-400' : player.balance < 0 ? 'text-red-400' : 'text-text-muted'
+                  }`}>
+                    {player.balance.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-text-muted font-mono block">silver</span>
+                </div>
+
+                {/* Siphoned Energy */}
+                <div className="text-right self-center">
+                  <span className={`text-sm font-mono font-medium ${
+                    player.siphonedEnergy > 0 ? 'text-teal-400' : player.siphonedEnergy < 0 ? 'text-red-400' : 'text-text-muted'
+                  }`}>
+                    {player.siphonedEnergy.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-text-muted font-mono block">energy</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
