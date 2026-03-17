@@ -846,8 +846,15 @@ function RefiningRow({
   const sellKey = `sell:${recipe.productId}`;
   const hasSellOverride = overrides[sellKey] !== undefined;
   const effectiveSellPrice = hasSellOverride ? overrides[sellKey] : result.estimatedSellPrice;
-  const displayProfitNoFocus = result.incomplete ? 0 : effectiveSellPrice - result.effectiveCostNoFocus;
-  const displayProfitWithFocus = result.incomplete ? 0 : effectiveSellPrice - result.effectiveCostWithFocus;
+  // When transmute alternative exists, use adjusted costs (cheaper materials)
+  const costNoFocus = result.transmuteAlt
+    ? (100 - settings.returnRateNoFocus) / 100 * result.transmuteAlt.adjustedMaterialCost + result.nutritionCost
+    : result.effectiveCostNoFocus;
+  const costWithFocus = result.transmuteAlt
+    ? (100 - settings.returnRateWithFocus) / 100 * result.transmuteAlt.adjustedMaterialCost + result.nutritionCost
+    : result.effectiveCostWithFocus;
+  const displayProfitNoFocus = result.incomplete ? 0 : effectiveSellPrice - costNoFocus;
+  const displayProfitWithFocus = result.incomplete ? 0 : effectiveSellPrice - costWithFocus;
   const matCost = result.transmuteAlt ? result.transmuteAlt.adjustedMaterialCost : result.materialCost;
   const estCostNoFocus = matCost * (100 - settings.returnRateNoFocus) / 100;
   const estCostWithFocus = matCost * (100 - settings.returnRateWithFocus) / 100;
