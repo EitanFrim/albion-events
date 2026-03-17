@@ -50,26 +50,43 @@ export async function handleSetupCommand(interaction: SetupInteraction) {
     )
   }
 
-  // Find a guild the user owns
-  const ownedGuild = await prisma.guild.findFirst({
-    where: { ownerId: user.id },
-  })
-
-  if (!ownedGuild) {
-    return NextResponse.json(
-      ephemeralMessage('You do not own any guild on Albion Events.')
-    )
-  }
-
-  // Check if this Discord server is already linked to a different guild
+  // Check if this Discord server is already linked to a guild
   const existingLink = await prisma.guild.findUnique({
     where: { discordGuildId },
   })
-  if (existingLink && existingLink.id !== ownedGuild.id) {
-    return NextResponse.json(
-      ephemeralMessage(
-        `This Discord server is already linked to guild "${existingLink.name}". Unlink it first from the guild settings page.`
+
+  // If already linked, verify the user is an officer/owner of THAT guild
+  if (existingLink) {
+    const membership = await prisma.guildMembership.findUnique({
+      where: { userId_guildId: { userId: user.id, guildId: existingLink.id } },
+    })
+    const isOwner = existingLink.ownerId === user.id
+    const isOfficer = membership?.status === 'ACTIVE' && (membership.role === 'OFFICER' || membership.role === 'OWNER')
+    if (!isOwner && !isOfficer) {
+      return NextResponse.json(
+        ephemeralMessage(`This Discord server is linked to guild "${existingLink.name}", but you are not an officer of that guild.`)
       )
+    }
+  }
+
+  // Find a guild the user owns or is an officer of
+  const targetGuild = existingLink ?? await prisma.guild.findFirst({
+    where: { ownerId: user.id },
+  }) ?? await prisma.guild.findFirst({
+    where: {
+      members: {
+        some: {
+          userId: user.id,
+          role: { in: ['OFFICER', 'OWNER'] },
+          status: 'ACTIVE',
+        },
+      },
+    },
+  })
+
+  if (!targetGuild) {
+    return NextResponse.json(
+      ephemeralMessage('You need to be an owner or officer of a guild on Albion Events to run /setup.')
     )
   }
 
@@ -86,7 +103,7 @@ export async function handleSetupCommand(interaction: SetupInteraction) {
 
   // Update the guild
   await prisma.guild.update({
-    where: { id: ownedGuild.id },
+    where: { id: targetGuild.id },
     data: {
       discordGuildId,
       discordBotInstalled: true,
@@ -111,6 +128,6 @@ export async function handleSetupCommand(interaction: SetupInteraction) {
   }
 
   return NextResponse.json(
-    ephemeralMessage(`Discord server linked to **${ownedGuild.name}**! ${messages.join(' ')}`)
+    ephemeralMessage(`Discord server linked to **${targetGuild.name}**! ${messages.join(' ')}`)
   )
 }

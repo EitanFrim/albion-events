@@ -46,7 +46,7 @@ const commands = [
   },
   {
     name: 'setup',
-    description: 'Link this Discord server to your Albion Events guild (owner only)',
+    description: 'Link this Discord server to your Albion Events guild (officer+)',
     type: 1,
     options: [
       {

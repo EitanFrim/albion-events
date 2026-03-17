@@ -16,9 +16,11 @@ const PRESET_COLORS = [
 
 interface Props {
   guild: { id: string; name: string; slug: string; inviteCode: string; description: string | null; logoUrl: string | null; bannerUrl: string | null; accentColor: string | null; bannerPositionY: number | null; logoZoom: number | null; logoPositionX: number | null; logoPositionY: number | null; discordGuildId: string | null; discordMemberRoleId: string | null; discordAllianceRoleId: string | null; discordBotInstalled: boolean; serverRegion: string | null }
+  role?: string
 }
 
-export function GuildSettingsPanel({ guild }: Props) {
+export function GuildSettingsPanel({ guild, role = 'OWNER' }: Props) {
+  const isOwner = role === 'OWNER'
   const router = useRouter()
   const [inviteCode, setInviteCode] = useState(guild.inviteCode)
   const [copied, setCopied] = useState(false)
@@ -604,8 +606,8 @@ export function GuildSettingsPanel({ guild }: Props) {
         )}
       </div>
 
-      {/* Danger zone */}
-      <div className="card p-5 border-red-900/40">
+      {/* Danger zone — owner only */}
+      {isOwner && <div className="card p-5 border-red-900/40">
         <h2 className="font-display font-600 text-red-400 mb-1">Danger Zone</h2>
         <p className="text-text-secondary text-sm mb-4">
           Permanently delete this guild. All events, signups, roles, and templates will be deleted. This cannot be undone.
@@ -652,7 +654,7 @@ export function GuildSettingsPanel({ guild }: Props) {
             </div>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   )
 }

@@ -15,7 +15,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const guild = await prisma.guild.findUnique({ where: { slug: params.slug } })
   if (!guild) return NextResponse.json({ error: 'Guild not found' }, { status: 404 })
 
-  const access = await requireGuildAccess(session.user.id, guild.id, 'OWNER')
+  const access = await requireGuildAccess(session.user.id, guild.id, 'OFFICER')
   if (!access) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   await prisma.guild.update({
