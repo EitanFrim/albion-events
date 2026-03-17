@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { verifyAlbionName } from '@/lib/albion'
+import { linkOrphanedEnergyTransactions } from '@/lib/siphoned-energy'
+import { applyPendingBalanceImports } from '@/lib/balance-import'
 
 const tokenSignupSchema = z.object({
   token: z.string().min(1),
@@ -85,4 +88,81 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   })
 
   return NextResponse.json({ ok: true, signupId: signup.id }, { status: 201 })
+}
+
+/* ─── PUT: Set IGN via token auth (for guests who haven't set their name yet) ─── */
+
+const ignSchema = z.object({
+  token: z.string().min(1),
+  inGameName: z.string().min(1).max(64).trim(),
+  region: z.enum(['americas', 'europe', 'asia']).optional(),
+})
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const body = await req.json()
+  const parsed = ignSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
+
+  const { token, inGameName, region } = parsed.data
+
+  // Validate token
+  const signupToken = await prisma.eventSignupToken.findUnique({ where: { token } })
+  if (!signupToken || signupToken.eventId !== params.id) {
+    return NextResponse.json({ error: 'Invalid signup link.' }, { status: 400 })
+  }
+
+  // Find user
+  const user = await prisma.user.findUnique({
+    where: { discordUserId: signupToken.discordUserId },
+  })
+  if (!user) {
+    return NextResponse.json({ error: 'User not found. Sign up first.' }, { status: 400 })
+  }
+
+  // Determine verify region from guild or request
+  const event = await prisma.event.findUnique({
+    where: { id: params.id },
+    include: { guild: { select: { id: true, serverRegion: true } } },
+  })
+  if (!event) {
+    return NextResponse.json({ error: 'Event not found.' }, { status: 404 })
+  }
+
+  const verifyRegion = event.guild.serverRegion ?? region ?? null
+  let finalName = inGameName
+
+  if (verifyRegion) {
+    const result = await verifyAlbionName(finalName, verifyRegion)
+    if (!result.valid) {
+      return NextResponse.json(
+        { error: `Player "${finalName}" not found in Albion Online. Check the spelling and make sure you're on the correct server region.` },
+        { status: 400 }
+      )
+    }
+    if (result.exactName) finalName = result.exactName
+  }
+
+  // Save IGN
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { inGameName: finalName },
+  })
+
+  // Link orphaned energy transactions
+  try {
+    await linkOrphanedEnergyTransactions(user.id, finalName)
+  } catch {
+    // Non-critical
+  }
+
+  // Apply pending balance imports
+  try {
+    await applyPendingBalanceImports(user.id, event.guild.id).catch(() => 0)
+  } catch {
+    // Non-critical
+  }
+
+  return NextResponse.json({ inGameName: finalName })
 }

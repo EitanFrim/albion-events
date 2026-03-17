@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { verifyAlbionName } from '@/lib/albion'
 import { linkOrphanedEnergyTransactions } from '@/lib/siphoned-energy'
+import { applyPendingBalanceImports } from '@/lib/balance-import'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -72,6 +73,19 @@ export async function PUT(req: NextRequest) {
   // Link orphaned siphoned energy transactions matching this IGN
   try {
     await linkOrphanedEnergyTransactions(session.user.id, finalName)
+  } catch {
+    // Non-critical — don't block profile update
+  }
+
+  // Apply pending balance imports for all guilds the user is in
+  try {
+    const memberships = await prisma.guildMembership.findMany({
+      where: { userId: session.user.id, status: 'ACTIVE' },
+      select: { guildId: true },
+    })
+    for (const m of memberships) {
+      await applyPendingBalanceImports(session.user.id, m.guildId).catch(() => 0)
+    }
   } catch {
     // Non-critical — don't block profile update
   }

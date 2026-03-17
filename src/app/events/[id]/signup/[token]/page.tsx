@@ -5,6 +5,7 @@ import { SignupForm } from '@/components/SignupForm'
 import { RegearButton } from '@/components/RegearButton'
 import { TokenSignupForm } from '@/components/TokenSignupForm'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
+import { InlineIgnSetup } from '@/components/InlineIgnSetup'
 import { EventStatus } from '@prisma/client'
 
 const statusConfig: Record<EventStatus, { label: string; cls: string; dot: string }> = {
@@ -47,7 +48,7 @@ export default async function TokenSignupPage({ params }: Props) {
   const event = await prisma.event.findUnique({
     where: { id: params.id },
     include: {
-      guild: { select: { name: true, slug: true } },
+      guild: { select: { name: true, slug: true, serverRegion: true } },
       parties: {
         orderBy: { displayOrder: 'asc' },
         include: {
@@ -80,8 +81,10 @@ export default async function TokenSignupPage({ params }: Props) {
   // Find the user linked to this token
   const tokenUser = await prisma.user.findFirst({
     where: { discordUserId: signupToken.discordUserId },
-    select: { id: true },
+    select: { id: true, inGameName: true },
   })
+
+  const needsIgn = tokenUser && !tokenUser.inGameName
 
   // Fetch role colors
   const guildRoles = await prisma.guildRole2.findMany({
@@ -290,8 +293,14 @@ export default async function TokenSignupPage({ params }: Props) {
               </div>
             )}
 
-            {/* Signup form — uses token auth for API calls */}
-            {event.status === 'PUBLISHED' && tokenUser && hasSignedUp ? (
+            {/* IGN gate — require in-game name before signup */}
+            {needsIgn && event.status === 'PUBLISHED' ? (
+              <InlineIgnSetup
+                eventId={params.id}
+                token={params.token}
+                serverRegion={event.guild.serverRegion}
+              />
+            ) : event.status === 'PUBLISHED' && tokenUser && hasSignedUp ? (
               <SignupForm
                 eventId={params.id}
                 parties={event.parties}
