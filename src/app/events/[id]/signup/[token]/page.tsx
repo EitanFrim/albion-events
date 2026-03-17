@@ -293,21 +293,30 @@ export default async function TokenSignupPage({ params }: Props) {
               </div>
             )}
 
-            {/* IGN gate — require in-game name before signup */}
-            {needsIgn && event.status === 'PUBLISHED' ? (
+            {/* Already signed up — show edit/withdraw (+ IGN prompt if needed) */}
+            {event.status === 'PUBLISHED' && tokenUser && hasSignedUp ? (
+              <>
+                {needsIgn && (
+                  <InlineIgnSetup
+                    eventId={params.id}
+                    token={params.token}
+                    serverRegion={event.guild.serverRegion}
+                  />
+                )}
+                <SignupForm
+                  eventId={params.id}
+                  parties={event.parties}
+                  existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
+                  isLocked={false}
+                  authToken={params.token}
+                  roleColors={roleColorMap}
+                />
+              </>
+            ) : needsIgn && event.status === 'PUBLISHED' && !hasSignedUp ? (
               <InlineIgnSetup
                 eventId={params.id}
                 token={params.token}
                 serverRegion={event.guild.serverRegion}
-              />
-            ) : event.status === 'PUBLISHED' && tokenUser && hasSignedUp ? (
-              <SignupForm
-                eventId={params.id}
-                parties={event.parties}
-                existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
-                isLocked={false}
-                authToken={params.token}
-                roleColors={roleColorMap}
               />
             ) : event.status === 'PUBLISHED' && tokenUser && !hasSignedUp ? (
               <SignupForm
