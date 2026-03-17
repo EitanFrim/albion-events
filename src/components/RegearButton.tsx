@@ -22,6 +22,7 @@ interface Props {
   eventId: string
   existingRegear: ExistingRegear | null
   assignedRole?: AssignedRoleInfo | null
+  authToken?: string
 }
 
 function parseRegearValue(notes: string | null | undefined): number | null {
@@ -33,7 +34,7 @@ function parseRegearValue(notes: string | null | undefined): number | null {
   } catch { return null }
 }
 
-export function RegearButton({ eventId, existingRegear, assignedRole }: Props) {
+export function RegearButton({ eventId, existingRegear, assignedRole, authToken }: Props) {
   const router = useRouter()
   const regearValue = assignedRole ? parseRegearValue(assignedRole.notes) : null
   const [modalOpen, setModalOpen] = useState(false)
@@ -47,12 +48,13 @@ export function RegearButton({ eventId, existingRegear, assignedRole }: Props) {
 
   const isResubmit = existingRegear?.status === 'REJECTED'
   const reviewerName = existingRegear?.reviewedBy?.inGameName || existingRegear?.reviewedBy?.discordName
+  const tokenParam = authToken ? `?token=${authToken}` : ''
 
   // Load existing screenshot when opening resubmit modal
   useEffect(() => {
     if (modalOpen && isResubmit && existingRegear && !existingScreenshot) {
       setLoadingScreenshot(true)
-      fetch(`/api/events/${eventId}/regears/${existingRegear.id}`)
+      fetch(`/api/events/${eventId}/regears/${existingRegear.id}${tokenParam}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data?.screenshotData) setExistingScreenshot(data.screenshotData)
@@ -87,7 +89,7 @@ export function RegearButton({ eventId, existingRegear, assignedRole }: Props) {
       if (isResubmit && !file) {
         fd.append('keepExisting', 'true')
       }
-      const res = await fetch(`/api/events/${eventId}/regears`, { method: 'POST', body: fd })
+      const res = await fetch(`/api/events/${eventId}/regears${tokenParam}`, { method: 'POST', body: fd })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Failed to submit')

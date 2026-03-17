@@ -35,49 +35,45 @@ export async function handleEventSignupButton(interaction: DiscordInteraction, c
     return NextResponse.json(ephemeralMessage('Event not found.'))
   }
 
-  if (event.status !== 'PUBLISHED') {
-    return NextResponse.json(ephemeralMessage('This event is no longer open for signups.'))
+  if (event.status !== 'PUBLISHED' && event.status !== 'LOCKED' && event.status !== 'COMPLETED') {
+    return NextResponse.json(ephemeralMessage('This event is not available.'))
   }
 
-  // Check if user already has an active signup
-  const existingUser = await prisma.user.findUnique({
-    where: { discordUserId: discordUser.id },
+  // Upsert token — reuse existing link for same user+event, or create new one
+  const discordUsername = discordUser.global_name || discordUser.username
+  const existingToken = await prisma.eventSignupToken.findUnique({
+    where: { event_discord_user: { eventId, discordUserId: discordUser.id } },
   })
 
-  if (existingUser) {
-    const existingSignup = await prisma.signup.findUnique({
-      where: { eventId_userId: { eventId, userId: existingUser.id } },
+  let tokenValue: string
+  if (existingToken) {
+    tokenValue = existingToken.token
+    // Update username in case it changed
+    await prisma.eventSignupToken.update({
+      where: { id: existingToken.id },
+      data: { discordUsername },
     })
-
-    if (existingSignup && existingSignup.status === 'ACTIVE') {
-      return NextResponse.json(
-        ephemeralMessage('You are already signed up for this event! You can manage your signup on the web app.')
-      )
-    }
+  } else {
+    tokenValue = randomUUID()
+    await prisma.eventSignupToken.create({
+      data: {
+        token: tokenValue,
+        eventId,
+        discordUserId: discordUser.id,
+        discordUsername,
+        // No expiration — permanent link
+      },
+    })
   }
-
-  // Generate token
-  const token = randomUUID()
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-  await prisma.eventSignupToken.create({
-    data: {
-      token,
-      eventId,
-      discordUserId: discordUser.id,
-      discordUsername: discordUser.global_name || discordUser.username,
-      expiresAt,
-    },
-  })
 
   const baseUrl = process.env.NEXTAUTH_URL || 'https://albionhq.com'
-  const signupUrl = `${baseUrl}/events/${eventId}/signup/${token}`
+  const signupUrl = `${baseUrl}/events/${eventId}/signup/${tokenValue}`
 
   return NextResponse.json(
     ephemeralMessage(
-      `🔗 **Your private signup link:**\n${signupUrl}\n\n` +
-      `This link is unique to you and expires in 24 hours.\n` +
-      `No login required — just click and choose your roles!`
+      `🔗 **Your event link:**\n${signupUrl}\n\n` +
+      `This link is your personal event page — sign up, manage your signup, and request regears all from here.\n` +
+      `Bookmark it for easy access!`
     )
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface RoleSlot { id: string; roleName: string; capacity: number }
 interface Party { id: string; name: string; roleSlots: RoleSlot[] }
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function TokenSignupForm({ eventId, token, parties, discordUsername, roleColors }: Props) {
+  const router = useRouter()
   const allRoles = Array.from(new Set(parties.flatMap(p => p.roleSlots.map(s => s.roleName))))
 
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
@@ -59,6 +61,8 @@ export function TokenSignupForm({ eventId, token, parties, discordUsername, role
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Failed to sign up')
       }
+      // Refresh the page so the server re-renders with SignupForm (full features)
+      router.refresh()
       setDone(true)
     } catch (err: any) {
       setError(err.message)

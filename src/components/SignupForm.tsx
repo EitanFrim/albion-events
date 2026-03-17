@@ -12,11 +12,13 @@ interface Props {
   existingSignup: { preferredRoles: string[]; note: string } | null
   isLocked: boolean
   onSignupComplete?: () => void
+  authToken?: string
+  roleColors?: Record<string, string>
 }
 
 interface GuildRole { id: string; name: string; categoryId: string | null; category: { id: string; name: string; color: string } | null }
 
-export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignupComplete }: Props) {
+export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignupComplete, authToken, roleColors: roleColorsProp }: Props) {
   const router = useRouter()
   const allRoles = Array.from(new Set(parties.flatMap(p => p.roleSlots.map(s => s.roleName))))
 
@@ -34,8 +36,12 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignu
   const [editing, setEditing] = useState(!existingSignup)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Fetch role colors
+  // Use provided role colors or fetch them
   useEffect(() => {
+    if (roleColorsProp) {
+      setRoleColors(roleColorsProp)
+      return
+    }
     fetch('/api/guild-roles2')
       .then(r => r.json())
       .then((roles: GuildRole[]) => {
@@ -44,7 +50,7 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignu
         setRoleColors(map)
       })
       .catch(() => {})
-  }, [])
+  }, [roleColorsProp])
 
   // Close on outside click
   useEffect(() => {
@@ -74,7 +80,8 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignu
     setLoading(true); setError(''); setSuccess('')
     try {
       const method = isSignedUp ? 'PUT' : 'POST'
-      const res = await fetch(`/api/events/${eventId}/signup`, {
+      const tokenParam = authToken ? `?token=${authToken}` : ''
+      const res = await fetch(`/api/events/${eventId}/signup${tokenParam}`, {
         method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ preferredRoles: selectedRoles, note }),
       })
@@ -92,7 +99,8 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignu
     if (!confirm('Withdraw from this event?')) return
     setLoading(true); setError('')
     try {
-      const res = await fetch(`/api/events/${eventId}/signup`, { method: 'DELETE' })
+      const tokenParam = authToken ? `?token=${authToken}` : ''
+      const res = await fetch(`/api/events/${eventId}/signup${tokenParam}`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Failed to withdraw')

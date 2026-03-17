@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const { token, preferredRoles, note } = parsed.data
 
-  // Find and validate token atomically
+  // Find and validate token
   const signupToken = await prisma.eventSignupToken.findUnique({
     where: { token },
   })
@@ -29,14 +29,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   if (signupToken.eventId !== params.id) {
     return NextResponse.json({ error: 'Invalid signup link.' }, { status: 400 })
-  }
-
-  if (signupToken.expiresAt < new Date()) {
-    return NextResponse.json({ error: 'This signup link has expired. Click the Sign Up button in Discord to get a new one.' }, { status: 400 })
-  }
-
-  if (signupToken.usedAt) {
-    return NextResponse.json({ error: 'This signup link has already been used.' }, { status: 400 })
   }
 
   // Validate event
@@ -91,16 +83,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       status: 'ACTIVE',
     },
   })
-
-  // Mark token as used (atomic — prevents race conditions)
-  const updated = await prisma.eventSignupToken.updateMany({
-    where: { id: signupToken.id, usedAt: null },
-    data: { usedAt: new Date() },
-  })
-
-  if (updated.count === 0) {
-    // Token was used by concurrent request — signup still went through via upsert, so that's fine
-  }
 
   return NextResponse.json({ ok: true, signupId: signup.id }, { status: 201 })
 }

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { requireGuildAccess } from '@/lib/guild'
+import { resolveUser } from '@/lib/token-auth'
 import { z } from 'zod'
 
 const signupSchema = z.object({
@@ -16,8 +17,8 @@ async function getEvent(id: string) {
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await resolveUser(req, params.id)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const event = await prisma.event.findUnique({ where: { id: params.id } })
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -27,13 +28,22 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // For members-only events, require PLAYER+ role
   if (event.visibility === 'PUBLIC') {
     const membership = await prisma.guildMembership.findUnique({
-      where: { userId_guildId: { userId: session.user.id, guildId: event.guildId } },
+      where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
     })
     if (!membership || membership.status !== 'ACTIVE') {
-      return NextResponse.json({ error: 'You must be an active member to sign up.' }, { status: 403 })
+      // For token users, auto-create GUEST membership for public events
+      if (user.fromToken) {
+        await prisma.guildMembership.upsert({
+          where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
+          create: { userId: user.id, guildId: event.guildId, role: 'GUEST', status: 'ACTIVE' },
+          update: {},
+        })
+      } else {
+        return NextResponse.json({ error: 'You must be an active member to sign up.' }, { status: 403 })
+      }
     }
   } else {
-    const membership = await requireGuildAccess(session.user.id, event.guildId, 'PLAYER')
+    const membership = await requireGuildAccess(user.id, event.guildId, 'PLAYER')
     if (!membership) return NextResponse.json({ error: 'You must be a verified guild member to sign up.' }, { status: 403 })
   }
 
@@ -42,7 +52,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
   const existing = await prisma.signup.findUnique({
-    where: { eventId_userId: { eventId: params.id, userId: session.user.id } },
+    where: { eventId_userId: { eventId: params.id, userId: user.id } },
   })
 
   if (existing && existing.status === 'ACTIVE') {
@@ -50,10 +60,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const signup = await prisma.signup.upsert({
-    where: { eventId_userId: { eventId: params.id, userId: session.user.id } },
+    where: { eventId_userId: { eventId: params.id, userId: user.id } },
     update: { preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE' },
     create: {
-      eventId: params.id, userId: session.user.id,
+      eventId: params.id, userId: user.id,
       preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE',
     },
     include: { user: { select: { id: true, discordName: true, avatarUrl: true } } },
@@ -63,8 +73,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await resolveUser(req, params.id)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const event = await getEvent(params.id)
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -77,10 +87,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
   const signup = await prisma.signup.upsert({
-    where: { eventId_userId: { eventId: params.id, userId: session.user.id } },
+    where: { eventId_userId: { eventId: params.id, userId: user.id } },
     update: { preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE' },
     create: {
-      eventId: params.id, userId: session.user.id,
+      eventId: params.id, userId: user.id,
       preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE',
     },
     include: { user: { select: { id: true, discordName: true, avatarUrl: true } } },
@@ -89,16 +99,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(signup)
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const user = await resolveUser(req, params.id)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const event = await getEvent(params.id)
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (event.status === 'COMPLETED') return NextResponse.json({ error: 'Event is completed.' }, { status: 400 })
 
   await prisma.signup.updateMany({
-    where: { eventId: params.id, userId: session.user.id },
+    where: { eventId: params.id, userId: user.id },
     data: { status: 'WITHDRAWN' },
   })
 

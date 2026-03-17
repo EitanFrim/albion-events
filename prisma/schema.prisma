@@ -469,11 +469,12 @@ model EventSignupToken {
   eventId         String    @map("event_id")
   discordUserId   String    @map("discord_user_id")
   discordUsername  String    @map("discord_username")
-  expiresAt       DateTime  @map("expires_at")
+  expiresAt       DateTime? @map("expires_at")
   usedAt          DateTime? @map("used_at")
   createdAt       DateTime  @default(now()) @map("created_at")
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
+  @@unique([eventId, discordUserId], name: "event_discord_user")
   @@map("event_signup_tokens")
 }

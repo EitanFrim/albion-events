@@ -5,14 +5,15 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { requireGuildAccess } from '@/lib/guild'
+import { resolveUser } from '@/lib/token-auth'
 
 // POST: player submits a regear request (FormData with screenshot)
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await resolveUser(req, params.id)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const event = await prisma.event.findUnique({ where: { id: params.id } })
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
@@ -22,13 +23,13 @@ export async function POST(
   let membership
   if (event.visibility === 'PUBLIC') {
     membership = await prisma.guildMembership.findUnique({
-      where: { userId_guildId: { userId: session.user.id, guildId: event.guildId } },
+      where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
     })
     if (!membership || membership.status !== 'ACTIVE') {
       return NextResponse.json({ error: 'Must be an active member' }, { status: 403 })
     }
   } else {
-    membership = await requireGuildAccess(session.user.id, event.guildId, 'PLAYER')
+    membership = await requireGuildAccess(user.id, event.guildId, 'PLAYER')
     if (!membership) return NextResponse.json({ error: 'Must be a verified guild member' }, { status: 403 })
   }
 
@@ -40,7 +41,7 @@ export async function POST(
 
   // Check for existing request first (needed for resubmit logic)
   const existing = await prisma.regearRequest.findUnique({
-    where: { eventId_userId: { eventId: params.id, userId: session.user.id } },
+    where: { eventId_userId: { eventId: params.id, userId: user.id } },
   })
 
   // For resubmit with keepExisting, screenshot is optional
@@ -84,7 +85,7 @@ export async function POST(
   const regear = await prisma.regearRequest.create({
     data: {
       eventId: params.id,
-      userId: session.user.id,
+      userId: user.id,
       membershipId: membership.id,
       screenshotData,
       note: note.slice(0, 500) || null,
