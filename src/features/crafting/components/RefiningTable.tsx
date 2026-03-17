@@ -244,7 +244,7 @@ export default function RefiningTable({
 
   // Dynamic column count for colSpan
   const materialColCount = settings.showMaterials ? (hasHearts ? 3 : 2) : 1;
-  const totalCols = 1 + materialColCount + 7; // product + materials + estCost + nutrition + productPrice + sellPrice + profitNoFocus + profitFocus + focusEff
+  const totalCols = 1 + materialColCount + 6; // product + materials + estCost + productPrice + sellPrice + profitNoFocus + profitFocus + focusEff
 
   return (
     <div className="border rounded-xl overflow-hidden shadow-lg" style={{
@@ -360,7 +360,6 @@ export default function RefiningTable({
                 <th className={thClass + " text-right"}>Material Cost</th>
               )}
               <th className={thClass + " text-right"}>Est. Cost</th>
-              <th className={thClass + " text-right"}>Nutrition</th>
               <th className={thClass + " text-right"}>Product Price</th>
               <th className={thClass + " text-right"}>
                 {settings.useSellNow ? 'Sell (-4%)' : `Sell (-${settings.sellMarkdown}%)`}
@@ -970,31 +969,6 @@ function RefiningRow({
         </div>
       </td>
 
-      {/* Nutrition Cost */}
-      <td className="px-2 py-3 text-right whitespace-nowrap">
-        <div className="flex justify-end">
-          <HoverPopover
-            trigger={
-              <span className="tabular-nums cursor-default flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
-                {formatSilver(result.nutritionCost)}
-                <InfoIcon />
-              </span>
-            }
-          >
-            <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
-              Nutrition Details
-            </div>
-            <div className="flex flex-col gap-1.5 text-xs">
-              <PopoverRow label="Nutrition" value={String(recipe.nutrition)} />
-              <PopoverRow label="Cost per 100" value={formatSilver(settings.nutritionPricePer100)} />
-              <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border-subtle)' }}>
-                <PopoverRow label="Total cost" value={formatSilver(result.nutritionCost)} accent />
-              </div>
-            </div>
-          </HoverPopover>
-        </div>
-      </td>
-
       {/* Product price */}
       <td className="px-2 py-3 text-right">
         <div className="flex items-center justify-end gap-2">
@@ -1049,35 +1023,90 @@ function RefiningRow({
       </td>
 
       {/* Profit no focus */}
-      <td className="px-2 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) }}>
+      <td className="px-2 py-3 text-right whitespace-nowrap">
         {result.incomplete ? (
-          <span className="text-[10px] italic">N/A</span>
-        ) : (
-          <span className="inline-flex items-center justify-end gap-1">
-            {result.transmuteAlt && !hasSellOverride && (
-              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-            )}
-            {formatSilver(Math.round((hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) * quantity))}
-          </span>
-        )}
+          <span className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>N/A</span>
+        ) : (() => {
+          const profitVal = hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result);
+          return (
+          <div className="flex justify-end">
+            <HoverPopover
+              trigger={
+                <span className="tabular-nums cursor-default flex items-center gap-1 font-medium" style={{ color: profitColor(profitVal) }}>
+                  {result.transmuteAlt && !hasSellOverride && (
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                  )}
+                  {formatSilver(Math.round(profitVal * quantity))}
+                  <InfoIcon />
+                </span>
+              }
+            >
+              <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                Profit Breakdown (No Focus)
+              </div>
+              <div className="flex flex-col gap-1.5 text-xs">
+                <PopoverRow label="Sell price" value={formatSilver(Math.round(effectiveSellPrice))} />
+                <PopoverRow label={`Material cost (${settings.returnRateNoFocus}% return)`} value={`-${formatSilver(Math.round(estCostNoFocus))}`} />
+                <PopoverRow label="Nutrition cost" value={`-${formatSilver(result.nutritionCost)}`} />
+                <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                  <PopoverRow label="Profit per craft" value={formatSilver(Math.round(profitVal))} accent />
+                  {quantity > 1 && (
+                    <div className="mt-1">
+                      <PopoverRow label={`Total (×${quantity})`} value={formatSilver(Math.round(profitVal * quantity))} accent />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </HoverPopover>
+          </div>
+          );
+        })()}
       </td>
 
       {/* Profit with focus */}
-      <td className="px-2 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) }}>
+      <td className="px-2 py-3 text-right whitespace-nowrap">
         {result.incomplete ? (
-          <span className="text-[10px] italic">N/A</span>
-        ) : (
-          <span className="inline-flex items-center justify-end gap-1">
-            {result.transmuteAlt && !hasSellOverride && (
-              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-            )}
-            {formatSilver(Math.round((hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) * quantity))}
-          </span>
-        )}
+          <span className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>N/A</span>
+        ) : (() => {
+          const profitVal = hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result);
+          return (
+          <div className="flex justify-end">
+            <HoverPopover
+              trigger={
+                <span className="tabular-nums cursor-default flex items-center gap-1 font-medium" style={{ color: profitColor(profitVal) }}>
+                  {result.transmuteAlt && !hasSellOverride && (
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-accent)' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                  )}
+                  {formatSilver(Math.round(profitVal * quantity))}
+                  <InfoIcon />
+                </span>
+              }
+            >
+              <div className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                Profit Breakdown (With Focus)
+              </div>
+              <div className="flex flex-col gap-1.5 text-xs">
+                <PopoverRow label="Sell price" value={formatSilver(Math.round(effectiveSellPrice))} />
+                <PopoverRow label={`Material cost (${settings.returnRateWithFocus}% return)`} value={`-${formatSilver(Math.round(estCostWithFocus))}`} />
+                <PopoverRow label="Nutrition cost" value={`-${formatSilver(result.nutritionCost)}`} />
+                <PopoverRow label={result.actualFocusCost !== recipe.focusCost ? `Focus cost (spec'd)` : "Focus cost"} value={String(result.actualFocusCost)} />
+                <div className="border-t pt-1.5 mt-0.5" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                  <PopoverRow label="Profit per craft" value={formatSilver(Math.round(profitVal))} accent />
+                  {quantity > 1 && (
+                    <div className="mt-1">
+                      <PopoverRow label={`Total (×${quantity})`} value={formatSilver(Math.round(profitVal * quantity))} accent />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </HoverPopover>
+          </div>
+          );
+        })()}
       </td>
 
       {/* Focus efficiency */}
