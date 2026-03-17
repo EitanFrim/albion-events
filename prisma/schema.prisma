@@ -82,6 +82,7 @@ model User {
   lootTabParticipantsAdded LootTabParticipant[] @relation("ParticipantAddedBy")
   energyActions            SiphonedEnergyTransaction[] @relation("EnergyPerformer")
   balanceImports           PendingBalanceImport[]      @relation("BalanceImporter")
+  balanceClaims            PendingBalanceImport[]      @relation("BalanceClaimer")
 
   @@map("users")
 }
@@ -447,17 +448,19 @@ model SiphonedEnergyTransaction {
 }
 
 model PendingBalanceImport {
-  id          String   @id @default(cuid())
-  guildId     String   @map("guild_id")
-  playerName  String   @map("player_name")
-  amount      Int
-  reason      String?
-  importedById String  @map("imported_by_id")
-  appliedAt   DateTime? @map("applied_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id              String    @id @default(cuid())
+  guildId         String    @map("guild_id")
+  playerName      String    @map("player_name")
+  amount          Int
+  reason          String?
+  importedById    String    @map("imported_by_id")
+  appliedAt       DateTime? @map("applied_at")
+  appliedToUserId String?   @map("applied_to_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   guild       Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
   importedBy  User     @relation("BalanceImporter", fields: [importedById], references: [id])
+  appliedTo   User?    @relation("BalanceClaimer", fields: [appliedToUserId], references: [id])
 
   @@unique([guildId, playerName], name: "guild_player_pending")
   @@map("pending_balance_imports")

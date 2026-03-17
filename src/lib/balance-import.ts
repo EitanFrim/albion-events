@@ -68,9 +68,14 @@ export async function importBalances(
       })
 
       if (existing) {
+        // Don't reset already-applied imports
+        if (existing.appliedAt) {
+          skippedZero++
+          continue
+        }
         await prisma.pendingBalanceImport.update({
           where: { id: existing.id },
-          data: { amount: entry.amount, appliedAt: null, importedById: performedById },
+          data: { amount: entry.amount, importedById: performedById },
         })
         updated++
       } else {
@@ -94,11 +99,18 @@ export async function importBalances(
 /**
  * Called after a player registers or sets their IGN.
  * Checks for any pending balance imports that match their name and applies them.
+ * Each import can only be claimed once per Discord account.
  */
 export async function applyPendingBalanceImports(
   userId: string,
   guildId: string
 ): Promise<number> {
+  // Check if this user already claimed any imports in this guild
+  const alreadyClaimed = await prisma.pendingBalanceImport.findFirst({
+    where: { guildId, appliedToUserId: userId },
+  })
+  if (alreadyClaimed) return 0
+
   // Get the user's names
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -142,7 +154,7 @@ export async function applyPendingBalanceImports(
 
     await prisma.pendingBalanceImport.update({
       where: { id: imp.id },
-      data: { appliedAt: new Date() },
+      data: { appliedAt: new Date(), appliedToUserId: userId },
     })
 
     totalApplied += imp.amount
