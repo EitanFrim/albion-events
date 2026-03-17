@@ -286,6 +286,25 @@ export default async function TokenSignupPage({ params }: Props) {
                                 {slot.assignments.length}/{slot.capacity}
                               </span>
                             </div>
+                            {/* Assigned player names */}
+                            {slot.assignments.length > 0 && (
+                              <div className="ml-4 mt-0.5 mb-1 space-y-px">
+                                {slot.assignments.map((assignment: any) => {
+                                  const isMe = tokenUser && assignment.user.id === tokenUser.id
+                                  return (
+                                    <div
+                                      key={assignment.id}
+                                      className={`flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded ${isMe ? 'font-semibold' : ''}`}
+                                      style={{ color: isMe ? '#34d399' : 'var(--color-text-secondary)' }}
+                                    >
+                                      <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: isMe ? '#34d399' : color + '80' }} />
+                                      <span className="truncate">{assignment.user.discordName}</span>
+                                      {isMe && <span className="text-[9px] text-emerald-400/70 flex-shrink-0">(you)</span>}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
                           </div>
                         )
                       })}
