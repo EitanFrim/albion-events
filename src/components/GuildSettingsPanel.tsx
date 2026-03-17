@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { BalanceImport } from './BalanceImport'
 
 const PRESET_COLORS = [
   { value: '#f97316', label: 'Orange' },
@@ -605,6 +606,9 @@ export function GuildSettingsPanel({ guild, role = 'OWNER' }: Props) {
           </div>
         )}
       </div>
+
+      {/* Balance import */}
+      <BalanceImport guildSlug={guild.slug} />
 
       {/* Danger zone — owner only */}
       {isOwner && <div className="card p-5 border-red-900/40">

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { ephemeralMessage, modalResponse } from '@/lib/discord'
 import { verifyAlbionName, REGION_LABELS } from '@/lib/albion'
+import { applyPendingBalanceImports } from '@/lib/balance-import'
 
 interface DiscordInteraction {
   guild_id?: string
@@ -176,9 +177,16 @@ export async function completeRegistration(
     })
   }
 
+  // Apply any pending balance imports for this player
+  const importedBalance = await applyPendingBalanceImports(userId, guildId).catch(() => 0)
+
+  const balanceMsg = importedBalance
+    ? `\n\nYour imported silver balance of **${importedBalance.toLocaleString()}** has been applied.`
+    : ''
+
   return NextResponse.json(
     ephemeralMessage(
-      `Welcome to **${guildName}**! You have been registered as a verified member.`
+      `Welcome to **${guildName}**! You have been registered as a verified member.${balanceMsg}`
     )
   )
 }

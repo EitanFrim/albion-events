@@ -81,6 +81,7 @@ model User {
   lootTabParticipations    LootTabParticipant[]
   lootTabParticipantsAdded LootTabParticipant[] @relation("ParticipantAddedBy")
   energyActions            SiphonedEnergyTransaction[] @relation("EnergyPerformer")
+  balanceImports           PendingBalanceImport[]      @relation("BalanceImporter")
 
   @@map("users")
 }
@@ -114,6 +115,7 @@ model Guild {
   templates  GuildTemplate[]
   lootTabSales LootTabSale[]
   siphonedEnergyTransactions SiphonedEnergyTransaction[]
+  pendingBalanceImports      PendingBalanceImport[]
 
   @@map("guilds")
 }
@@ -442,6 +444,23 @@ model SiphonedEnergyTransaction {
 
   @@unique([guildId, playerName, logDate, amount], name: "dedup_key")
   @@map("siphoned_energy_transactions")
+}
+
+model PendingBalanceImport {
+  id          String   @id @default(cuid())
+  guildId     String   @map("guild_id")
+  playerName  String   @map("player_name")
+  amount      Int
+  reason      String?
+  importedById String  @map("imported_by_id")
+  appliedAt   DateTime? @map("applied_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  guild       Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  importedBy  User     @relation("BalanceImporter", fields: [importedById], references: [id])
+
+  @@unique([guildId, playerName], name: "guild_player_pending")
+  @@map("pending_balance_imports")
 }
 
 model EventSignupToken {
