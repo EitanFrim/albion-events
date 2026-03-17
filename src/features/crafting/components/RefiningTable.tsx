@@ -239,7 +239,7 @@ export default function RefiningTable({
     setter(next);
   };
 
-  const thClass = "px-4 py-3 text-sm font-medium uppercase tracking-wider select-none whitespace-nowrap";
+  const thClass = "px-2 py-3 text-sm font-medium uppercase tracking-wider select-none whitespace-nowrap";
   const thSortable = thClass + " cursor-pointer transition-colors";
 
   // Dynamic column count for colSpan
@@ -343,7 +343,7 @@ export default function RefiningTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div>
         <table className="w-full text-base">
           <thead>
             <tr className="border-b" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}>
@@ -360,16 +360,16 @@ export default function RefiningTable({
                 <th className={thClass + " text-right"}>Material Cost</th>
               )}
               <th className={thClass + " text-right"}>Est. Cost</th>
-              <th className={thClass + " text-right"}>Nutrition Cost</th>
+              <th className={thClass + " text-right"}>Nutrition</th>
               <th className={thClass + " text-right"}>Product Price</th>
               <th className={thClass + " text-right"}>
-                {settings.useSellNow ? 'Sell Price (-4% tax)' : `Sell Price (-${settings.sellMarkdown}%)`}
+                {settings.useSellNow ? 'Sell (-4%)' : `Sell (-${settings.sellMarkdown}%)`}
               </th>
               <th className={thSortable + " text-right"} onClick={() => toggleSort('profitNoFocus')}>
-                Profit (No Focus){sortIcon('profitNoFocus')}
+                No Focus{sortIcon('profitNoFocus')}
               </th>
               <th className={thSortable + " text-right"} onClick={() => toggleSort('profitWithFocus')}>
-                Profit (Focus){sortIcon('profitWithFocus')}
+                Focus{sortIcon('profitWithFocus')}
               </th>
               <th className={thSortable + " text-right"} onClick={() => toggleSort('focusEfficiency')}>
                 Focus Eff.{sortIcon('focusEfficiency')}
@@ -881,7 +881,7 @@ function RefiningRow({
       }}
     >
       {/* Product name */}
-      <td className="px-4 py-3 font-medium" style={{ color: 'var(--color-text-primary)' }}>
+      <td className="px-2 py-3 font-medium" style={{ color: 'var(--color-text-primary)' }}>
         <div className="flex items-center gap-2">
           <ItemIcon itemId={recipe.productId} size={36} />
           <span>{recipe.productLabel}</span>
@@ -924,7 +924,7 @@ function RefiningRow({
           />
         </>
       ) : (
-        <td className="px-4 py-3 text-right">
+        <td className="px-2 py-3 text-right">
           <div className="flex justify-end">
             <MaterialCostTooltip
               result={result}
@@ -937,7 +937,7 @@ function RefiningRow({
       )}
 
       {/* Est. Cost */}
-      <td className="px-4 py-3 text-right whitespace-nowrap">
+      <td className="px-2 py-3 text-right whitespace-nowrap">
         <div className="flex justify-end">
           <HoverPopover
             trigger={
@@ -971,7 +971,7 @@ function RefiningRow({
       </td>
 
       {/* Nutrition Cost */}
-      <td className="px-4 py-3 text-right whitespace-nowrap">
+      <td className="px-2 py-3 text-right whitespace-nowrap">
         <div className="flex justify-end">
           <HoverPopover
             trigger={
@@ -996,7 +996,7 @@ function RefiningRow({
       </td>
 
       {/* Product price */}
-      <td className="px-4 py-3 text-right">
+      <td className="px-2 py-3 text-right">
         <div className="flex items-center justify-end gap-2">
           <div className="inline-flex flex-col items-end">
             <div className="flex items-center gap-1">
@@ -1036,7 +1036,7 @@ function RefiningRow({
       </td>
 
       {/* Estimated sell price — overridable */}
-      <td className="px-4 py-3 text-right">
+      <td className="px-2 py-3 text-right">
         <PriceCell
           itemId={sellKey}
           price={Math.round(effectiveSellPrice)}
@@ -1049,7 +1049,7 @@ function RefiningRow({
       </td>
 
       {/* Profit no focus */}
-      <td className="px-4 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) }}>
+      <td className="px-2 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) }}>
         {result.incomplete ? (
           <span className="text-[10px] italic">N/A</span>
         ) : (
@@ -1065,7 +1065,7 @@ function RefiningRow({
       </td>
 
       {/* Profit with focus */}
-      <td className="px-4 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) }}>
+      <td className="px-2 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) }}>
         {result.incomplete ? (
           <span className="text-[10px] italic">N/A</span>
         ) : (
@@ -1081,7 +1081,7 @@ function RefiningRow({
       </td>
 
       {/* Focus efficiency */}
-      <td className="px-4 py-3 text-right whitespace-nowrap">
+      <td className="px-2 py-3 text-right whitespace-nowrap">
         {result.incomplete ? (
           <span className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>N/A</span>
         ) : (() => {
