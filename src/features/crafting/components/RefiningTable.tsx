@@ -239,7 +239,7 @@ export default function RefiningTable({
     setter(next);
   };
 
-  const thClass = "px-4 py-3 text-xs font-medium uppercase tracking-wider select-none";
+  const thClass = "px-4 py-3 text-sm font-medium uppercase tracking-wider select-none whitespace-nowrap";
   const thSortable = thClass + " cursor-pointer transition-colors";
 
   // Dynamic column count for colSpan
@@ -255,10 +255,10 @@ export default function RefiningTable({
       {/* Filter header */}
       <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
             Refining Profits
           </h2>
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
             {sorted.length} recipes
           </span>
         </div>
@@ -266,7 +266,7 @@ export default function RefiningTable({
         <div className="flex flex-wrap gap-6">
           {/* Tier filter */}
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+            <span className="text-sm font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
               Tier
             </span>
             <div className="inline-flex gap-1 p-0.5 rounded-lg" style={{ backgroundColor: 'var(--color-surface-0)' }}>
@@ -274,7 +274,7 @@ export default function RefiningTable({
                 <button
                   key={t}
                   onClick={() => toggleFilter(filterTiers, t, setFilterTiers)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     filterTiers.has(t) ? 'ring-1' : 'hover:opacity-80'
                   }`}
                   style={filterTiers.has(t) ? {
@@ -293,7 +293,7 @@ export default function RefiningTable({
 
           {/* Enchant filter */}
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+            <span className="text-sm font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
               Enchant
             </span>
             <div className="inline-flex gap-1 p-0.5 rounded-lg" style={{ backgroundColor: 'var(--color-surface-0)' }}>
@@ -301,7 +301,7 @@ export default function RefiningTable({
                 <button
                   key={e}
                   onClick={() => toggleFilter(filterEnchants, e, setFilterEnchants)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     filterEnchants.has(e) ? 'ring-1' : 'hover:opacity-80'
                   }`}
                   style={filterEnchants.has(e) ? {
@@ -320,7 +320,7 @@ export default function RefiningTable({
 
           {/* Quantity multiplier */}
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
+            <span className="text-sm font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>
               Qty
             </span>
             <input
@@ -332,7 +332,7 @@ export default function RefiningTable({
                 const v = parseInt(e.target.value);
                 if (!isNaN(v) && v >= 1) setQuantity(v);
               }}
-              className="border rounded-md px-2 py-1 text-xs w-16 text-right focus:outline-none focus:ring-2"
+              className="border rounded-md px-2 py-1.5 text-sm w-16 text-right focus:outline-none focus:ring-2"
               style={{
                 backgroundColor: 'var(--color-surface-3)',
                 borderColor: 'var(--color-border)',
@@ -344,7 +344,7 @@ export default function RefiningTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-base">
           <thead>
             <tr className="border-b" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}>
               <th className={thSortable + " text-left"} onClick={() => toggleSort('tier')}>
@@ -937,7 +937,7 @@ function RefiningRow({
       )}
 
       {/* Est. Cost */}
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-right whitespace-nowrap">
         <div className="flex justify-end">
           <HoverPopover
             trigger={
@@ -971,7 +971,7 @@ function RefiningRow({
       </td>
 
       {/* Nutrition Cost */}
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-right whitespace-nowrap">
         <div className="flex justify-end">
           <HoverPopover
             trigger={
@@ -1049,7 +1049,7 @@ function RefiningRow({
       </td>
 
       {/* Profit no focus */}
-      <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) }}>
+      <td className="px-4 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitNoFocus : effectiveProfitNoFocus(result)) }}>
         {result.incomplete ? (
           <span className="text-[10px] italic">N/A</span>
         ) : (
@@ -1065,7 +1065,7 @@ function RefiningRow({
       </td>
 
       {/* Profit with focus */}
-      <td className="px-4 py-3 text-right tabular-nums font-medium" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) }}>
+      <td className="px-4 py-3 text-right tabular-nums font-medium whitespace-nowrap" style={{ color: result.incomplete ? 'var(--color-text-muted)' : profitColor(hasSellOverride ? displayProfitWithFocus : effectiveProfitWithFocus(result)) }}>
         {result.incomplete ? (
           <span className="text-[10px] italic">N/A</span>
         ) : (
@@ -1081,7 +1081,7 @@ function RefiningRow({
       </td>
 
       {/* Focus efficiency */}
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-right whitespace-nowrap">
         {result.incomplete ? (
           <span className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>N/A</span>
         ) : (() => {
