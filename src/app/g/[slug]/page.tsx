@@ -6,6 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { format } from 'date-fns'
 import { EventStatus } from '@prisma/client'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { AnimatedList, AnimatedListItem } from '@/components/motion/AnimatedList'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +59,7 @@ export default async function GuildHomePage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-10">
       <div className="flex items-end justify-between mb-8">
         <div>
           <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">{guild.name}</p>
@@ -108,14 +110,15 @@ export default async function GuildHomePage({ params }: Props) {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
                 <span className="text-xs font-mono text-text-muted uppercase tracking-widest">Upcoming</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <AnimatedList className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {active.map(event => {
                   const { total, filled } = getSlotStats(event)
                   const pct = total > 0 ? Math.round((filled / total) * 100) : 0
                   const sc = statusConfig[event.status]
                   return (
-                    <Link key={event.id} href={`/g/${params.slug}/events/${event.id}`} prefetch={false}
-                      className="card p-4 hover:border-border hover:shadow-card-hover transition-all duration-200 group block">
+                    <AnimatedListItem key={event.id}>
+                    <Link href={`/g/${params.slug}/events/${event.id}`} prefetch={false}
+                      className="card p-4 hover:border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 group block">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-1.5">
                           <span className={`badge ${sc.cls}`}>
@@ -146,9 +149,10 @@ export default async function GuildHomePage({ params }: Props) {
                         <p className="text-xs text-text-muted mt-1.5">{event._count.signups} signed up</p>
                       </div>
                     </Link>
+                    </AnimatedListItem>
                   )
                 })}
-              </div>
+              </AnimatedList>
             </section>
           )}
 
@@ -173,6 +177,6 @@ export default async function GuildHomePage({ params }: Props) {
           )}
         </div>
       )}
-    </div>
+    </AnimatedPage>
   )
 }

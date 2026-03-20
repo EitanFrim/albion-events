@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { RegearsManager } from '@/components/RegearsManager'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,7 @@ export default async function RegearsPage({ params }: Props) {
   })
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-6">
         <Link href={`/g/${params.slug}/events/${params.id}`} className="btn-ghost text-xs mb-4 inline-flex">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,6 +55,6 @@ export default async function RegearsPage({ params }: Props) {
       </div>
 
       <RegearsManager eventId={params.id} guildSlug={params.slug} />
-    </div>
+    </AnimatedPage>
   )
 }

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { OnboardingForm } from '@/components/OnboardingForm'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions)
@@ -26,7 +27,7 @@ export default async function OnboardingPage() {
   })
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <AnimatedPage className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4 overflow-hidden">
@@ -47,6 +48,6 @@ export default async function OnboardingPage() {
           guildSlug={membership?.guild.slug}
         />
       </div>
-    </div>
+    </AnimatedPage>
   )
 }

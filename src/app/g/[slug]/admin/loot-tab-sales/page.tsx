@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { LootTabSalesManager } from '@/components/LootTabSalesManager'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,18 +37,22 @@ export default async function LootTabSalesPage({ params }: Props) {
   })
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-6">
-        <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
-        <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Loot Tab Sales</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Create loot tab sales, view signups, and draw winners.
-        </p>
-      </div>
-      <LootTabSalesManager
-        guildSlug={params.slug}
-        initialSales={JSON.parse(JSON.stringify(sales))}
-      />
-    </div>
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
+      <ScrollReveal>
+        <div className="mb-6">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
+          <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Loot Tab Sales</h1>
+          <p className="text-text-secondary text-sm mt-1">
+            Create loot tab sales, view signups, and draw winners.
+          </p>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.1}>
+        <LootTabSalesManager
+          guildSlug={params.slug}
+          initialSales={JSON.parse(JSON.stringify(sales))}
+        />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

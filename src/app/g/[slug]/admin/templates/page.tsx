@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import { TemplatesManager } from '@/components/TemplatesManager'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,21 +38,25 @@ export default async function GuildTemplatesPage({ params }: Props) {
   })
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-6">
-        <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild</p>
-        <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Builds</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          {isOfficerPlus ? 'Save and reuse party compositions across events.' : 'Browse party compositions used in events.'}
-        </p>
-      </div>
-      <TemplatesManager
-        initialTemplates={templates as any}
-        initialCategories={categories as any}
-        initialRoles={roles as any}
-        guildSlug={params.slug}
-        readonly={!isOfficerPlus}
-      />
-    </div>
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
+      <ScrollReveal>
+        <div className="mb-6">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild</p>
+          <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Builds</h1>
+          <p className="text-text-secondary text-sm mt-1">
+            {isOfficerPlus ? 'Save and reuse party compositions across events.' : 'Browse party compositions used in events.'}
+          </p>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.1}>
+        <TemplatesManager
+          initialTemplates={templates as any}
+          initialCategories={categories as any}
+          initialRoles={roles as any}
+          guildSlug={params.slug}
+          readonly={!isOfficerPlus}
+        />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

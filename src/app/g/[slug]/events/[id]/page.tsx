@@ -15,6 +15,8 @@ import { ExportPlayersButton } from '@/components/ExportPlayersButton'
 import { RegearButton } from '@/components/RegearButton'
 import { ReactivateEventButton } from '@/components/ReactivateEventButton'
 import { EventStatus } from '@prisma/client'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { AnimatedList, AnimatedListItem } from '@/components/motion/AnimatedList'
 
 const statusConfig: Record<EventStatus, { label: string; cls: string; dot: string }> = {
   DRAFT:     { label: 'Draft',     cls: 'badge-gray',  dot: 'bg-text-muted' },
@@ -146,7 +148,7 @@ export default async function GuildEventPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-7xl mx-auto px-4 py-8">
 
       {/* Back + admin tools */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
@@ -239,12 +241,12 @@ export default async function GuildEventPage({ params }: Props) {
       <div className="grid lg:grid-cols-[1fr,300px] gap-6 items-start">
 
         <div className="overflow-x-auto pb-2">
-          <div className="flex gap-3 min-w-max">
+          <AnimatedList className="flex gap-3 min-w-max">
             {event.parties.map((party) => {
               const cap = party.roleSlots.reduce((a, s) => a + s.capacity, 0)
               const fill = party.roleSlots.reduce((a, s) => a + s.assignments.length, 0)
               return (
-                <div key={party.id} className="flex-shrink-0 w-52 rounded-xl border border-border bg-bg-surface">
+                <AnimatedListItem key={party.id} className="flex-shrink-0 w-52 rounded-xl border border-border bg-bg-surface">
                   <div className="px-3 py-2.5 border-b border-border-subtle flex items-center justify-between rounded-t-xl bg-bg-elevated">
                     <span className="font-display font-600 text-text-primary text-xs tracking-wide truncate">{party.name}</span>
                     <span className="text-xs font-mono text-text-muted ml-2 flex-shrink-0">{fill}/{cap}</span>
@@ -291,10 +293,10 @@ export default async function GuildEventPage({ params }: Props) {
                       )
                     })}
                   </div>
-                </div>
+                </AnimatedListItem>
               )
             })}
-          </div>
+          </AnimatedList>
         </div>
 
         {/* Signup panel */}
@@ -442,6 +444,6 @@ export default async function GuildEventPage({ params }: Props) {
           isLocked={false}
         />
       )}
-    </div>
+    </AnimatedPage>
   )
 }

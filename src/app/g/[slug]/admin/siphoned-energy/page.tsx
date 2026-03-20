@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { SiphonedEnergyLogs } from '@/components/SiphonedEnergyLogs'
 import { SiphonedEnergyImport } from '@/components/SiphonedEnergyImport'
 import { NotifyDebtButton } from '@/components/NotifyDebtButton'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ export default async function SiphonedEnergyPage({ params }: Props) {
   })
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-6">
         <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
         <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Siphoned Energy</h1>
@@ -42,6 +43,6 @@ export default async function SiphonedEnergyPage({ params }: Props) {
         <NotifyDebtButton guildSlug={params.slug} debtCount={debtCount} />
         <SiphonedEnergyLogs guildSlug={params.slug} />
       </div>
-    </div>
+    </AnimatedPage>
   )
 }

@@ -46,9 +46,10 @@ export default function ItemIcon({ itemId, size = 32, className = '' }: ItemIcon
         style={{
           width: size,
           height: size,
-          backgroundColor: 'var(--color-surface-3)',
+          backgroundColor: 'rgba(30,30,42,0.6)',
           color: 'var(--color-text-muted)',
-          border: '1px solid var(--color-border-subtle)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: '6px',
         }}
       >
         ?
@@ -64,7 +65,7 @@ export default function ItemIcon({ itemId, size = 32, className = '' }: ItemIcon
       height={size}
       loading="lazy"
       className={`inline-block rounded-sm ${className}`}
-      style={{ border: '1px solid var(--color-border-subtle)' }}
+      style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px' }}
       onError={() => setHasError(true)}
     />
   );

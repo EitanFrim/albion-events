@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { format, formatDistanceToNow, subDays } from 'date-fns'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { AnimatedList, AnimatedListItem } from '@/components/motion/AnimatedList'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -149,7 +152,7 @@ export default async function GuildHomePage({ params }: Props) {
   const medalColors = ['text-amber-400', 'text-gray-300', 'text-amber-600']
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       {/* Guild Header */}
       <div className="card p-6 mb-6">
         <div className="flex items-center gap-4">
@@ -331,13 +334,14 @@ export default async function GuildHomePage({ params }: Props) {
                 )}
               </div>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <AnimatedList className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {upcomingEvents.map(event => {
                   const { total, filled } = getSlotStats(event)
                   const pct = total > 0 ? Math.round((filled / total) * 100) : 0
                   return (
-                    <Link key={event.id} href={`${base}/events/${event.id}`}
-                      className="card p-4 hover:border-border hover:shadow-card-hover transition-all group block">
+                    <AnimatedListItem key={event.id}>
+                    <Link href={`${base}/events/${event.id}`}
+                      className="card p-4 hover:border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all group block">
                       <span className="text-xs text-text-muted font-mono">{format(new Date(event.startTime), 'MMM d · HH:mm')}</span>
                       <h3 className="font-display font-600 text-text-primary group-hover:text-accent transition-colors text-sm mt-1 mb-2 leading-snug line-clamp-2">
                         {event.title}
@@ -351,13 +355,15 @@ export default async function GuildHomePage({ params }: Props) {
                           style={{ width: `${pct}%` }} />
                       </div>
                     </Link>
+                    </AnimatedListItem>
                   )
                 })}
-              </div>
+              </AnimatedList>
             )}
           </section>
 
           {/* Weekly Attendance Leaderboard */}
+          <ScrollReveal delay={0.1}>
           <section>
             <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">
               Weekly Attendance
@@ -403,11 +409,13 @@ export default async function GuildHomePage({ params }: Props) {
               </div>
             )}
           </section>
+          </ScrollReveal>
         </div>
 
         {/* Right column — members, activity, quick links */}
         <div className="space-y-6">
           {/* Members Overview */}
+          <ScrollReveal delay={0.15}>
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest">Members</h2>
@@ -440,8 +448,10 @@ export default async function GuildHomePage({ params }: Props) {
               </p>
             </div>
           </section>
+          </ScrollReveal>
 
           {/* Recent Activity */}
+          <ScrollReveal delay={0.2}>
           <section>
             <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">Recent Activity</h2>
             {recentActivity.length === 0 ? (
@@ -469,8 +479,10 @@ export default async function GuildHomePage({ params }: Props) {
               </div>
             )}
           </section>
+          </ScrollReveal>
 
           {/* Quick Links */}
+          <ScrollReveal delay={0.25}>
           <section>
             <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">Quick Links</h2>
             <div className="grid grid-cols-2 gap-2">
@@ -510,8 +522,9 @@ export default async function GuildHomePage({ params }: Props) {
               )}
             </div>
           </section>
+          </ScrollReveal>
         </div>
       </div>
-    </div>
+    </AnimatedPage>
   )
 }

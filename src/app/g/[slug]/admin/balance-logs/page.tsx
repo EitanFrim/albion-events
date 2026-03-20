@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { BalanceLogs } from '@/components/BalanceLogs'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,13 +25,13 @@ export default async function BalanceLogsPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-6">
         <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
         <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Balance Logs</h1>
         <p className="text-text-secondary text-sm mt-1">All silver balance transactions for your guild.</p>
       </div>
       <BalanceLogs guildSlug={params.slug} />
-    </div>
+    </AnimatedPage>
   )
 }

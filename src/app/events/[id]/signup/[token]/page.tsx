@@ -6,6 +6,7 @@ import { RegearButton } from '@/components/RegearButton'
 import { TokenSignupForm } from '@/components/TokenSignupForm'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
 import { InlineIgnSetup } from '@/components/InlineIgnSetup'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 import { EventStatus } from '@prisma/client'
 
 const statusConfig: Record<EventStatus, { label: string; cls: string; dot: string }> = {
@@ -150,7 +151,7 @@ export default async function TokenSignupPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-bg-base">
-      <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      <AnimatedPage className="max-w-7xl mx-auto px-4 py-8">
         {/* Guild branding */}
         <div className="flex items-center gap-2 mb-6">
           <a
@@ -440,7 +441,7 @@ export default async function TokenSignupPage({ params }: Props) {
             </div>
           </div>
         </div>
-      </div>
+      </AnimatedPage>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import { MyBalanceLogs } from '@/components/MyBalanceLogs'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,13 +22,13 @@ export default async function MyBalancePage({ params }: Props) {
   if (!membership || membership.status !== 'ACTIVE') redirect(`/g/${params.slug}`)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-6">
         <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Personal</p>
         <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">My Balance</h1>
         <p className="text-text-secondary text-sm mt-1">Your silver transaction history.</p>
       </div>
       <MyBalanceLogs guildSlug={params.slug} currentBalance={membership.balance} />
-    </div>
+    </AnimatedPage>
   )
 }

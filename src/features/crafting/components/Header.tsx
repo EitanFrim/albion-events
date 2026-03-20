@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion';
 import { SERVERS, type ServerKey } from '../data/items';
 
 interface HeaderProps {
@@ -30,10 +31,16 @@ export default function Header({
   onClearOverrides,
 }: HeaderProps) {
   return (
-    <header className="border-b px-8 py-5" style={{
-      backgroundColor: 'var(--color-surface-2)',
-      borderColor: 'var(--color-border)',
-    }}>
+    <motion.header
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
+      className="border-b px-8 py-5 sticky top-0 z-40 backdrop-blur-xl"
+      style={{
+        backgroundColor: 'rgba(12, 12, 18, 0.8)',
+        borderColor: 'rgba(255,255,255,0.06)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+      }}>
       <div className="max-w-[1600px] mx-auto">
         {/* Top row */}
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -113,17 +120,28 @@ export default function Header({
             <div className="w-px h-6" style={{ backgroundColor: 'var(--color-border)' }} />
 
             {/* Refresh */}
-            <button
+            <motion.button
               onClick={onRefresh}
               disabled={loading}
-              className="px-4 py-1.5 rounded-md text-sm font-medium shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors accent-glow"
               style={{
                 backgroundColor: 'var(--color-accent)',
-                color: '#18181b',
+                color: '#0a0a0f',
               }}
             >
-              {loading ? 'Loading...' : 'Refresh Prices'}
-            </button>
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full"
+                  />
+                  Loading...
+                </span>
+              ) : 'Refresh Prices'}
+            </motion.button>
 
             {overrideCount > 0 && (
               <button
@@ -148,6 +166,6 @@ export default function Header({
           {error && <span style={{ color: 'var(--color-loss)' }}>Error: {error}</span>}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

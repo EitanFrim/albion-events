@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { GuildSettingsPanel } from '@/components/GuildSettingsPanel'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,15 +24,19 @@ export default async function GuildSettingsPage({ params }: Props) {
   if (!membership || (membership.role !== 'OWNER' && membership.role !== 'OFFICER')) redirect(`/g/${params.slug}`)
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10 animate-fade-in">
-      <div className="mb-8">
-        <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
-        <h1 className="font-display text-2xl font-800 text-text-primary tracking-tight">Guild Settings</h1>
-      </div>
-      <GuildSettingsPanel
-        guild={{ id: guild.id, name: guild.name, slug: guild.slug, inviteCode: guild.inviteCode, description: guild.description, logoUrl: guild.logoUrl, bannerUrl: guild.bannerUrl, accentColor: guild.accentColor, bannerPositionY: guild.bannerPositionY, logoZoom: guild.logoZoom, logoPositionX: guild.logoPositionX, logoPositionY: guild.logoPositionY, discordGuildId: guild.discordGuildId, discordMemberRoleId: guild.discordMemberRoleId, discordAllianceRoleId: guild.discordAllianceRoleId, discordBotInstalled: guild.discordBotInstalled, serverRegion: guild.serverRegion }}
-        role={membership.role}
-      />
-    </div>
+    <AnimatedPage className="max-w-2xl mx-auto px-4 py-10">
+      <ScrollReveal>
+        <div className="mb-8">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
+          <h1 className="font-display text-2xl font-800 text-text-primary tracking-tight">Guild Settings</h1>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.1}>
+        <GuildSettingsPanel
+          guild={{ id: guild.id, name: guild.name, slug: guild.slug, inviteCode: guild.inviteCode, description: guild.description, logoUrl: guild.logoUrl, bannerUrl: guild.bannerUrl, accentColor: guild.accentColor, bannerPositionY: guild.bannerPositionY, logoZoom: guild.logoZoom, logoPositionX: guild.logoPositionX, logoPositionY: guild.logoPositionY, discordGuildId: guild.discordGuildId, discordMemberRoleId: guild.discordMemberRoleId, discordAllianceRoleId: guild.discordAllianceRoleId, discordBotInstalled: guild.discordBotInstalled, serverRegion: guild.serverRegion }}
+          role={membership.role}
+        />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { patchNotes } from '@/lib/patch-notes'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 const typeBadge = {
   added: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
@@ -20,32 +22,34 @@ export const metadata = {
 
 export default function PatchNotesPage() {
   return (
-    <div className="min-h-screen bg-bg-base">
+    <AnimatedPage className="min-h-screen bg-bg-base">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Header */}
-        <div className="mb-10">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-secondary transition-colors mb-6"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Home
-          </Link>
-          <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight mb-2">
-            Patch Notes
-          </h1>
-          <p className="text-text-secondary text-sm">
-            Latest updates, new features, and bug fixes for AlbionHQ.
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="mb-10">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-secondary transition-colors mb-6"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to Home
+            </Link>
+            <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight mb-2">
+              Patch Notes
+            </h1>
+            <p className="text-text-secondary text-sm">
+              Latest updates, new features, and bug fixes for AlbionHQ.
+            </p>
+          </div>
+        </ScrollReveal>
 
         {/* Timeline */}
         <div className="space-y-6">
           {patchNotes.map((note, i) => (
+            <ScrollReveal key={note.version} delay={Math.min(i * 0.1, 0.4)}>
             <article
-              key={note.version}
               className="rounded-xl border border-border bg-bg-surface p-6 shadow-card"
             >
               {/* Version header */}
@@ -87,9 +91,10 @@ export default function PatchNotesPage() {
                 ))}
               </ul>
             </article>
+            </ScrollReveal>
           ))}
         </div>
       </div>
-    </div>
+    </AnimatedPage>
   )
 }

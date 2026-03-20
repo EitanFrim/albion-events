@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { ProfileForm } from '@/components/ProfileForm'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -22,13 +24,17 @@ export default async function ProfilePage() {
   })
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12 animate-fade-in">
-      <div className="mb-8">
-        <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Account</p>
-        <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Profile</h1>
-        <p className="text-text-secondary text-sm mt-1">Set your in-game name so leaders can identify you on rosters.</p>
-      </div>
-      <ProfileForm discordName={user?.discordName ?? ''} currentInGameName={user?.inGameName ?? ''} guildSlug={membership?.guild.slug} />
-    </div>
+    <AnimatedPage className="max-w-md mx-auto px-4 py-12">
+      <ScrollReveal>
+        <div className="mb-8">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Account</p>
+          <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Profile</h1>
+          <p className="text-text-secondary text-sm mt-1">Set your in-game name so leaders can identify you on rosters.</p>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.1}>
+        <ProfileForm discordName={user?.discordName ?? ''} currentInGameName={user?.inGameName ?? ''} guildSlug={membership?.guild.slug} />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

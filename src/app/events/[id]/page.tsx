@@ -9,6 +9,7 @@ import { DeleteEventButton } from '@/components/DeleteEventButton'
 import { CompleteEventButton } from '@/components/CompleteEventButton'
 import { RoleNoteButton } from '@/components/RoleNoteButton'
 import { PublishEventButton } from '@/components/PublishEventButton'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 import { EventStatus } from '@prisma/client'
 
 const statusConfig: Record<EventStatus, { label: string; cls: string; dot: string }> = {
@@ -93,7 +94,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-7xl mx-auto px-4 py-8">
 
       {/* Back + admin tools */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
@@ -336,6 +337,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
         </div>
       )}
 
-    </div>
+    </AnimatedPage>
   )
 }

@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { dropdown, transitions } from '@/lib/animations'
 
 export function NavBar() {
   const { data: session, status } = useSession()
@@ -27,7 +29,12 @@ export function NavBar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl">
+      <motion.nav
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={transitions.smooth}
+        className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl"
+      >
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -136,10 +143,17 @@ export function NavBar() {
                   </svg>
                 </button>
 
+                <AnimatePresence>
                 {menuOpen && (
-                  <div className="absolute right-0 top-full w-52 pt-1">
-                  <div className="card-elevated border border-border py-1 shadow-card-hover animate-fade-in">
-                    <div className="px-3 py-2.5 border-b border-border-subtle">
+                  <motion.div
+                    variants={dropdown}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="absolute right-0 top-full w-52 pt-1"
+                  >
+                  <div className="rounded-xl border border-white/[0.08] py-1 backdrop-blur-xl shadow-[0_16px_48px_rgba(0,0,0,0.5)]" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
+                    <div className="px-3 py-2.5 border-b border-white/[0.04]">
                       {inGameName ? (
                         <>
                           <p className="text-sm font-medium text-text-primary">{inGameName}</p>
@@ -182,8 +196,9 @@ export function NavBar() {
                       Sign out
                     </button>
                   </div>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
             ) : (
               <button onClick={() => signIn('discord')} className="btn-primary text-xs py-1.5">
@@ -195,7 +210,7 @@ export function NavBar() {
             )}
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {showNameWarning && (
         <div className="bg-amber-950/50 border-b border-amber-900/40 px-4 py-2 flex items-center justify-between gap-4">

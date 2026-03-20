@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { GuildPlayersManager } from '@/components/GuildPlayersManager'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,19 +84,23 @@ export default async function GuildPlayersPage({ params }: Props) {
     .sort((a, b) => a.playerName.localeCompare(b.playerName))
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-8">
-        <p className="text-[11px] font-mono text-accent uppercase tracking-widest mb-2">Guild Management</p>
-        <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight">Players</h1>
-        <p className="text-text-secondary text-sm mt-1.5">Manage your guild roster, verify new members, and track balances.</p>
-      </div>
-      <GuildPlayersManager
-        members={members as any}
-        guildSlug={params.slug}
-        isOwner={myMembership.role === 'OWNER'}
-        currentUserId={session.user.id}
-        unlinkedPlayers={unlinkedPlayers}
-      />
-    </div>
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
+      <ScrollReveal>
+        <div className="mb-8">
+          <p className="text-[11px] font-mono text-accent uppercase tracking-widest mb-2">Guild Management</p>
+          <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight">Players</h1>
+          <p className="text-text-secondary text-sm mt-1.5">Manage your guild roster, verify new members, and track balances.</p>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.1}>
+        <GuildPlayersManager
+          members={members as any}
+          guildSlug={params.slug}
+          isOwner={myMembership.role === 'OWNER'}
+          currentUserId={session.user.id}
+          unlinkedPlayers={unlinkedPlayers}
+        />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

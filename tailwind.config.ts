@@ -64,6 +64,13 @@ const config: Config = {
       transitionTimingFunction: {
         'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      },
+      backdropBlur: {
+        '2xl': '40px',
+        '3xl': '64px',
+      },
     },
   },
   plugins: [],

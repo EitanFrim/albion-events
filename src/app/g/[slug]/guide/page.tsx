@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: { slug: string } }
@@ -62,7 +63,7 @@ export default async function GuidePage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10 animate-fade-in">
+    <AnimatedPage className="max-w-2xl mx-auto px-4 py-10">
 
       {/* Header */}
       <div className="mb-10">
@@ -409,6 +410,6 @@ export default async function GuidePage({ params }: Props) {
         </Link>
       </div>
 
-    </div>
+    </AnimatedPage>
   )
 }

@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GuildSelector } from '@/components/GuildSelector'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { AnimatedList, AnimatedListItem } from '@/components/motion/AnimatedList'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +16,7 @@ export default async function GuildsPage() {
   // Not logged in — show guild management overview with login prompt
   if (!session) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
+      <AnimatedPage className="max-w-2xl mx-auto px-4 py-12">
         <div className="mb-8">
           <Link href="/" className="text-xs font-mono text-text-muted hover:text-accent transition-colors mb-4 inline-flex items-center gap-1.5">
             <Image src="/images/branding/logo.png" alt="" width={16} height={16} className="object-contain" />
@@ -28,7 +31,7 @@ export default async function GuildsPage() {
         </div>
 
         {/* Features overview */}
-        <div className="space-y-3 mb-8">
+        <AnimatedList className="space-y-3 mb-8">
           {[
             { title: 'Event Planning', desc: 'Create events with parties, role slots, and compositions. Members sign up with preferred roles.' },
             { title: 'Drag & Drop Assignments', desc: 'Assign players to composition slots visually. See gear specializations at a glance.' },
@@ -36,17 +39,20 @@ export default async function GuildsPage() {
             { title: 'Discord Bot', desc: 'Slash commands for balance checks, loot signups, draws, and notifications right in your server.' },
             { title: 'Audit & Tracking', desc: 'Full audit log, balance history, regear requests, and member activity tracking.' },
           ].map((feature) => (
-            <div key={feature.title} className="card p-4 flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2 flex-shrink-0" />
-              <div>
-                <h3 className="text-sm font-semibold text-text-primary">{feature.title}</h3>
-                <p className="text-xs text-text-secondary mt-0.5">{feature.desc}</p>
+            <AnimatedListItem key={feature.title}>
+              <div className="card p-4 flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">{feature.title}</h3>
+                  <p className="text-xs text-text-secondary mt-0.5">{feature.desc}</p>
+                </div>
               </div>
-            </div>
+            </AnimatedListItem>
           ))}
-        </div>
+        </AnimatedList>
 
         {/* Login prompt */}
+        <ScrollReveal delay={0.3}>
         <div className="card p-6 text-center border-accent/20">
           <p className="text-text-secondary text-sm mb-4">
             Sign in with Discord to create or join a guild.
@@ -58,7 +64,8 @@ export default async function GuildsPage() {
             Continue with Discord
           </a>
         </div>
-      </div>
+        </ScrollReveal>
+      </AnimatedPage>
     )
   }
 
@@ -76,21 +83,25 @@ export default async function GuildsPage() {
   })
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
-      <div className="mb-8">
-        <Link href="/" className="text-xs font-mono text-text-muted hover:text-accent transition-colors mb-4 inline-flex items-center gap-1">
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          AlbionHQ
-        </Link>
-        <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1 mt-4">Welcome back</p>
-        <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight">
-          {session.user.inGameName ?? session.user.discordName}
-        </h1>
-      </div>
+    <AnimatedPage className="max-w-2xl mx-auto px-4 py-12">
+      <ScrollReveal>
+        <div className="mb-8">
+          <Link href="/" className="text-xs font-mono text-text-muted hover:text-accent transition-colors mb-4 inline-flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            AlbionHQ
+          </Link>
+          <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1 mt-4">Welcome back</p>
+          <h1 className="font-display text-3xl font-800 text-text-primary tracking-tight">
+            {session.user.inGameName ?? session.user.discordName}
+          </h1>
+        </div>
+      </ScrollReveal>
 
-      <GuildSelector memberships={memberships as any} />
-    </div>
+      <ScrollReveal delay={0.1}>
+        <GuildSelector memberships={memberships as any} />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

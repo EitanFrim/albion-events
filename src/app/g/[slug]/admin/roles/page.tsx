@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import { RolesManager } from '@/components/RolesManager'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,13 +34,17 @@ export default async function GuildRolesPage({ params }: Props) {
   })
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-6">
-        <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
-        <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Roles</h1>
-        <p className="text-text-secondary text-sm mt-1">Define role categories and available roles for events.</p>
-      </div>
-      <RolesManager initialCategories={categories as any} initialRoles={roles as any} guildSlug={params.slug} />
-    </div>
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
+      <ScrollReveal>
+        <div className="mb-6">
+          <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Guild Management</p>
+          <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">Roles</h1>
+          <p className="text-text-secondary text-sm mt-1">Define role categories and available roles for events.</p>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.1}>
+        <RolesManager initialCategories={categories as any} initialRoles={roles as any} guildSlug={params.slug} />
+      </ScrollReveal>
+    </AnimatedPage>
   )
 }

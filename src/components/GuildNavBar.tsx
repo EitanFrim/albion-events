@@ -7,6 +7,8 @@ import Image from 'next/image'
 const DEFAULT_GUILD_LOGO = '/images/branding/default-guild-logo.png'
 import { useState, useRef, useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { dropdown, transitions } from '@/lib/animations'
 
 interface Props {
   guild: { id: string; name: string; slug: string; logoUrl?: string | null; logoZoom?: number | null; logoPositionX?: number | null; logoPositionY?: number | null }
@@ -93,7 +95,12 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
   ]
 
   return (
-    <nav className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl">
+    <motion.nav
+      initial={{ y: -10, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={transitions.smooth}
+      className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl"
+    >
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
 
         {/* Left: home + guild name + nav */}
@@ -144,9 +151,10 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+                  <AnimatePresence>
                   {contentsOpen && (
-                    <div className="absolute left-0 top-full pt-1.5 z-50">
-                      <div className="w-48 rounded-xl bg-bg-surface border border-border shadow-[0_16px_48px_rgba(0,0,0,0.4)] animate-fade-in overflow-hidden py-1.5">
+                    <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute left-0 top-full pt-1.5 z-50">
+                      <div className="w-48 rounded-xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden py-1.5 backdrop-blur-xl" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
                         <Link href={base}
                           className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                             pathname === base || pathname.startsWith(`${base}/events`)
@@ -168,8 +176,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                           New Content
                         </Link>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 navLink(base, 'Contents')
@@ -191,9 +200,10 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
+                  <AnimatePresence>
                   {buildsOpen && (
-                    <div className="absolute left-0 top-full pt-1.5 z-50">
-                      <div className="w-48 rounded-xl bg-bg-surface border border-border shadow-[0_16px_48px_rgba(0,0,0,0.4)] animate-fade-in overflow-hidden py-1.5">
+                    <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute left-0 top-full pt-1.5 z-50">
+                      <div className="w-48 rounded-xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden py-1.5 backdrop-blur-xl" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
                         <Link href={`${base}/admin/templates`}
                           className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                             pathname.startsWith(`${base}/admin/templates`)
@@ -217,8 +227,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                           </Link>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -242,9 +253,10 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                     </svg>
                   </button>
 
+                  <AnimatePresence>
                   {mgmtOpen && (
-                    <div className="absolute left-0 top-full pt-1.5 z-50">
-                      <div className="w-64 rounded-xl bg-bg-surface border border-border shadow-[0_16px_48px_rgba(0,0,0,0.4)] animate-fade-in overflow-hidden">
+                    <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute left-0 top-full pt-1.5 z-50">
+                      <div className="w-64 rounded-xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden backdrop-blur-xl" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
                         {/* Total guild silver */}
                         <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-amber-500/[0.06] to-transparent">
                           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Guild Total Silver</p>
@@ -299,8 +311,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                           })}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>
@@ -376,9 +389,10 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                 </svg>
               </button>
 
+              <AnimatePresence>
               {menuOpen && (
-                <div className="absolute right-0 top-full w-52 pt-1">
-                <div className="card-elevated border border-border py-1 shadow-card-hover animate-fade-in">
+                <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute right-0 top-full w-52 pt-1">
+                <div className="rounded-xl border border-white/[0.08] py-1 backdrop-blur-xl shadow-[0_16px_48px_rgba(0,0,0,0.5)]" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
                   <div className="px-3 py-2.5 border-b border-border-subtle">
                     {session.user.inGameName ? (
                       <>
@@ -434,8 +448,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                     Sign out
                   </button>
                 </div>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
           )}
         </div>
@@ -462,6 +477,6 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
           </Link>
         </div>
       )}
-    </nav>
+    </motion.nav>
   )
 }

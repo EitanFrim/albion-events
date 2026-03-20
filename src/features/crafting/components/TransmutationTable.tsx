@@ -78,11 +78,7 @@ export default function TransmutationTable({
   const thSortable = thClass + " cursor-pointer transition-colors";
 
   return (
-    <div className="border rounded-xl overflow-hidden shadow-lg" style={{
-      backgroundColor: 'var(--color-surface-2)',
-      borderColor: 'var(--color-border)',
-      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.2)',
-    }}>
+    <div className="glass-panel overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
         <div className="flex items-center justify-between">

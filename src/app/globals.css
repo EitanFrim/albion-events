@@ -116,6 +116,16 @@ body {
            hover:border-border hover:shadow-card-hover hover:-translate-y-0.5;
   }
 
+  /* Glass morphism */
+  .glass {
+    @apply backdrop-blur-xl border border-border-subtle;
+    background: rgba(17, 17, 24, 0.6);
+  }
+  .glass-elevated {
+    @apply backdrop-blur-xl border border-border;
+    background: rgba(24, 24, 31, 0.7);
+  }
+
   /* Staggered children animation */
   .stagger-children > * {
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
@@ -126,6 +136,67 @@ body {
   .stagger-children > *:nth-child(4) { animation-delay: 180ms; }
   .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
   .stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+  /* Enhanced glass morphism */
+  .glass-card {
+    @apply rounded-xl border border-white/[0.06];
+    background: rgba(17, 17, 24, 0.5);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent via-orange-400 to-amber-300;
+  }
+
+  /* Animated border glow */
+  .border-glow {
+    position: relative;
+  }
+  .border-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(249,115,22,0.2), transparent 50%, rgba(99,102,241,0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Pulse dot for status indicators */
+  .pulse-dot {
+    @apply relative;
+  }
+  .pulse-dot::after {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  /* Smooth hover lift for cards */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Guild accent color override */

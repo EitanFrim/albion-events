@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { JoinGuildButton } from '@/components/JoinGuildButton'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 interface Props { params: { code: string } }
 
@@ -48,7 +49,7 @@ export default async function JoinGuildPage({ params }: Props) {
   const leaderName = guild.owner.inGameName ?? guild.owner.discordName
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+    <AnimatedPage className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
 
         {/* Guild card */}
@@ -84,6 +85,6 @@ export default async function JoinGuildPage({ params }: Props) {
           <JoinGuildButton guildName={guild.name} guildSlug={guild.slug} inviteCode={params.code} />
         )}
       </div>
-    </div>
+    </AnimatedPage>
   )
 }

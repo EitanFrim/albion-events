@@ -5,6 +5,7 @@ import { redirect, notFound } from 'next/navigation'
 import { EventBuilderForm } from '@/components/EventBuilderForm'
 import { parseSlotNote } from '@/lib/slot-note'
 import Link from 'next/link'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,7 @@ export default async function GuildEditEventPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/g/${params.slug}/events/${params.id}`} className="btn-ghost text-sm py-1.5">← Back</Link>
         <div>
@@ -59,6 +60,6 @@ export default async function GuildEditEventPage({ params }: Props) {
         </div>
       </div>
       <EventBuilderForm initialData={initialData as any} eventId={event.id} guildSlug={params.slug} />
-    </div>
+    </AnimatedPage>
   )
 }

@@ -8,6 +8,7 @@ import { CompleteEventButton } from '@/components/CompleteEventButton'
 import { UnlockEventButton } from '@/components/UnlockEventButton'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,7 +60,7 @@ export default async function GuildAssignmentBoardPage({ params }: Props) {
   })
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 animate-fade-in">
+    <AnimatedPage className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <Link href={`/g/${params.slug}/events/${params.id}`} className="btn-ghost text-xs">← Content</Link>
         <Link href={`/g/${params.slug}/admin/events/${params.id}/edit`} className="btn-ghost text-xs">Edit</Link>
@@ -80,6 +81,6 @@ export default async function GuildAssignmentBoardPage({ params }: Props) {
         signups={signups as any}
         guildSlug={params.slug}
       />
-    </div>
+    </AnimatedPage>
   )
 }

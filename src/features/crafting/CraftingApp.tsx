@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import SettingsPanel from './components/SettingsPanel';
 import RefiningTable from './components/RefiningTable';
@@ -11,6 +12,7 @@ import { RESOURCE_TYPES, RESOURCES, CITIES, type ResourceType, type City, getCit
 import { RECIPES_BY_RESOURCE } from './data/recipes';
 import { TRANSMUTATIONS_BY_RESOURCE } from './data/transmutations';
 import { preloadAllIcons } from './components/ItemIcon';
+import { transitions } from '@/lib/animations';
 
 const SETTINGS_KEY = 'albion-refiner-settings';
 const RESOURCE_KEY = 'albion-refiner-resource';
@@ -88,10 +90,7 @@ export default function App() {
     buyCities: Set<City>; toggleBuyCity: (c: City) => void;
     sellCities: Set<City>; toggleSellCity: (c: City) => void;
   }) => (
-    <div className="border rounded-xl overflow-hidden px-5 py-4" style={{
-      backgroundColor: 'var(--color-surface-2)',
-      borderColor: 'var(--color-border)',
-    }}>
+    <div className="glass-panel px-5 py-4">
       <div className="flex flex-wrap items-center gap-6">
         <div className="flex items-center gap-2.5">
           <label className="text-xs font-medium uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--color-text-tertiary)' }}>
@@ -146,7 +145,19 @@ export default function App() {
   );
 
   return (
-    <div className="crafting-root min-h-screen" style={{ backgroundColor: 'var(--color-surface-0)' }}>
+    <motion.div
+      className="crafting-root min-h-screen"
+      style={{ backgroundColor: 'var(--color-surface-0)' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={transitions.smooth}
+    >
+      {/* Subtle background accents */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[5%] w-[500px] h-[500px] rounded-full bg-amber-500/[0.02] blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[10%] w-[400px] h-[400px] rounded-full bg-indigo-500/[0.015] blur-[100px]" />
+      </div>
+
       <Header
         server={server}
         setServer={setServer}
@@ -160,7 +171,7 @@ export default function App() {
         onClearOverrides={clearAllOverrides}
       />
 
-      <main className="max-w-[1600px] mx-auto px-8 py-8 space-y-6">
+      <main className="relative z-10 max-w-[1600px] mx-auto px-8 py-8 space-y-6">
         <SettingsPanel settings={settings} onChange={handleSettingsChange} />
 
         {/* Resource type selector */}
@@ -176,18 +187,23 @@ export default function App() {
               <button
                 key={type}
                 onClick={() => handleResourceChange(type)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  resourceType === type ? 'shadow-sm' : 'hover:opacity-80'
+                className={`relative px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  resourceType === type ? '' : 'hover:opacity-80'
                 }`}
-                style={resourceType === type ? {
-                  backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                  color: 'var(--color-accent)',
-                  boxShadow: 'inset 0 0 0 1px rgba(245, 158, 11, 0.25)',
-                } : {
-                  color: 'var(--color-text-muted)',
-                }}
+                style={{ color: resourceType === type ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
               >
-                {RESOURCES[type].label}
+                {resourceType === type && (
+                  <motion.div
+                    layoutId="resource-indicator"
+                    className="absolute inset-0 rounded-md shadow-sm"
+                    style={{
+                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                      boxShadow: 'inset 0 0 0 1px rgba(245, 158, 11, 0.25)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{RESOURCES[type].label}</span>
               </button>
             ))}
           </div>
@@ -198,40 +214,31 @@ export default function App() {
           backgroundColor: 'var(--color-surface-2)',
           borderColor: 'var(--color-border-subtle)',
         }}>
-          <button
-            onClick={() => setActiveTab('refining')}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'refining'
-                ? 'shadow-sm'
-                : 'hover:opacity-80'
-            }`}
-            style={activeTab === 'refining' ? {
-              backgroundColor: 'var(--color-surface-3)',
-              color: 'var(--color-text-primary)',
-            } : {
-              color: 'var(--color-text-tertiary)',
-            }}
-          >
-            Refining
-            <span className="ml-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{recipes.length}</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('transmutation')}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'transmutation'
-                ? 'shadow-sm'
-                : 'hover:opacity-80'
-            }`}
-            style={activeTab === 'transmutation' ? {
-              backgroundColor: 'var(--color-surface-3)',
-              color: 'var(--color-text-primary)',
-            } : {
-              color: 'var(--color-text-tertiary)',
-            }}
-          >
-            Transmutation
-            <span className="ml-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>{transmutations.length}</span>
-          </button>
+          {(['refining', 'transmutation'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`relative px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab !== tab ? 'hover:opacity-80' : ''
+              }`}
+              style={{ color: activeTab === tab ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}
+            >
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="tab-indicator"
+                  className="absolute inset-0 rounded-md shadow-sm"
+                  style={{ backgroundColor: 'var(--color-surface-3)' }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">
+                {tab === 'refining' ? 'Refining' : 'Transmutation'}
+                <span className="ml-1.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  {tab === 'refining' ? recipes.length : transmutations.length}
+                </span>
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* City selection */}
@@ -242,38 +249,43 @@ export default function App() {
           toggleSellCity={toggleSellCity}
         />
 
-        <div
-          key={`${activeTab}-${resourceType}`}
-          style={{ animation: 'fadeIn 0.25s ease-out' }}
-        >
-          {activeTab === 'refining' ? (
-            <RefiningTable
-              recipes={recipes}
-              transmutations={transmutations}
-              getBuyPrice={getBuyPrice}
-              getBuyPriceInfo={getBuyPriceInfo}
-              getSellPrice={getSellPrice}
-              getSellPriceInfo={getSellPriceInfo}
-              getAllBuyPrices={getAllBuyPrices}
-              settings={settings}
-              onOverride={setOverride}
-              onClearOverride={clearOverride}
-              overrides={overrides}
-            />
-          ) : (
-            <TransmutationTable
-              transmutations={transmutations}
-              getBuyPrice={getBuyPrice}
-              getBuyPriceInfo={getBuyPriceInfo}
-              getSellPrice={getSellPrice}
-              getSellPriceInfo={getSellPriceInfo}
-              onOverride={setOverride}
-              onClearOverride={clearOverride}
-              overrides={overrides}
-            />
-          )}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeTab}-${resourceType}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={transitions.quick}
+          >
+            {activeTab === 'refining' ? (
+              <RefiningTable
+                recipes={recipes}
+                transmutations={transmutations}
+                getBuyPrice={getBuyPrice}
+                getBuyPriceInfo={getBuyPriceInfo}
+                getSellPrice={getSellPrice}
+                getSellPriceInfo={getSellPriceInfo}
+                getAllBuyPrices={getAllBuyPrices}
+                settings={settings}
+                onOverride={setOverride}
+                onClearOverride={clearOverride}
+                overrides={overrides}
+              />
+            ) : (
+              <TransmutationTable
+                transmutations={transmutations}
+                getBuyPrice={getBuyPrice}
+                getBuyPriceInfo={getBuyPriceInfo}
+                getSellPrice={getSellPrice}
+                getSellPriceInfo={getSellPriceInfo}
+                onOverride={setOverride}
+                onClearOverride={clearOverride}
+                overrides={overrides}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
-    </div>
+    </motion.div>
   );
 }

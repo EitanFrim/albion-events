@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import { MySiphonedEnergyLogs } from '@/components/MySiphonedEnergyLogs'
+import { AnimatedPage } from '@/components/motion/AnimatedPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,13 +22,13 @@ export default async function MySiphonedEnergyPage({ params }: Props) {
   if (!membership || membership.status !== 'ACTIVE') redirect(`/g/${params.slug}`)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+    <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-6">
         <p className="text-xs font-mono text-text-muted uppercase tracking-widest mb-1">Personal</p>
         <h1 className="font-display text-2xl font-700 text-text-primary tracking-tight">My Siphoned Energy</h1>
         <p className="text-text-secondary text-sm mt-1">Your siphoned energy transaction history.</p>
       </div>
       <MySiphonedEnergyLogs guildSlug={params.slug} currentEnergy={membership.siphonedEnergy} />
-    </div>
+    </AnimatedPage>
   )
 }

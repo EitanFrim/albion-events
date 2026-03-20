@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Settings, SpecLevels } from '../utils/calculations';
 
 interface SettingsPanelProps {
@@ -21,10 +22,7 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
   };
 
   return (
-    <div className="border rounded-xl overflow-hidden" style={{
-      backgroundColor: 'var(--color-surface-2)',
-      borderColor: 'var(--color-border)',
-    }}>
+    <div className="glass-panel overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-5 py-3.5 flex items-center justify-between text-left transition-colors hover:opacity-90"
@@ -58,11 +56,15 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
         )}
       </button>
 
-      <div
-        className="grid transition-[grid-template-rows] duration-300 ease-out"
-        style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
-      >
-        <div className="overflow-hidden">
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
         <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pt-4">
             <SettingField
@@ -265,8 +267,9 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
             </div>
           </div>
         </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
