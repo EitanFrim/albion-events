@@ -82,7 +82,7 @@ export default async function JoinGuildPage({ params }: Props) {
             </a>
           </div>
         ) : (
-          <JoinGuildButton guildName={guild.name} guildSlug={guild.slug} inviteCode={params.code} />
+          <JoinGuildButton guildName={guild.name} guildSlug={guild.slug} inviteCode={params.code} existingIgn={session.user.inGameName} />
         )}
       </div>
     </AnimatedPage>

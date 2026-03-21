@@ -41,9 +41,11 @@ const roleConfig: Record<MemberRole, { label: string; color: string; bg: string 
   GUEST:    { label: 'Guest',    color: 'text-gray-400',   bg: 'bg-gray-500/15 border-gray-500/25' },
 }
 
-export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId, unlinkedPlayers = [] }: Props) {
+export function GuildPlayersManager({ members: initial, guildSlug, isOwner, currentUserId, unlinkedPlayers: initialUnlinked = [] }: Props) {
   const [members, setMembers] = useState<Member[]>(initial)
+  const [unlinked, setUnlinked] = useState<UnlinkedPlayer[]>(initialUnlinked)
   const [loading, setLoading] = useState<string | null>(null)
+  const [deletingUnlinked, setDeletingUnlinked] = useState<string | null>(null)
   const [filter, setFilter] = useState<MemberStatus | 'ALL'>('ACTIVE')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('name')
@@ -64,6 +66,22 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
   const [energyAmount, setEnergyAmount] = useState('')
   const [energyMode, setEnergyMode] = useState<'add' | 'deduct'>('add')
   const [energyReason, setEnergyReason] = useState('')
+
+  async function deleteUnlinkedPlayer(playerName: string) {
+    if (!confirm(`Remove "${playerName}" from the unlinked players list? Their pending balance and energy data will be permanently deleted.`)) return
+    setDeletingUnlinked(playerName)
+    try {
+      const res = await fetch(`/api/guilds/${guildSlug}/unlinked-players`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName }),
+      })
+      if (!res.ok) { alert('Failed to delete'); return }
+      setUnlinked(prev => prev.filter(p => p.playerName !== playerName))
+    } finally {
+      setDeletingUnlinked(null)
+    }
+  }
 
   async function updateMember(userId: string, data: { status?: MemberStatus; role?: MemberRole }) {
     setLoading(userId)
@@ -624,7 +642,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
       )}
 
       {/* Unlinked Players Section */}
-      {unlinkedPlayers.length > 0 && (
+      {unlinked.length > 0 && (
         <div className="mt-8 space-y-3">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -634,7 +652,7 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
               <h2 className="font-display text-lg font-700 text-text-primary">Unlinked Players</h2>
             </div>
             <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
-              {unlinkedPlayers.length}
+              {unlinked.length}
             </span>
           </div>
           <p className="text-xs text-text-muted">
@@ -643,17 +661,18 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
 
           <div className="rounded-xl bg-bg-surface border border-amber-500/15 overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] gap-2 px-4 py-2.5 border-b border-border-subtle bg-bg-elevated/50">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] sm:grid-cols-[1fr_120px_120px_40px] gap-2 px-4 py-2.5 border-b border-border-subtle bg-bg-elevated/50">
               <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">Player Name</span>
               <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted text-right">Silver</span>
               <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted text-right">Energy</span>
+              <span />
             </div>
 
             {/* Rows */}
-            {unlinkedPlayers.map(player => (
+            {unlinked.map(player => (
               <div
                 key={player.playerName}
-                className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] gap-2 px-4 py-3 border-b border-border-subtle/50 last:border-0 hover:bg-bg-elevated/30 transition-colors"
+                className="grid grid-cols-[1fr_auto_auto_auto] sm:grid-cols-[1fr_120px_120px_40px] gap-2 px-4 py-3 border-b border-border-subtle/50 last:border-0 hover:bg-bg-elevated/30 transition-colors"
               >
                 {/* Name */}
                 <div className="flex items-center gap-2 min-w-0">
@@ -688,6 +707,20 @@ export function GuildPlayersManager({ members: initial, guildSlug, isOwner, curr
                     {player.siphonedEnergy.toLocaleString()}
                   </span>
                   <span className="text-[10px] text-text-muted font-mono block">energy</span>
+                </div>
+
+                {/* Delete */}
+                <div className="self-center flex justify-center">
+                  <button
+                    onClick={() => deleteUnlinkedPlayer(player.playerName)}
+                    disabled={deletingUnlinked === player.playerName}
+                    title="Remove unlinked player"
+                    className="p-1.5 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}

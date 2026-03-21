@@ -9,8 +9,11 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { code } = await req.json()
+  const { code, inGameName } = await req.json()
   if (!code) return NextResponse.json({ error: 'Invite code required' }, { status: 400 })
+  if (!inGameName || typeof inGameName !== 'string' || !inGameName.trim()) {
+    return NextResponse.json({ error: 'In-game name is required' }, { status: 400 })
+  }
 
   const guild = await prisma.guild.findUnique({
     where: { inviteCode: code.toUpperCase().trim() },
@@ -35,7 +38,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ guild, membership: existing, alreadyMember: true })
   }
 
-  // Owner auto-active, others pending
+  // Save IGN on user profile if not already set
+  const trimmedIgn = inGameName.trim()
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { inGameName: trimmedIgn },
+  })
+
+  // Create pending membership — officer must verify
   const membership = await prisma.guildMembership.create({
     data: {
       userId: session.user.id,

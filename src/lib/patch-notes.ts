@@ -12,6 +12,34 @@ export interface PatchNote {
 
 export const patchNotes: PatchNote[] = [
   {
+    version: '0.14.0',
+    date: '2026-03-21',
+    title: 'Guild Join Overhaul, Nav Improvements & Unlinked Player Management',
+    changes: [
+      { type: 'improved', text: 'Guild join flow now requires in-game name before applying — officers can verify players immediately' },
+      { type: 'improved', text: 'Removed guest role — non-members are redirected to the join page instead of getting auto-created as guests' },
+      { type: 'added', text: 'Delete unlinked players — officers can remove orphaned balance/energy entries from the players list' },
+      { type: 'added', text: 'Discord bot install button added directly to the How To guide — no need to navigate to settings' },
+      { type: 'added', text: 'How To link added to the right side of the nav bar for officers and owners' },
+    ],
+  },
+  {
+    version: '0.13.0',
+    date: '2026-03-21',
+    title: 'Full UI Redesign with Animations & Glass Morphism',
+    changes: [
+      { type: 'added', text: 'Framer Motion animations across all pages — smooth page transitions, staggered reveals, and micro-interactions' },
+      { type: 'added', text: 'Reusable motion components — AnimatedPage, AnimatedCard, AnimatedList, ScrollReveal, and AnimatedNumber for consistent animations' },
+      { type: 'added', text: 'Glass morphism design system — new .glass-card, .text-gradient, .border-glow, and .hover-lift utility classes' },
+      { type: 'improved', text: 'Landing page redesigned — hero with floating logo, scroll-triggered feature cards, and hover parallax on app showcase cards' },
+      { type: 'improved', text: 'Navigation redesigned — glass morphism dropdowns with animated enter/exit on both NavBar and GuildNavBar' },
+      { type: 'improved', text: 'Sign-in page — glass card with animated shield icon and ambient background orbs' },
+      { type: 'improved', text: 'Crafting calculator — glass-panel containers, sticky header with animated refresh, modernized table styling' },
+      { type: 'improved', text: 'All guild admin pages now use ScrollReveal animations with cascading delays' },
+      { type: 'improved', text: 'Ambient background radials added to root layout for depth' },
+    ],
+  },
+  {
     version: '0.12.0',
     date: '2026-03-17',
     title: 'Permanent Discord Links, Balance Import & Bug Fixes',

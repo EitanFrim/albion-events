@@ -24,27 +24,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (event.status !== 'PUBLISHED') return NextResponse.json({ error: 'Event is not open for signups' }, { status: 400 })
 
-  // For public events, allow any active membership (including GUEST)
-  // For members-only events, require PLAYER+ role
-  if (event.visibility === 'PUBLIC') {
-    const membership = await prisma.guildMembership.findUnique({
-      where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
-    })
-    if (!membership || membership.status !== 'ACTIVE') {
-      // For token users, auto-create GUEST membership for public events
-      if (user.fromToken) {
-        await prisma.guildMembership.upsert({
-          where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
-          create: { userId: user.id, guildId: event.guildId, role: 'GUEST', status: 'ACTIVE' },
-          update: {},
-        })
-      } else {
-        return NextResponse.json({ error: 'You must be an active member to sign up.' }, { status: 403 })
-      }
-    }
-  } else {
-    const membership = await requireGuildAccess(user.id, event.guildId, 'PLAYER')
-    if (!membership) return NextResponse.json({ error: 'You must be a verified guild member to sign up.' }, { status: 403 })
+  // Require active membership (PLAYER+ role) for all events
+  const membership = await prisma.guildMembership.findUnique({
+    where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
+  })
+  if (!membership || membership.status !== 'ACTIVE' || membership.role === 'GUEST') {
+    return NextResponse.json({ error: 'You must be a registered guild member to sign up.' }, { status: 403 })
   }
 
   const body = await req.json()

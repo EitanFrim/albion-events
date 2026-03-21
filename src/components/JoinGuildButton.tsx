@@ -7,21 +7,29 @@ interface Props {
   guildName: string
   guildSlug: string
   inviteCode: string
+  existingIgn?: string | null
 }
 
-export function JoinGuildButton({ guildName, guildSlug, inviteCode }: Props) {
+export function JoinGuildButton({ guildName, guildSlug, inviteCode, existingIgn }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [joined, setJoined] = useState(false)
+  const [ign, setIgn] = useState(existingIgn ?? '')
   const router = useRouter()
 
   async function handleJoin() {
+    const trimmed = ign.trim()
+    if (!trimmed) {
+      setError('Please enter your in-game name.')
+      return
+    }
+
     setLoading(true); setError('')
     try {
       const res = await fetch('/api/guilds/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: inviteCode }),
+        body: JSON.stringify({ code: inviteCode, inGameName: trimmed }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Join failed'); return }
@@ -48,25 +56,40 @@ export function JoinGuildButton({ guildName, guildSlug, inviteCode }: Props) {
         <div>
           <h2 className="font-display font-700 text-text-primary mb-1">Application Submitted</h2>
           <p className="text-text-secondary text-sm">
-            You've joined <span className="text-text-primary font-semibold">{guildName}</span> as a pending member.
-            An Officer needs to verify you before you can participate in events.
+            Your application to <span className="text-text-primary font-semibold">{guildName}</span> has been submitted.
+            A guild officer will review and verify your membership.
           </p>
         </div>
-        <a href={`/g/${guildSlug}`} className="btn-secondary w-full justify-center">
-          View Guild →
-        </a>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      <button onClick={handleJoin} disabled={loading} className="btn-primary w-full justify-center">
-        {loading ? 'Joining…' : `Join ${guildName}`}
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="ign" className="block text-xs font-mono text-text-muted uppercase tracking-widest mb-1.5">
+          In-Game Name
+        </label>
+        <input
+          id="ign"
+          type="text"
+          value={ign}
+          onChange={e => setIgn(e.target.value)}
+          placeholder="Your Albion Online character name"
+          className="w-full px-4 py-2.5 rounded-lg bg-bg-base border border-border text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors"
+          onKeyDown={e => e.key === 'Enter' && handleJoin()}
+          disabled={loading}
+        />
+        <p className="text-[11px] text-text-muted mt-1.5">
+          Must match your exact in-game name. This will be verified by a guild officer.
+        </p>
+      </div>
+      <button onClick={handleJoin} disabled={loading || !ign.trim()} className="btn-primary w-full justify-center">
+        {loading ? 'Submitting…' : 'Apply to Join'}
       </button>
       {error && <p className="text-red-400 text-sm text-center">{error}</p>}
       <p className="text-xs text-text-muted text-center">
-        Your membership will be pending until verified by an Officer.
+        Your application will be pending until verified by a guild officer.
       </p>
     </div>
   )

@@ -40,24 +40,12 @@ export default async function GuildEventPage({ params }: Props) {
     where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
   }) : null
 
-  // Ensure GUEST membership exists (layout may not have created it yet due to concurrent rendering)
+  // No membership — not allowed to view guild events
   if (!membership && session) {
-    try {
-      membership = await prisma.guildMembership.upsert({
-        where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
-        create: { userId: session.user.id, guildId: guild.id, role: 'GUEST', status: 'ACTIVE' },
-        update: {},
-      })
-    } catch {
-      // Race condition with layout — retry read
-      membership = await prisma.guildMembership.findUnique({
-        where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
-      })
-    }
+    notFound()
   }
 
   const isOfficerPlus = membership?.role === 'OWNER' || membership?.role === 'OFFICER'
-  const isGuest = membership?.role === 'GUEST'
 
   const event = await prisma.event.findUnique({
     where: { id: params.id },
@@ -81,7 +69,6 @@ export default async function GuildEventPage({ params }: Props) {
 
   if (!event || event.guildId !== guild.id) notFound()
   if (event.status === 'DRAFT' && !isOfficerPlus) notFound()
-  if (isGuest && event.visibility !== 'PUBLIC') notFound()
 
   const guildRoles = await prisma.guildRole2.findMany({
     where: { guildId: guild.id },

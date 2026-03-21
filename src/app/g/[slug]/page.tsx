@@ -32,14 +32,12 @@ export default async function GuildHomePage({ params }: Props) {
   })
 
   const isOfficerPlus = membership?.role === 'OWNER' || membership?.role === 'OFFICER'
-  const isGuest = membership?.role === 'GUEST'
   const isActive = membership?.status === 'ACTIVE'
 
   const events = await prisma.event.findMany({
     where: {
       guildId: guild.id,
       ...(isOfficerPlus ? {} : { status: { in: ['PUBLISHED', 'LOCKED', 'COMPLETED'] } }),
-      ...(isGuest ? { visibility: 'PUBLIC' } : {}),
     },
     include: {
       parties: { include: { roleSlots: { include: { _count: { select: { assignments: true } } } } } },

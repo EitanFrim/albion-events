@@ -57,21 +57,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     update: {},
   })
 
-  // Ensure guild membership exists (as GUEST for public events)
-  if (event.visibility === 'MEMBERS_ONLY') {
-    const membership = await prisma.guildMembership.findUnique({
-      where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
-    })
-    if (!membership || membership.status !== 'ACTIVE' || membership.role === 'GUEST') {
-      return NextResponse.json({ error: 'This event is for guild members only. Register as a member first.' }, { status: 403 })
-    }
-  } else {
-    // Public event — ensure at least GUEST membership
-    await prisma.guildMembership.upsert({
-      where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
-      create: { userId: user.id, guildId: event.guildId, role: 'GUEST', status: 'ACTIVE' },
-      update: {},
-    })
+  // Verify guild membership — must be an active member (not GUEST)
+  const membership = await prisma.guildMembership.findUnique({
+    where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
+  })
+  if (!membership || membership.status !== 'ACTIVE' || membership.role === 'GUEST') {
+    return NextResponse.json({ error: 'You must be a registered guild member to sign up. Apply to join the guild first.' }, { status: 403 })
   }
 
   // Create or update signup

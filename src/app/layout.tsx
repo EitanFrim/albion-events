@@ -4,10 +4,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { SessionProvider } from './providers'
 import { ConditionalNavBar } from '@/components/ConditionalNavBar'
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: 'AlbionHQ — Tools for Albion Online',
@@ -26,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en">
       <body className="bg-bg-base text-text-primary antialiased">
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_-10%,rgba(249,115,22,0.05)_0%,transparent_60%)]" />

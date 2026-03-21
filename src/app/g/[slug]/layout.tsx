@@ -27,13 +27,9 @@ export default async function GuildLayout({ children, params }: Props) {
     where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
   })
 
-  // Auto-create GUEST membership for non-members (e.g. arrived via public event link)
+  // No membership — redirect to guild join page
   if (!membership) {
-    membership = await prisma.guildMembership.upsert({
-      where: { userId_guildId: { userId: session.user.id, guildId: guild.id } },
-      create: { userId: session.user.id, guildId: guild.id, role: 'GUEST', status: 'ACTIVE' },
-      update: {},
-    })
+    redirect(`/guilds/join/${guild.inviteCode}`)
   }
 
   // Query total guild balance across all active members (for officer+ nav)
