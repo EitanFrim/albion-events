@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect, useLayoutEffect, type ReactNode } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { type Recipe } from '../data/recipes';
 import { type Transmutation } from '../data/transmutations';
@@ -178,6 +178,23 @@ export default function RefiningTable({
     return filtered.some((r) => r.recipe.inputs.length > 2);
   }, [filtered]);
 
+  // Compute displayed profit accounting for sell overrides (sell:productId keys)
+  const displayProfit = useCallback((r: RefineResultWithTransmute, withFocus: boolean) => {
+    const sellKey = `sell:${r.recipe.productId}`;
+    const hasSellOverride = overrides[sellKey] !== undefined;
+    if (!hasSellOverride) {
+      return withFocus ? effectiveProfitWithFocus(r) : effectiveProfitNoFocus(r);
+    }
+    const sellPrice = overrides[sellKey];
+    const costNoFocus = r.transmuteAlt
+      ? (100 - settings.returnRateNoFocus) / 100 * r.transmuteAlt.adjustedMaterialCost + r.nutritionCost
+      : r.effectiveCostNoFocus;
+    const costWithFocus = r.transmuteAlt
+      ? (100 - settings.returnRateWithFocus) / 100 * r.transmuteAlt.adjustedMaterialCost + r.nutritionCost
+      : r.effectiveCostWithFocus;
+    return r.incomplete ? 0 : sellPrice - (withFocus ? costWithFocus : costNoFocus);
+  }, [overrides, settings.returnRateNoFocus, settings.returnRateWithFocus]);
+
   const sorted = useMemo(() => {
     const arr = [...filtered];
     arr.sort((a, b) => {
@@ -188,28 +205,28 @@ export default function RefiningTable({
           vb = b.recipe.tier * 10 + b.recipe.enchant;
           break;
         case 'profitNoFocus':
-          va = effectiveProfitNoFocus(a);
-          vb = effectiveProfitNoFocus(b);
+          va = displayProfit(a, false);
+          vb = displayProfit(b, false);
           break;
         case 'profitWithFocus':
-          va = effectiveProfitWithFocus(a);
-          vb = effectiveProfitWithFocus(b);
+          va = displayProfit(a, true);
+          vb = displayProfit(b, true);
           break;
         case 'focusEfficiency':
-          va = a.actualFocusCost > 0 ? Math.round(effectiveProfitWithFocus(a) / a.actualFocusCost) : 0;
-          vb = b.actualFocusCost > 0 ? Math.round(effectiveProfitWithFocus(b) / b.actualFocusCost) : 0;
+          va = a.actualFocusCost > 0 ? Math.round(displayProfit(a, true) / a.actualFocusCost) : 0;
+          vb = b.actualFocusCost > 0 ? Math.round(displayProfit(b, true) / b.actualFocusCost) : 0;
           break;
       }
       return sortAsc ? va - vb : vb - va;
     });
     return arr;
-  }, [filtered, sortKey, sortAsc]);
+  }, [filtered, sortKey, sortAsc, displayProfit]);
 
   const bestProfit = useMemo(() => {
     const complete = filtered.filter((r) => !r.incomplete);
     if (complete.length === 0) return 0;
-    return Math.max(...complete.map((r) => effectiveProfitWithFocus(r)));
-  }, [filtered]);
+    return Math.max(...complete.map((r) => displayProfit(r, true)));
+  }, [filtered, displayProfit]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
