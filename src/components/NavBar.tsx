@@ -8,6 +8,33 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { dropdown, transitions } from '@/lib/animations'
 
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={`relative px-3 py-1.5 rounded-full text-sm font-body font-medium transition-colors duration-200 ${
+        active
+          ? 'text-text-primary bg-accent/10'
+          : 'text-text-secondary hover:text-text-primary'
+      }`}
+    >
+      {children}
+      {active && (
+        <motion.div
+          layoutId="nav-indicator"
+          className="absolute inset-0 rounded-full bg-accent/10 -z-10"
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        >
+          {/* Top glow line */}
+          <div className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-8 h-[2px] bg-accent rounded-full">
+            <div className="absolute w-12 h-4 bg-accent/20 rounded-full blur-md -top-1 -left-2" />
+          </div>
+        </motion.div>
+      )}
+    </Link>
+  )
+}
+
 export function NavBar() {
   const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -30,67 +57,43 @@ export function NavBar() {
   return (
     <>
       <motion.nav
-        initial={{ y: -10, opacity: 0 }}
+        initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={transitions.smooth}
-        className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl"
+        transition={{ ...transitions.smooth, delay: 0.1 }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl"
       >
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-6">
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          style={{ background: 'rgba(15, 15, 35, 0.7)' }}
+        >
           {/* Logo */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Link href="/" className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-bg-elevated transition-colors" title="AlbionHQ Home">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2" />
-              </svg>
-            </Link>
-            <span className="text-border-subtle mx-0.5 hidden sm:block">/</span>
-            <Link href="/guilds" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden">
-                <Image src="/images/branding/logo.png" alt="AlbionHQ" width={20} height={20} className="object-contain" />
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 group" title="AlbionHQ Home">
+              <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-accent/40 group-hover:shadow-glow-sm">
+                <Image src="/images/branding/logo.png" alt="AlbionHQ" width={22} height={22} className="object-contain" />
               </div>
-              <span className="font-display text-sm font-700 text-text-primary tracking-tight hidden sm:block">
-                Guild Manager
+              <span className="font-display text-sm text-text-primary tracking-wider hidden sm:block">
+                ALBIONHQ
               </span>
             </Link>
           </div>
 
-          {/* Nav */}
-          <div className="hidden md:flex items-center gap-1 flex-1">
+          {/* Center Nav */}
+          <div className="hidden md:flex items-center gap-1">
             {session && (
-              <Link
-                href="/guilds"
-                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
-                  pathname === '/guilds' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                }`}
-              >
+              <NavLink href="/guilds" active={pathname === '/guilds'}>
                 My Guilds
-              </Link>
+              </NavLink>
             )}
-            <Link
-              href="/crafting"
-              className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
-                pathname.startsWith('/crafting') ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-              }`}
-            >
+            <NavLink href="/crafting" active={pathname.startsWith('/crafting')}>
               Crafting
-            </Link>
-            <Link
-              href="/patch-notes"
-              className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
-                pathname === '/patch-notes' ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-              }`}
-            >
-              Patch Notes
-            </Link>
+            </NavLink>
+            <NavLink href="/patch-notes" active={pathname === '/patch-notes'}>
+              Updates
+            </NavLink>
             {session?.user?.role === 'ADMIN' && (
-              <Link
-                href="/admin/stats"
-                className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
-                  pathname === '/admin/stats' ? 'text-accent bg-accent/10' : 'text-accent/70 hover:text-accent hover:bg-accent/10'
-                }`}
-              >
+              <NavLink href="/admin/stats" active={pathname === '/admin/stats'}>
                 Stats
-              </Link>
+              </NavLink>
             )}
           </div>
 
@@ -100,7 +103,7 @@ export function NavBar() {
               onClick={() => startRefresh(() => router.refresh())}
               disabled={isRefreshing}
               title="Refresh data"
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-lg text-text-secondary hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
             >
               <svg
                 className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
@@ -119,12 +122,12 @@ export function NavBar() {
                 <button
                   onMouseEnter={() => setMenuOpen(true)}
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-white/[0.05] transition-colors cursor-pointer"
                 >
                   {session.user.image ? (
-                    <Image src={session.user.image} alt="" width={26} height={26} className="rounded-full" />
+                    <Image src={session.user.image} alt="" width={26} height={26} className="rounded-full ring-1 ring-accent/20" />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-mono text-accent">
+                    <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-xs font-mono text-accent">
                       {(inGameName || session.user.discordName)?.[0]?.toUpperCase()}
                     </div>
                   )}
@@ -134,11 +137,11 @@ export function NavBar() {
                     </div>
                   </div>
                   {session.user.role === 'ADMIN' && (
-                    <span className="hidden sm:block text-xs font-mono px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/20">
+                    <span className="hidden sm:block text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/20">
                       Admin
                     </span>
                   )}
-                  <svg className="w-3.5 h-3.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -150,9 +153,9 @@ export function NavBar() {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="absolute right-0 top-full w-52 pt-1"
+                    className="absolute right-0 top-full w-52 pt-2"
                   >
-                  <div className="rounded-xl border border-white/[0.08] py-1 backdrop-blur-xl shadow-[0_16px_48px_rgba(0,0,0,0.5)]" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
+                  <div className="rounded-xl border border-white/[0.08] py-1 backdrop-blur-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)]" style={{ background: 'rgba(15, 15, 35, 0.9)' }}>
                     <div className="px-3 py-2.5 border-b border-white/[0.04]">
                       {inGameName ? (
                         <>
@@ -166,7 +169,7 @@ export function NavBar() {
                     <Link
                       href="/profile"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-overlay transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-accent/5 transition-colors"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -177,7 +180,7 @@ export function NavBar() {
                       <Link
                         href="/admin/stats"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-accent/70 hover:text-accent hover:bg-bg-overlay transition-colors md:hidden"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-accent/70 hover:text-accent hover:bg-accent/5 transition-colors md:hidden"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -185,10 +188,9 @@ export function NavBar() {
                         Stats
                       </Link>
                     )}
-
                     <button
                       onClick={() => signOut()}
-                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-overlay transition-colors"
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-accent/5 transition-colors cursor-pointer"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -201,25 +203,35 @@ export function NavBar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <button onClick={() => signIn('discord')} className="btn-primary text-xs py-1.5">
+              <motion.button
+                onClick={() => signIn('discord')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="btn-neon text-xs py-2 px-4 cursor-pointer"
+              >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.114 18.1.132 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
                 </svg>
-                Login with Discord
-              </button>
+                Login
+              </motion.button>
             )}
           </div>
         </div>
       </motion.nav>
 
       {showNameWarning && (
-        <div className="bg-amber-950/50 border-b border-amber-900/40 px-4 py-2 flex items-center justify-between gap-4">
-          <p className="text-amber-400/80 text-xs">
-            Set your in-game name so the guild leader can identify you on the roster.
-          </p>
-          <Link href="/profile" className="text-xs font-medium text-amber-400 hover:text-amber-300 flex-shrink-0 flex items-center gap-1">
-            Set name →
-          </Link>
+        <div className="fixed top-[76px] left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-5xl">
+          <div className="bg-amber-950/60 backdrop-blur-xl border border-amber-900/40 rounded-xl px-4 py-2 flex items-center justify-between gap-4">
+            <p className="text-amber-400/80 text-xs">
+              Set your in-game name so the guild leader can identify you.
+            </p>
+            <Link href="/profile" className="text-xs font-medium text-amber-400 hover:text-amber-300 flex-shrink-0 flex items-center gap-1 cursor-pointer">
+              Set name
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         </div>
       )}
     </>

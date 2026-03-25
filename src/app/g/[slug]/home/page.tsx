@@ -154,9 +154,10 @@ export default async function GuildHomePage({ params }: Props) {
   return (
     <AnimatedPage className="max-w-5xl mx-auto px-4 py-8">
       {/* Guild Header */}
-      <div className="card p-6 mb-6">
+      <div className="glass-card-neon p-6 mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+          <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center overflow-hidden flex-shrink-0"
+            style={{ boxShadow: '0 0 20px rgba(124, 58, 237, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3)' }}>
             <img
               src={guild.logoUrl || '/images/branding/default-guild-logo.png'}
               alt=""
@@ -164,12 +165,12 @@ export default async function GuildHomePage({ params }: Props) {
             />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display text-2xl font-800 text-text-primary tracking-tight truncate">
+            <h1 className="font-display text-2xl font-800 tracking-tight truncate bg-gradient-to-r from-purple-400 via-violet-300 to-fuchsia-400 bg-clip-text text-transparent">
               {guild.name}
             </h1>
             <div className="flex items-center gap-3 mt-1">
               <span className="text-sm text-text-secondary">
-                <span className="font-mono text-text-primary">{activeCount}</span> members
+                <span className="font-mono text-accent">{activeCount}</span> members
               </span>
               {pendingCount > 0 && (
                 <span className="text-sm text-amber-400">
@@ -195,7 +196,7 @@ export default async function GuildHomePage({ params }: Props) {
         const botInviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID}&scope=bot+applications.commands&permissions=8`
 
         return (
-          <div className="card p-6 mb-6 border-accent/20">
+          <div className="card p-6 mb-6 border-accent/20" style={{ boxShadow: '0 0 20px rgba(124, 58, 237, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03)' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
                 <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -303,7 +304,7 @@ export default async function GuildHomePage({ params }: Props) {
                 <span className="font-mono">{Math.round((done / total) * 100)}%</span>
               </div>
               <div className="h-1.5 bg-bg-overlay rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${(done / total) * 100}%` }} />
+                <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${(done / total) * 100}%`, boxShadow: '0 0 8px rgba(124, 58, 237, 0.4)' }} />
               </div>
             </div>
           </div>
@@ -317,8 +318,8 @@ export default async function GuildHomePage({ params }: Props) {
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
-                <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest">Upcoming Events</h2>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-soft" style={{ boxShadow: '0 0 8px rgba(52, 211, 153, 0.5)' }} />
+                <h2 className="text-xs font-mono text-accent/70 uppercase tracking-widest">Upcoming Events</h2>
               </div>
               <Link href={base} className="text-xs text-text-muted hover:text-accent transition-colors">
                 View all →
@@ -341,7 +342,8 @@ export default async function GuildHomePage({ params }: Props) {
                   return (
                     <AnimatedListItem key={event.id}>
                     <Link href={`${base}/events/${event.id}`}
-                      className="card p-4 hover:border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all group block">
+                      className="card p-4 hover:border-purple-500/20 hover:-translate-y-1 transition-all duration-300 group block"
+                      style={{ boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.03)' }}>
                       <span className="text-xs text-text-muted font-mono">{format(new Date(event.startTime), 'MMM d · HH:mm')}</span>
                       <h3 className="font-display font-600 text-text-primary group-hover:text-accent transition-colors text-sm mt-1 mb-2 leading-snug line-clamp-2">
                         {event.title}
@@ -365,7 +367,7 @@ export default async function GuildHomePage({ params }: Props) {
           {/* Weekly Attendance Leaderboard */}
           <ScrollReveal delay={0.1}>
           <section>
-            <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">
+            <h2 className="text-xs font-mono text-accent/70 uppercase tracking-widest mb-3">
               Weekly Attendance
             </h2>
             {weeklySignups.length === 0 ? (
@@ -418,7 +420,7 @@ export default async function GuildHomePage({ params }: Props) {
           <ScrollReveal delay={0.15}>
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest">Members</h2>
+              <h2 className="text-xs font-mono text-accent/70 uppercase tracking-widest">Members</h2>
               {isOfficerPlus && (
                 <Link href={`${base}/admin/players`} className="text-xs text-text-muted hover:text-accent transition-colors">
                   Manage →
@@ -453,7 +455,7 @@ export default async function GuildHomePage({ params }: Props) {
           {/* Recent Activity */}
           <ScrollReveal delay={0.2}>
           <section>
-            <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">Recent Activity</h2>
+            <h2 className="text-xs font-mono text-accent/70 uppercase tracking-widest mb-3">Recent Activity</h2>
             {recentActivity.length === 0 ? (
               <div className="card p-4 text-center text-text-muted text-xs">No recent activity.</div>
             ) : (
@@ -484,15 +486,15 @@ export default async function GuildHomePage({ params }: Props) {
           {/* Quick Links */}
           <ScrollReveal delay={0.25}>
           <section>
-            <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">Quick Links</h2>
+            <h2 className="text-xs font-mono text-accent/70 uppercase tracking-widest mb-3">Quick Links</h2>
             <div className="grid grid-cols-2 gap-2">
-              <Link href={`${base}/my-balance`} className="card px-3 py-2.5 text-xs text-text-secondary hover:text-amber-400 hover:border-amber-500/20 transition-colors flex items-center gap-2">
+              <Link href={`${base}/my-balance`} className="card px-3 py-2.5 text-xs text-text-secondary hover:text-amber-400 hover:border-amber-500/20 transition-all duration-200 hover:shadow-[0_0_12px_rgba(245,158,11,0.1)] flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 My Balance
               </Link>
-              <Link href={`${base}/my-siphoned-energy`} className="card px-3 py-2.5 text-xs text-text-secondary hover:text-teal-400 hover:border-teal-500/20 transition-colors flex items-center gap-2">
+              <Link href={`${base}/my-siphoned-energy`} className="card px-3 py-2.5 text-xs text-text-secondary hover:text-teal-400 hover:border-teal-500/20 transition-all duration-200 hover:shadow-[0_0_12px_rgba(20,184,166,0.1)] flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>

@@ -101,14 +101,14 @@ function HoverPopover({ trigger, children }: { trigger: ReactNode; children: Rea
       {open && createPortal(
         <div
           ref={popoverRef}
-          className="fixed z-50 border rounded-lg shadow-xl p-4 min-w-[240px]"
+          className="fixed z-50 border rounded-xl shadow-xl p-4 min-w-[240px] backdrop-blur-2xl"
           style={{
             top: pos?.top ?? 0,
             left: pos?.left ?? 0,
             transform: 'translateX(-100%)',
-            backgroundColor: '#111113',
-            borderColor: '#2a2a2e',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.3)',
+            backgroundColor: 'rgba(15, 15, 40, 0.92)',
+            borderColor: 'rgba(124, 58, 237, 0.2)',
+            boxShadow: '0 20px 40px -5px rgba(0,0,0,0.5), 0 0 30px rgba(124, 58, 237, 0.1), inset 0 1px 0 rgba(124, 58, 237, 0.06)',
             visibility: pos ? 'visible' : 'hidden',
           }}
           onMouseEnter={handleEnter}
@@ -274,9 +274,9 @@ export default function RefiningTable({
                     filterTiers.has(t) ? 'ring-1' : 'hover:opacity-80'
                   }`}
                   style={filterTiers.has(t) ? {
-                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    backgroundColor: 'rgba(124, 58, 237, 0.15)',
                     color: 'var(--color-accent)',
-                    boxShadow: 'inset 0 0 0 1px rgba(245, 158, 11, 0.25)',
+                    boxShadow: 'inset 0 0 0 1px rgba(124, 58, 237, 0.3)',
                   } : {
                     color: 'var(--color-text-muted)',
                   }}
@@ -301,9 +301,9 @@ export default function RefiningTable({
                     filterEnchants.has(e) ? 'ring-1' : 'hover:opacity-80'
                   }`}
                   style={filterEnchants.has(e) ? {
-                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    backgroundColor: 'rgba(124, 58, 237, 0.15)',
                     color: 'var(--color-accent)',
-                    boxShadow: 'inset 0 0 0 1px rgba(245, 158, 11, 0.25)',
+                    boxShadow: 'inset 0 0 0 1px rgba(124, 58, 237, 0.3)',
                   } : {
                     color: 'var(--color-text-muted)',
                   }}
@@ -529,7 +529,7 @@ function TransmutePathDisplay({ alternative, getBuyPriceInfo }: {
       {/* Path visualization */}
       <div
         className="flex items-center gap-1.5 rounded-md px-2 py-1.5 mb-1.5 flex-wrap"
-        style={{ backgroundColor: 'rgba(245, 158, 11, 0.06)' }}
+        style={{ backgroundColor: 'rgba(124, 58, 237, 0.08)' }}
       >
         <ItemIcon itemId={alternative.steps[0].fromId} size={20} />
         <span className="text-xs" style={{ color: 'var(--color-text-primary)' }}>
@@ -771,7 +771,7 @@ function MaterialInputCell({
                           key={p.city}
                           className="flex items-center justify-between gap-3 rounded-md px-2 py-1"
                           style={{
-                            backgroundColor: isBest ? 'rgba(245, 158, 11, 0.06)' : 'var(--color-surface-2)',
+                            backgroundColor: isBest ? 'rgba(124, 58, 237, 0.08)' : 'var(--color-surface-2)',
                           }}
                         >
                           <span
@@ -866,13 +866,13 @@ function RefiningRow({
       className="border-b transition-colors"
       style={{
         borderColor: 'var(--color-border-subtle)',
-        backgroundColor: isBest ? 'rgba(245, 158, 11, 0.05)' : undefined,
+        backgroundColor: isBest ? 'rgba(124, 58, 237, 0.06)' : undefined,
       }}
       onMouseEnter={(e) => {
         if (!isBest) e.currentTarget.style.backgroundColor = 'rgba(39, 39, 42, 0.4)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = isBest ? 'rgba(245, 158, 11, 0.05)' : '';
+        e.currentTarget.style.backgroundColor = isBest ? 'rgba(124, 58, 237, 0.06)' : '';
       }}
     >
       {/* Product name */}

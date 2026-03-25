@@ -2,176 +2,131 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { useRef } from 'react'
 import { patchNotes } from '@/lib/patch-notes'
 import {
   staggerContainer,
   staggerItem,
-  scaleIn,
-  slideUp,
-  fadeIn,
-  float,
-  glowPulse,
+  heroTextReveal,
+  neonGlow,
   transitions,
 } from '@/lib/animations'
 import { ScrollReveal } from '@/components/motion/ScrollReveal'
 import { AnimatedList, AnimatedListItem } from '@/components/motion/AnimatedList'
+import { AuroraBackground } from '@/components/backgrounds/AuroraBackground'
+import { ParticleField } from '@/components/backgrounds/ParticleField'
+import { GridBackground } from '@/components/backgrounds/GridBackground'
+import { Card3D } from '@/components/ui/Card3D'
+
+// Lazy load the 3D sphere to avoid SSR issues with Three.js
+const HeroSphere = dynamic(
+  () => import('@/components/backgrounds/HeroSphere').then(mod => ({ default: mod.HeroSphere })),
+  { ssr: false }
+)
 
 const features = [
   {
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
     ),
     title: 'Events & Signups',
     desc: 'Create ZvZ, ganking, HG events. Members sign up with preferred roles. Officers lock and assign compositions.',
+    color: 'from-accent to-accent-light',
+    glowColor: 'rgba(124,58,237,0.3)',
   },
   {
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
     ),
     title: 'Comp Builder',
-    desc: 'Build reusable compositions with custom roles, color-coded categories, and pre-defined build setups per weapon.',
+    desc: 'Build reusable compositions with custom roles, color-coded categories, and pre-defined build setups.',
+    color: 'from-neon-cyan to-neon-blue',
+    glowColor: 'rgba(6,182,212,0.3)',
   },
   {
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     title: 'Loot Splits',
     desc: 'Fair loot tab sales with draw system. Track silver balances, regear deductions, and full payout history.',
+    color: 'from-neon-rose to-rose-dim',
+    glowColor: 'rgba(244,63,94,0.3)',
   },
   {
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
     ),
     title: 'Siphoned Energy',
     desc: 'Import energy logs from the game. Track debts per member. Auto-DM players who owe energy via Discord.',
+    color: 'from-amber-400 to-amber-600',
+    glowColor: 'rgba(245,158,11,0.3)',
   },
   {
     icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
     title: 'Guild Dashboard',
-    desc: 'Member roster, weekly attendance leaderboard, activity feed, and upcoming events — all on one homepage.',
+    desc: 'Member roster, weekly attendance leaderboard, activity feed, and upcoming events all in one place.',
+    color: 'from-emerald-400 to-emerald-600',
+    glowColor: 'rgba(52,211,153,0.3)',
   },
   {
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.114 18.1.132 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+      </svg>
+    ),
+    title: 'Discord Bot',
+    desc: 'Event announcements, loot draws, balance checks, and DM notifications from your Discord server.',
+    color: 'from-indigo-400 to-indigo-600',
+    glowColor: 'rgba(99,102,241,0.3)',
+  },
+]
+
+const steps = [
+  {
+    num: '01',
+    title: 'Sign in with Discord',
+    desc: 'One click. No forms, no passwords, no downloads.',
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
         <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.114 18.1.132 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
       </svg>
     ),
-    title: 'Discord Bot',
-    desc: 'Event announcements, loot draws, balance checks, and DM notifications — all from your Discord server.',
+  },
+  {
+    num: '02',
+    title: 'Create or join a guild',
+    desc: 'Link your Discord server. Officers sync automatically.',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+      </svg>
+    ),
+  },
+  {
+    num: '03',
+    title: 'Start managing',
+    desc: 'Plan events, build comps, split loot, track energy.',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.58-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+      </svg>
+    ),
   },
 ]
-
-const steps = [
-  { num: '1', title: 'Sign in with Discord', desc: 'One click. No forms, no passwords, no downloads.' },
-  { num: '2', title: 'Create or join a guild', desc: 'Link your Discord server. Officers sync automatically.' },
-  { num: '3', title: 'Start managing', desc: 'Plan events, build comps, split loot, track energy.' },
-]
-
-// Animated gradient orbs for background
-function HeroBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <Image
-        src="/images/backgrounds/hero-bg.png"
-        alt=""
-        fill
-        className="object-cover opacity-[0.08]"
-        priority
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg-base/60 to-bg-base" />
-
-      {/* Animated gradient orbs */}
-      <motion.div
-        className="absolute top-[-20%] left-[10%] w-[600px] h-[600px] rounded-full bg-accent/[0.07] blur-[120px]"
-        animate={{
-          x: [0, 60, 0],
-          y: [0, 40, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[120px]"
-        animate={{
-          x: [0, -40, 0],
-          y: [0, 60, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-[0%] left-[40%] w-[400px] h-[400px] rounded-full bg-accent/[0.04] blur-[100px]"
-        animate={{
-          x: [0, 30, -30, 0],
-          y: [0, -30, 0],
-        }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-      />
-    </div>
-  )
-}
-
-// Particle field for hero — client-only to avoid hydration mismatch
-function ParticleField() {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>([])
-
-  useEffect(() => {
-    setParticles(
-      Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: Math.random() * 3 + 1,
-        duration: Math.random() * 4 + 4,
-        delay: Math.random() * 4,
-      }))
-    )
-  }, [])
-
-  if (particles.length === 0) return null
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          className="absolute rounded-full bg-accent/30"
-          style={{
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: p.size,
-            height: p.size,
-          }}
-          animate={{
-            opacity: [0, 0.6, 0],
-            y: [0, -40],
-            scale: [0, 1, 0.5],
-          }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            delay: p.delay,
-            ease: 'easeOut',
-          }}
-        />
-      ))}
-    </div>
-  )
-}
 
 export default function HomePage() {
   const latestPatch = patchNotes[0]
@@ -181,309 +136,300 @@ export default function HomePage() {
     offset: ['start start', 'end start'],
   })
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
-  const heroY = useTransform(scrollYProgress, [0, 0.5], [0, -50])
+  const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95])
+  const sphereOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0])
 
   return (
-    <div className="min-h-screen bg-bg-base">
-      {/* Hero */}
-      <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
-        <HeroBackground />
-        <ParticleField />
+    <div className="min-h-screen">
+      {/* ============= HERO SECTION ============= */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* 3D Sphere background */}
+        <motion.div style={{ opacity: sphereOpacity }} className="absolute inset-0">
+          <HeroSphere />
+        </motion.div>
 
+        {/* Aurora + particles */}
+        <AuroraBackground className="absolute inset-0" />
+        <ParticleField count={50} />
+
+        {/* Radial gradient overlay for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,#0F0F23_70%)] z-[5]" />
+
+        {/* Hero content */}
         <motion.div
-          style={{ opacity: heroOpacity, y: heroY }}
-          className="max-w-5xl mx-auto px-4 pt-24 pb-20 text-center relative z-10"
+          style={{ opacity: heroOpacity, scale: heroScale }}
+          className="relative z-10 max-w-5xl mx-auto px-4 text-center"
         >
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="space-y-6"
+            className="space-y-8"
           >
             {/* Logo */}
             <motion.div variants={staggerItem} className="flex justify-center">
               <motion.div
-                animate={float}
-                className="w-20 h-20 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shadow-glow-sm"
+                animate={{
+                  y: [-6, 6],
+                  transition: { y: { duration: 3, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' } },
+                }}
+                className="w-24 h-24 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shadow-glow-purple"
               >
-                <Image src="/images/branding/logo.png" alt="AlbionHQ" width={56} height={56} className="object-contain" />
+                <Image src="/images/branding/logo.png" alt="AlbionHQ" width={64} height={64} className="object-contain" priority />
               </motion.div>
             </motion.div>
 
-            {/* Title with letter stagger */}
+            {/* Title */}
             <motion.div variants={staggerItem}>
-              <h1 className="font-display text-5xl sm:text-7xl font-800 text-text-primary tracking-tight">
-                {'AlbionHQ'.split('').map((char, i) => (
+              <motion.h1
+                className="font-display text-6xl sm:text-8xl lg:text-9xl text-text-primary tracking-wider"
+                animate={neonGlow}
+              >
+                {'ALBIONHQ'.split('').map((char, i) => (
                   <motion.span
                     key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + i * 0.05, ...transitions.smooth }}
+                    initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{ delay: 0.3 + i * 0.06, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     className="inline-block"
                   >
                     {char}
                   </motion.span>
                 ))}
-              </h1>
+              </motion.h1>
             </motion.div>
 
             {/* Subtitle */}
             <motion.p
-              variants={staggerItem}
-              className="text-text-secondary text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed"
+              variants={heroTextReveal}
+              className="text-lg sm:text-xl lg:text-2xl max-w-2xl mx-auto leading-relaxed font-body font-light"
             >
-              The free guild management suite for Albion Online. Events, comps, loot splits, siphoned energy, Discord bot — everything your guild needs in one place.
+              <span className="text-text-secondary">Command Your Guild.</span>{' '}
+              <span className="text-gradient-neon font-medium">Dominate the Battlefield.</span>
+            </motion.p>
+
+            {/* Tagline */}
+            <motion.p variants={staggerItem} className="text-text-muted text-sm max-w-xl mx-auto">
+              The free guild management suite for Albion Online. Events, comps, loot splits, siphoned energy, Discord bot — everything in one place.
             </motion.p>
 
             {/* CTA Buttons */}
             <motion.div variants={staggerItem} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/guilds"
-                  className="btn-primary px-8 py-3.5 text-base font-semibold rounded-xl shadow-glow-orange transition-all duration-300 relative overflow-hidden group"
+                  className="btn-neon px-10 py-4 text-base rounded-xl relative overflow-hidden group"
                 >
-                  <span className="relative z-10">Get Started — Free</span>
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-accent via-orange-400 to-accent bg-[length:200%_100%]"
-                    animate={{ backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                  />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Get Started — Free
+                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </span>
                 </Link>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href="/crafting"
-                  className="btn-secondary px-8 py-3.5 text-base font-semibold rounded-xl transition-all duration-300"
+                  className="btn-secondary px-10 py-4 text-base rounded-xl border-accent/20 hover:border-accent/40 hover:shadow-glow-sm"
                 >
                   Crafting Calculator
                 </Link>
               </motion.div>
             </motion.div>
-
-            {/* Tagline */}
-            <motion.p variants={staggerItem} className="text-text-muted text-xs pt-2">
-              No downloads. No fees. Sign in with Discord and go.
-            </motion.p>
           </motion.div>
         </motion.div>
 
         {/* Scroll indicator */}
         <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 8, 0] }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <svg className="w-6 h-6 text-text-muted/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
+          <div className="w-6 h-10 rounded-full border-2 border-accent/30 flex items-start justify-center p-1.5">
+            <motion.div
+              className="w-1 h-2 rounded-full bg-accent"
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </div>
         </motion.div>
       </section>
 
-      {/* Feature Grid */}
-      <section className="max-w-5xl mx-auto px-4 pb-24">
-        <ScrollReveal className="text-center mb-14">
-          <h2 className="font-display text-3xl sm:text-4xl font-700 text-text-primary mb-3">
-            Everything your guild needs
-          </h2>
-          <p className="text-text-secondary max-w-lg mx-auto">
-            Built by an Albion player for guild leaders who are tired of spreadsheets and manual tracking.
-          </p>
-        </ScrollReveal>
+      {/* ============= FEATURES GRID ============= */}
+      <section className="relative py-32">
+        <GridBackground />
 
-        <AnimatedList reveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((f) => (
-            <AnimatedListItem key={f.title}>
-              <motion.div
-                whileHover={{
-                  y: -4,
-                  borderColor: 'rgba(255,255,255,0.18)',
-                  backgroundColor: 'rgba(24,24,31,1)',
-                  transition: { duration: 0.2 },
-                }}
-                className="rounded-xl border border-border bg-bg-surface p-6 transition-colors duration-300 cursor-default h-full"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={transitions.spring}
-                  className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent mb-4"
-                >
-                  {f.icon}
-                </motion.div>
-                <h3 className="font-display text-base font-600 text-text-primary mb-2">{f.title}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed">{f.desc}</p>
-              </motion.div>
-            </AnimatedListItem>
-          ))}
-        </AnimatedList>
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
+          <ScrollReveal className="text-center mb-16">
+            <motion.span className="inline-block text-xs font-mono text-accent uppercase tracking-[0.3em] mb-4">
+              Features
+            </motion.span>
+            <h2 className="font-display text-3xl sm:text-5xl text-text-primary mb-4 tracking-wide">
+              Everything Your Guild Needs
+            </h2>
+            <p className="text-text-secondary max-w-lg mx-auto text-lg">
+              Built by an Albion player for guild leaders tired of spreadsheets.
+            </p>
+          </ScrollReveal>
+
+          <AnimatedList reveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((f) => (
+              <AnimatedListItem key={f.title}>
+                <Card3D glowColor={f.glowColor} className="p-6 h-full">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center text-white mb-5`}>
+                    {f.icon}
+                  </div>
+                  <h3 className="font-display text-lg text-text-primary mb-2 tracking-wide">{f.title}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{f.desc}</p>
+                </Card3D>
+              </AnimatedListItem>
+            ))}
+          </AnimatedList>
+        </div>
       </section>
 
-      {/* How It Works */}
-      <ScrollReveal>
-        <section className="max-w-5xl mx-auto px-4 pb-24">
-          <div className="rounded-2xl border border-border bg-bg-surface/80 backdrop-blur-sm p-8 sm:p-12 relative overflow-hidden">
-            {/* Subtle glow behind */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] bg-accent/[0.06] blur-[80px] pointer-events-none" />
+      {/* ============= HOW IT WORKS ============= */}
+      <section className="relative py-32">
+        <div className="max-w-5xl mx-auto px-4">
+          <ScrollReveal>
+            <div className="glass-card-neon p-8 sm:p-12 relative overflow-hidden">
+              {/* Background glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-accent/[0.08] blur-[100px] pointer-events-none" />
 
-            <h2 className="font-display text-2xl sm:text-3xl font-700 text-text-primary mb-10 text-center relative">
-              Up and running in 2 minutes
-            </h2>
+              <div className="text-center mb-12 relative">
+                <span className="inline-block text-xs font-mono text-accent uppercase tracking-[0.3em] mb-4">
+                  Quick Start
+                </span>
+                <h2 className="font-display text-2xl sm:text-4xl text-text-primary tracking-wide">
+                  Up and Running in 2 Minutes
+                </h2>
+              </div>
 
-            <div className="grid sm:grid-cols-3 gap-8 relative">
-              {/* Connecting line */}
-              <div className="hidden sm:block absolute top-6 left-[16.6%] right-[16.6%] h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
+              <div className="grid sm:grid-cols-3 gap-8 relative">
+                {/* Connecting line */}
+                <div className="hidden sm:block absolute top-10 left-[16.6%] right-[16.6%] h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
 
-              {steps.map((step, i) => (
-                <motion.div
-                  key={step.num}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.15, ...transitions.smooth }}
-                  className="text-center relative"
-                >
+                {steps.map((step, i) => (
                   <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4 relative z-10"
+                    key={step.num}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.15, ...transitions.smooth }}
+                    className="text-center relative"
                   >
-                    <span className="font-display text-lg font-700 text-accent">{step.num}</span>
+                    <motion.div
+                      whileHover={{ scale: 1.1, boxShadow: '0 0 30px rgba(124,58,237,0.3)' }}
+                      className="w-16 h-16 rounded-2xl bg-bg-elevated border border-accent/20 flex items-center justify-center mx-auto mb-5 relative z-10 text-accent"
+                    >
+                      {step.icon}
+                    </motion.div>
+                    <span className="inline-block font-mono text-xs text-accent/60 mb-2">{step.num}</span>
+                    <h3 className="text-text-primary font-display text-base mb-2 tracking-wide">{step.title}</h3>
+                    <p className="text-text-secondary text-sm leading-relaxed">{step.desc}</p>
                   </motion.div>
-                  <h3 className="text-text-primary font-semibold mb-2">{step.title}</h3>
-                  <p className="text-text-secondary text-sm leading-relaxed">{step.desc}</p>
-                </motion.div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
-      </ScrollReveal>
+          </ScrollReveal>
+        </div>
+      </section>
 
-      {/* App Cards */}
+      {/* ============= APP CARDS ============= */}
       <section className="max-w-5xl mx-auto px-4 pb-24">
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Guild Management Card */}
+          {/* Guild Management */}
           <ScrollReveal delay={0}>
-            <Link
-              href="/guilds"
-              className="group block rounded-2xl border border-border bg-bg-surface overflow-hidden shadow-card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-border-strong cursor-pointer"
-            >
-              <motion.div
-                className="relative h-44 overflow-hidden"
-                whileHover={{ scale: 1.02 }}
-                transition={transitions.spring}
-              >
-                <Image
-                  src="/images/cards/guild-management.png"
-                  alt=""
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/60 to-transparent" />
-              </motion.div>
-              <div className="p-6 -mt-8 relative">
-                <div className="flex items-center gap-3 mb-3">
-                  <motion.div
-                    whileHover={{ scale: 1.15, rotate: -5 }}
-                    transition={transitions.spring}
-                    className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center"
-                  >
-                    <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            <Link href="/guilds" className="group block cursor-pointer">
+              <Card3D className="overflow-hidden">
+                <motion.div className="relative h-44 overflow-hidden" whileHover={{ scale: 1.02 }} transition={transitions.spring}>
+                  <Image
+                    src="/images/cards/guild-management.png"
+                    alt=""
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/60 to-transparent" />
+                </motion.div>
+                <div className="p-6 -mt-8 relative">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-white">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <h2 className="font-display text-xl text-text-primary group-hover:text-accent transition-colors duration-300 tracking-wide">
+                      Guild Management
+                    </h2>
+                  </div>
+                  <p className="text-text-secondary text-sm leading-relaxed mb-4">
+                    Full guild event planner with compositions, signups, role assignments, loot distribution, and Discord integration.
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-text-muted group-hover:text-accent/60 transition-colors">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" opacity={0.6}>
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.114 18.1.132 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
                     </svg>
-                  </motion.div>
-                  <h2 className="font-display text-xl font-700 text-text-primary group-hover:text-accent transition-colors duration-300">
-                    Guild Management
-                  </h2>
+                    Sign in with Discord
+                    <svg className="w-4 h-4 ml-auto transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                <p className="text-text-secondary text-sm leading-relaxed mb-4">
-                  Full guild event planner with compositions, signups, role assignments, loot distribution, and Discord integration.
-                </p>
-                <div className="flex items-center gap-2 text-xs text-text-muted group-hover:text-accent/60 transition-colors">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" opacity={0.6}>
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.114 18.1.132 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
-                  </svg>
-                  Sign in with Discord
-                  <motion.svg
-                    className="w-4 h-4 ml-auto"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    initial={{ x: 0 }}
-                    whileHover={{ x: 4 }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </motion.svg>
-                </div>
-              </div>
+              </Card3D>
             </Link>
           </ScrollReveal>
 
-          {/* Crafting Calculator Card */}
+          {/* Crafting Calculator */}
           <ScrollReveal delay={0.15}>
-            <Link
-              href="/crafting"
-              className="group block rounded-2xl border border-border bg-bg-surface overflow-hidden shadow-card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-border-strong cursor-pointer"
-            >
-              <motion.div
-                className="relative h-44 overflow-hidden"
-                whileHover={{ scale: 1.02 }}
-                transition={transitions.spring}
-              >
-                <Image
-                  src="/images/cards/crafting-calculator.png"
-                  alt=""
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/60 to-transparent" />
-              </motion.div>
-              <div className="p-6 -mt-8 relative">
-                <div className="flex items-center gap-3 mb-3">
-                  <motion.div
-                    whileHover={{ scale: 1.15, rotate: -5 }}
-                    transition={transitions.spring}
-                    className="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center"
-                  >
-                    <svg className="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            <Link href="/crafting" className="group block cursor-pointer">
+              <Card3D glowColor="rgba(234,179,8,0.3)" className="overflow-hidden">
+                <motion.div className="relative h-44 overflow-hidden" whileHover={{ scale: 1.02 }} transition={transitions.spring}>
+                  <Image
+                    src="/images/cards/crafting-calculator.png"
+                    alt=""
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-bg-surface via-bg-surface/60 to-transparent" />
+                </motion.div>
+                <div className="p-6 -mt-8 relative">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center text-white">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h2 className="font-display text-xl text-text-primary group-hover:text-gold transition-colors duration-300 tracking-wide">
+                      Crafting Calculator
+                    </h2>
+                  </div>
+                  <p className="text-text-secondary text-sm leading-relaxed mb-4">
+                    Real-time refining and transmutation profit calculator with live market prices from all cities.
+                  </p>
+                  <div className="flex items-center text-xs text-text-muted group-hover:text-gold/60 transition-colors">
+                    No login required
+                    <svg className="w-4 h-4 ml-auto transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
-                  </motion.div>
-                  <h2 className="font-display text-xl font-700 text-text-primary group-hover:text-gold transition-colors duration-300">
-                    Crafting Calculator
-                  </h2>
+                  </div>
                 </div>
-                <p className="text-text-secondary text-sm leading-relaxed mb-4">
-                  Real-time refining and transmutation profit calculator with live market prices from all cities.
-                </p>
-                <div className="flex items-center text-xs text-text-muted group-hover:text-gold/60 transition-colors">
-                  No login required
-                  <motion.svg
-                    className="w-4 h-4 ml-auto"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    initial={{ x: 0 }}
-                    whileHover={{ x: 4 }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </motion.svg>
-                </div>
-              </div>
+              </Card3D>
             </Link>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Latest Update Banner */}
+      {/* ============= LATEST UPDATE ============= */}
       {latestPatch && (
         <ScrollReveal>
           <section className="max-w-5xl mx-auto px-4 pb-24">
             <Link
               href="/patch-notes"
-              className="group block rounded-2xl border border-border bg-bg-surface p-6 sm:p-8 transition-all duration-300 hover:border-border-strong cursor-pointer relative overflow-hidden"
+              className="group block glass-card-neon p-6 sm:p-8 cursor-pointer relative overflow-hidden"
             >
-              {/* Subtle accent glow on hover */}
-              <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-accent/[0.04] blur-[80px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* Hover glow */}
+              <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-accent/[0.06] blur-[80px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               <div className="flex items-start justify-between gap-4 relative">
                 <div className="flex-1 min-w-0">
@@ -498,7 +444,7 @@ export default function HomePage() {
                     </motion.span>
                     <span className="text-xs text-text-muted">{latestPatch.date}</span>
                   </div>
-                  <h3 className="font-display text-lg font-600 text-text-primary mb-3 group-hover:text-accent transition-colors">
+                  <h3 className="font-display text-lg text-text-primary mb-3 group-hover:text-accent transition-colors tracking-wide">
                     {latestPatch.title}
                   </h3>
                   <ul className="space-y-1.5">
@@ -512,7 +458,7 @@ export default function HomePage() {
                         className="text-text-secondary text-sm flex items-start gap-2"
                       >
                         <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                          c.type === 'added' ? 'bg-green-400' : c.type === 'fixed' ? 'bg-blue-400' : 'bg-amber-400'
+                          c.type === 'added' ? 'bg-emerald-400' : c.type === 'fixed' ? 'bg-neon-blue' : 'bg-amber-400'
                         }`} />
                         {c.text}
                       </motion.li>
@@ -524,7 +470,7 @@ export default function HomePage() {
                     )}
                   </ul>
                 </div>
-                <svg className="w-5 h-5 text-text-muted group-hover:text-accent transition-colors flex-shrink-0 mt-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-5 h-5 text-text-muted group-hover:text-accent transition-all flex-shrink-0 mt-1 group-hover:translate-x-1 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -533,37 +479,40 @@ export default function HomePage() {
         </ScrollReveal>
       )}
 
-      {/* Footer CTA */}
-      <ScrollReveal>
-        <section className="max-w-5xl mx-auto px-4 pb-28">
-          <div className="text-center relative">
+      {/* ============= FOOTER CTA ============= */}
+      <section className="relative py-32">
+        <ScrollReveal>
+          <div className="max-w-5xl mx-auto px-4 text-center relative">
             {/* Background glow */}
             <div className="absolute inset-0 -top-20 flex justify-center pointer-events-none">
-              <div className="w-[400px] h-[200px] bg-accent/[0.06] blur-[100px]" />
+              <div className="w-[500px] h-[300px] bg-accent/[0.08] blur-[120px]" />
             </div>
 
-            <h2 className="font-display text-2xl sm:text-3xl font-700 text-text-primary mb-3 relative">
-              Ready to level up your guild?
+            <span className="inline-block text-xs font-mono text-accent uppercase tracking-[0.3em] mb-4 relative">
+              Join Now
+            </span>
+            <h2 className="font-display text-3xl sm:text-5xl text-text-primary mb-4 relative tracking-wide">
+              Ready to Level Up Your Guild?
             </h2>
-            <p className="text-text-secondary mb-8 max-w-md mx-auto relative">
-              Join guilds already using AlbionHQ to run smoother events, fairer loot, and happier members.
+            <p className="text-text-secondary mb-10 max-w-md mx-auto text-lg relative">
+              Join guilds already using AlbionHQ for smoother events, fairer loot, and happier members.
             </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} className="inline-block relative">
+            <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }} className="inline-block relative">
               <Link
                 href="/guilds"
-                className="btn-primary px-8 py-3.5 text-base font-semibold rounded-xl shadow-glow-orange transition-all duration-300"
+                className="btn-neon px-10 py-4 text-base rounded-xl shadow-glow-neon"
               >
                 Get Started — Free
               </Link>
             </motion.div>
-            <div className="flex items-center justify-center gap-6 mt-8 text-xs text-text-muted relative">
-              <Link href="/patch-notes" className="hover:text-accent transition-colors">Patch Notes</Link>
-              <span className="w-1 h-1 rounded-full bg-text-muted/30" />
-              <Link href="/crafting" className="hover:text-accent transition-colors">Crafting Calculator</Link>
+            <div className="flex items-center justify-center gap-6 mt-10 text-sm text-text-muted relative">
+              <Link href="/patch-notes" className="hover:text-accent transition-colors cursor-pointer">Patch Notes</Link>
+              <span className="w-1 h-1 rounded-full bg-accent/30" />
+              <Link href="/crafting" className="hover:text-accent transition-colors cursor-pointer">Crafting Calculator</Link>
             </div>
           </div>
-        </section>
-      </ScrollReveal>
+        </ScrollReveal>
+      </section>
     </div>
   )
 }

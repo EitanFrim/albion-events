@@ -9,7 +9,28 @@ interface SettingsPanelProps {
   onChange: (s: Settings) => void;
 }
 
-const inputClass = "border rounded-md px-3 py-1.5 text-sm w-full text-right focus:outline-none focus:ring-2";
+const inputClass = "border rounded-lg px-3 py-1.5 text-sm w-full text-right focus:outline-none transition-all duration-200";
+
+function NeonToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="relative w-9 h-5 rounded-full transition-all duration-300 flex-shrink-0 cursor-pointer"
+      style={{
+        backgroundColor: enabled ? 'var(--color-accent)' : 'var(--color-surface-3)',
+        boxShadow: enabled ? '0 0 12px rgba(124, 58, 237, 0.4)' : 'none',
+      }}
+    >
+      <span
+        className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform duration-200"
+        style={{
+          backgroundColor: 'var(--color-text-primary)',
+          transform: enabled ? 'translateX(16px)' : 'translateX(0)',
+        }}
+      />
+    </button>
+  );
+}
 
 export default function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,16 +46,18 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
     <div className="glass-panel overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-5 py-3.5 flex items-center justify-between text-left transition-colors hover:opacity-90"
+        className="w-full px-5 py-3.5 flex items-center justify-between text-left transition-colors hover:opacity-90 cursor-pointer"
       >
         <div className="flex items-center gap-3">
-          <svg
-            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-90' : ''}`}
-            style={{ color: 'var(--color-text-muted)' }}
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(124, 58, 237, 0.15)' }}>
+            <svg
+              className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`}
+              style={{ color: 'var(--color-accent-hover)' }}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
           <h2 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Settings</h2>
         </div>
         {!isOpen && (
@@ -98,120 +121,32 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
             </div>
           </div>
 
-          {/* Buy Order mode toggle */}
-          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <button
-              onClick={() => onChange({ ...settings, useBuyOrders: !settings.useBuyOrders })}
-              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: settings.useBuyOrders
-                  ? 'var(--color-accent)'
-                  : 'var(--color-surface-3)',
-              }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
-                style={{
-                  backgroundColor: 'var(--color-text-primary)',
-                  transform: settings.useBuyOrders ? 'translateX(16px)' : 'translateX(0)',
-                }}
-              />
-            </button>
-            <div>
-              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                Buy via Buy Orders
-              </div>
-              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                Use highest buy order price instead of cheapest sell order for material costs
-              </div>
-            </div>
-          </div>
-
-          {/* Sell Now mode toggle */}
-          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <button
-              onClick={() => onChange({ ...settings, useSellNow: !settings.useSellNow })}
-              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: settings.useSellNow
-                  ? 'var(--color-accent)'
-                  : 'var(--color-surface-3)',
-              }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
-                style={{
-                  backgroundColor: 'var(--color-text-primary)',
-                  transform: settings.useSellNow ? 'translateX(16px)' : 'translateX(0)',
-                }}
-              />
-            </button>
-            <div>
-              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                Sell Instantly
-              </div>
-              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                Sell to highest buy order instead of listing a sell order (4% market tax applied)
-              </div>
-            </div>
-          </div>
-
-          {/* Transmute optimization toggle */}
-          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <button
-              onClick={() => onChange({ ...settings, enableTransmute: !settings.enableTransmute })}
-              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: settings.enableTransmute
-                  ? 'var(--color-accent)'
-                  : 'var(--color-surface-3)',
-              }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
-                style={{
-                  backgroundColor: 'var(--color-text-primary)',
-                  transform: settings.enableTransmute ? 'translateX(16px)' : 'translateX(0)',
-                }}
-              />
-            </button>
-            <div>
-              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                Cheaper via Transmute
-              </div>
-              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                Show when transmuting a resource before refining is cheaper
-              </div>
-            </div>
-          </div>
-
-          {/* Show materials toggle */}
-          <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-            <button
-              onClick={() => onChange({ ...settings, showMaterials: !settings.showMaterials })}
-              className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: settings.showMaterials
-                  ? 'var(--color-accent)'
-                  : 'var(--color-surface-3)',
-              }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
-                style={{
-                  backgroundColor: 'var(--color-text-primary)',
-                  transform: settings.showMaterials ? 'translateX(16px)' : 'translateX(0)',
-                }}
-              />
-            </button>
-            <div>
-              <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                Show Materials
-              </div>
-              <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                Split material cost into individual ingredient columns
-              </div>
-            </div>
+          {/* Toggle section */}
+          <div className="space-y-0">
+            <ToggleRow
+              label="Buy via Buy Orders"
+              description="Use highest buy order price instead of cheapest sell order for material costs"
+              enabled={settings.useBuyOrders}
+              onToggle={() => onChange({ ...settings, useBuyOrders: !settings.useBuyOrders })}
+            />
+            <ToggleRow
+              label="Sell Instantly"
+              description="Sell to highest buy order instead of listing a sell order (4% market tax applied)"
+              enabled={settings.useSellNow}
+              onToggle={() => onChange({ ...settings, useSellNow: !settings.useSellNow })}
+            />
+            <ToggleRow
+              label="Cheaper via Transmute"
+              description="Show when transmuting a resource before refining is cheaper"
+              enabled={settings.enableTransmute}
+              onToggle={() => onChange({ ...settings, enableTransmute: !settings.enableTransmute })}
+            />
+            <ToggleRow
+              label="Show Materials"
+              description="Split material cost into individual ingredient columns"
+              enabled={settings.showMaterials}
+              onToggle={() => onChange({ ...settings, showMaterials: !settings.showMaterials })}
+            />
           </div>
 
           {/* Specialization levels */}
@@ -228,8 +163,8 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
               {settings.specLevels.some(s => s > 0) && (
                 <button
                   onClick={() => onChange({ ...settings, specLevels: [0, 0, 0, 0, 0] })}
-                  className="text-[10px] px-2 py-1 rounded transition-colors"
-                  style={{ color: 'var(--color-text-muted)' }}
+                  className="text-[10px] px-2 py-1 rounded-md transition-colors hover:opacity-80 cursor-pointer"
+                  style={{ color: 'var(--color-accent-hover)', backgroundColor: 'rgba(124, 58, 237, 0.1)' }}
                 >
                   Reset
                 </button>
@@ -257,8 +192,8 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
                     }}
                     className={inputClass + " text-center"}
                     style={{
-                      backgroundColor: 'var(--color-surface-3)',
-                      borderColor: 'var(--color-border)',
+                      backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                      borderColor: 'rgba(124, 58, 237, 0.2)',
                       color: 'var(--color-text-primary)',
                     }}
                   />
@@ -270,6 +205,27 @@ export default function SettingsPanel({ settings, onChange }: SettingsPanelProps
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function ToggleRow({ label, description, enabled, onToggle }: {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 pt-4 mt-4 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+      <NeonToggle enabled={enabled} onToggle={onToggle} />
+      <div>
+        <div className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          {label}
+        </div>
+        <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+          {description}
+        </div>
+      </div>
     </div>
   );
 }
@@ -296,8 +252,8 @@ function SettingField({
           onChange={(e) => onChange(e.target.value)}
           className={inputClass}
           style={{
-            backgroundColor: 'var(--color-surface-3)',
-            borderColor: 'var(--color-border)',
+            backgroundColor: 'rgba(124, 58, 237, 0.08)',
+            borderColor: 'rgba(124, 58, 237, 0.2)',
             color: 'var(--color-text-primary)',
           }}
         />

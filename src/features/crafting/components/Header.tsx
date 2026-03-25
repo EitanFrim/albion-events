@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { SERVERS, type ServerKey } from '../data/items';
+import { transitions } from '@/lib/animations';
 
 interface HeaderProps {
   server: ServerKey;
@@ -16,7 +17,7 @@ interface HeaderProps {
   onClearOverrides: () => void;
 }
 
-const inputClass = "border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2";
+const inputClass = "border rounded-lg px-3 py-1.5 text-sm focus:outline-none transition-all duration-200";
 
 export default function Header({
   server,
@@ -32,34 +33,56 @@ export default function Header({
 }: HeaderProps) {
   return (
     <motion.header
-      initial={{ opacity: 0, y: -12 }}
+      initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-      className="border-b px-8 py-5 sticky top-0 z-40 backdrop-blur-xl"
+      transition={transitions.smooth}
+      className="border-b px-8 py-5 sticky top-0 z-40 backdrop-blur-2xl"
       style={{
-        backgroundColor: 'rgba(12, 12, 18, 0.8)',
-        borderColor: 'rgba(255,255,255,0.06)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(15, 15, 35, 0.85)',
+        borderColor: 'rgba(124, 58, 237, 0.1)',
+        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4), 0 0 60px rgba(124, 58, 237, 0.04)',
       }}>
+
+      {/* Top glow line */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[1px]"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.4), rgba(244, 63, 94, 0.3), transparent)',
+        }}
+      />
+
       <div className="max-w-[1600px] mx-auto">
         {/* Top row */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <a
+            <motion.a
               href="/"
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
+              whileHover={{ scale: 1.05, boxShadow: '0 0 16px rgba(124, 58, 237, 0.3)' }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer"
               style={{
-                backgroundColor: 'var(--color-surface-3)',
+                backgroundColor: 'rgba(124, 58, 237, 0.1)',
                 color: 'var(--color-text-secondary)',
-                border: '1px solid var(--color-border-subtle)',
+                border: '1px solid rgba(124, 58, 237, 0.2)',
               }}
             >
               <img src="/images/branding/logo.png" alt="" className="w-4 h-4 object-contain" />
               AlbionHQ
-            </a>
+            </motion.a>
             <div>
-              <h1 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
-                Albion Refiner
+              <h1 className="text-lg font-semibold tracking-tight font-display">
+                <motion.span
+                  className="bg-gradient-to-r from-purple-400 via-violet-300 to-fuchsia-400 bg-clip-text text-transparent neon-text"
+                  animate={{
+                    textShadow: [
+                      '0 0 10px rgba(124,58,237,0.3)',
+                      '0 0 20px rgba(124,58,237,0.5)',
+                      '0 0 10px rgba(124,58,237,0.3)',
+                    ],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  Albion Refiner
+                </motion.span>
               </h1>
               <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
                 Refining &amp; transmutation profit calculator
@@ -78,8 +101,8 @@ export default function Header({
                 onChange={(e) => setServer(e.target.value as ServerKey)}
                 className={inputClass + " cursor-pointer appearance-none pr-8"}
                 style={{
-                  backgroundColor: 'var(--color-surface-3)',
-                  borderColor: 'var(--color-border)',
+                  backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                  borderColor: 'rgba(124, 58, 237, 0.2)',
                   color: 'var(--color-text-primary)',
                 }}
               >
@@ -90,7 +113,7 @@ export default function Header({
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6" style={{ backgroundColor: 'var(--color-border)' }} />
+            <div className="w-px h-6" style={{ backgroundColor: 'rgba(124, 58, 237, 0.2)' }} />
 
             {/* Max age */}
             <div className="flex items-center gap-2">
@@ -108,8 +131,8 @@ export default function Header({
                 }}
                 className={inputClass + " w-16 text-right"}
                 style={{
-                  backgroundColor: 'var(--color-surface-3)',
-                  borderColor: 'var(--color-border)',
+                  backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                  borderColor: 'rgba(124, 58, 237, 0.2)',
                   color: 'var(--color-text-primary)',
                 }}
               />
@@ -117,18 +140,19 @@ export default function Header({
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6" style={{ backgroundColor: 'var(--color-border)' }} />
+            <div className="w-px h-6" style={{ backgroundColor: 'rgba(124, 58, 237, 0.2)' }} />
 
-            {/* Refresh */}
+            {/* Refresh — neon gradient button */}
             <motion.button
               onClick={onRefresh}
               disabled={loading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors accent-glow"
+              whileHover={{ scale: 1.04, boxShadow: '0 0 30px rgba(124, 58, 237, 0.4), 0 0 60px rgba(244, 63, 94, 0.2)' }}
+              whileTap={{ scale: 0.96 }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
               style={{
-                backgroundColor: 'var(--color-accent)',
-                color: '#0a0a0f',
+                background: 'linear-gradient(135deg, #7C3AED, #F43F5E)',
+                color: '#fff',
+                boxShadow: '0 0 20px rgba(124, 58, 237, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3)',
               }}
             >
               {loading ? (
@@ -144,16 +168,20 @@ export default function Header({
             </motion.button>
 
             {overrideCount > 0 && (
-              <button
+              <motion.button
                 onClick={onClearOverrides}
-                className="border px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-80"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="border px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer"
                 style={{
-                  borderColor: 'color-mix(in srgb, var(--color-override) 40%, transparent)',
+                  borderColor: 'rgba(192, 132, 252, 0.4)',
                   color: 'var(--color-override)',
+                  backgroundColor: 'rgba(192, 132, 252, 0.08)',
+                  boxShadow: '0 0 12px rgba(192, 132, 252, 0.1)',
                 }}
               >
                 {overrideCount} Override{overrideCount > 1 ? 's' : ''} - Clear
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
@@ -161,7 +189,14 @@ export default function Header({
         {/* Status line */}
         <div className="mt-3 flex items-center gap-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
           {lastFetched && (
-            <span>Last updated: {lastFetched.toLocaleTimeString()}</span>
+            <span className="flex items-center gap-1.5">
+              <motion.span
+                className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                animate={{ opacity: [1, 0.4, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              Last updated: {lastFetched.toLocaleTimeString()}
+            </span>
           )}
           {error && <span style={{ color: 'var(--color-loss)' }}>Error: {error}</span>}
         </div>

@@ -79,11 +79,11 @@ export function GuildSelector({ memberships }: Props) {
       {/* Active guilds */}
       {active.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-mono text-text-muted uppercase tracking-widest">Your Guilds</p>
+          <p className="text-xs font-mono text-accent/60 uppercase tracking-widest">Your Guilds</p>
           {active.map(m => (
             <Link key={m.id} href={`/g/${m.guild.slug}`}
-              className="card p-4 flex items-center gap-4 hover:border-border hover:shadow-card-hover transition-all group block">
-              <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              className="card p-4 flex items-center gap-4 hover:border-purple-500/20 hover:-translate-y-0.5 transition-all duration-300 group block hover:shadow-[0_4px_20px_rgba(124,58,237,0.1)]">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-[0_0_10px_rgba(124,58,237,0.15)]">
                 <img src={m.guild.logoUrl || DEFAULT_GUILD_LOGO} alt="" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
@@ -134,7 +134,7 @@ export function GuildSelector({ memberships }: Props) {
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <Link href="/guilds/new"
-          className="btn-primary flex-1 justify-center">
+          className="btn-neon flex-1 justify-center">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>

@@ -69,8 +69,8 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
     const active = pathname === href || (href !== base && pathname.startsWith(href))
     return (
       <Link href={href}
-        className={`px-3 py-1.5 rounded-lg text-sm font-body transition-colors ${
-          active ? 'text-text-primary bg-bg-elevated' : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+        className={`px-3 py-1.5 rounded-lg text-sm font-body transition-all duration-200 ${
+          active ? 'text-accent bg-accent/10 shadow-[0_0_10px_rgba(124,58,237,0.1)]' : 'text-text-secondary hover:text-text-primary hover:bg-accent/5'
         }`}>
         {label}
       </Link>
@@ -98,14 +98,24 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={transitions.smooth}
-      className="sticky top-0 z-50 h-14 border-b border-border-subtle bg-bg-base/80 backdrop-blur-xl"
+      className="sticky top-0 z-50 h-14 border-b backdrop-blur-2xl"
+      style={{
+        backgroundColor: 'rgba(15, 15, 35, 0.85)',
+        borderColor: 'rgba(124, 58, 237, 0.1)',
+        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4), 0 0 40px rgba(124, 58, 237, 0.03)',
+      }}
     >
+      {/* Bottom neon glow line */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-[1px]"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), rgba(244, 63, 94, 0.2), transparent)' }}
+      />
+
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-4">
 
         {/* Left: home + guild name + nav */}
         <div className="flex items-center gap-1 flex-1 min-w-0">
           {/* AlbionHQ home */}
-          <Link href="/" className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-bg-elevated transition-colors flex-shrink-0" title="AlbionHQ Home">
+          <Link href="/" className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-accent/5 transition-all duration-200 hover:shadow-[0_0_10px_rgba(124,58,237,0.15)] flex-shrink-0" title="AlbionHQ Home">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2" />
             </svg>
@@ -115,7 +125,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
 
           {/* Guild switcher */}
           <Link href="/guilds" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-elevated transition-colors flex-shrink-0 group">
-            <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center overflow-hidden">
+            <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center overflow-hidden shadow-[0_0_8px_rgba(124,58,237,0.3)]">
               <img src={guild.logoUrl || DEFAULT_GUILD_LOGO} alt="" className="w-full h-full object-cover" style={{ objectPosition: `${guild.logoPositionX ?? 50}% ${guild.logoPositionY ?? 50}%`, transform: `scale(${guild.logoZoom ?? 1})` }} />
             </div>
             <span className="font-display text-sm font-700 text-text-primary tracking-tight hidden sm:block truncate max-w-[120px]">
@@ -153,7 +163,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                   <AnimatePresence>
                   {contentsOpen && (
                     <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute left-0 top-full pt-1.5 z-50">
-                      <div className="w-48 rounded-xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden py-1.5 backdrop-blur-xl" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
+                      <div className="w-48 rounded-xl border border-purple-500/[0.15] shadow-none overflow-hidden py-1.5 backdrop-blur-xl" style={{ background: 'rgba(15, 15, 40, 0.92)', boxShadow: '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(124, 58, 237, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03)' }}>
                         <Link href={base}
                           className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                             pathname === base || pathname.startsWith(`${base}/events`)
@@ -202,7 +212,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                   <AnimatePresence>
                   {buildsOpen && (
                     <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute left-0 top-full pt-1.5 z-50">
-                      <div className="w-48 rounded-xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden py-1.5 backdrop-blur-xl" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
+                      <div className="w-48 rounded-xl border border-purple-500/[0.15] shadow-none overflow-hidden py-1.5 backdrop-blur-xl" style={{ background: 'rgba(15, 15, 40, 0.92)', boxShadow: '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(124, 58, 237, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03)' }}>
                         <Link href={`${base}/admin/templates`}
                           className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                             pathname.startsWith(`${base}/admin/templates`)
@@ -255,9 +265,9 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                   <AnimatePresence>
                   {mgmtOpen && (
                     <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute left-0 top-full pt-1.5 z-50">
-                      <div className="w-64 rounded-xl border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden backdrop-blur-xl" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
+                      <div className="w-64 rounded-xl border border-purple-500/[0.15] shadow-none overflow-hidden backdrop-blur-xl" style={{ background: 'rgba(15, 15, 40, 0.92)', boxShadow: '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(124, 58, 237, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03)' }}>
                         {/* Total guild silver */}
-                        <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-amber-500/[0.06] to-transparent">
+                        <div className="px-4 py-3 border-b border-border-subtle" style={{ background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.06), rgba(124, 58, 237, 0.04), transparent)' }}>
                           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Guild Total Silver</p>
                           <div className="flex items-center gap-2">
                             <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -271,7 +281,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
                         </div>
 
                         {/* Total guild siphoned energy */}
-                        <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-teal-500/[0.06] to-transparent">
+                        <div className="px-4 py-3 border-b border-border-subtle" style={{ background: 'linear-gradient(90deg, rgba(20, 184, 166, 0.06), rgba(124, 58, 237, 0.04), transparent)' }}>
                           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">Guild Siphoned Energy</p>
                           <div className="flex items-center gap-2">
                             <svg className="w-4 h-4 text-teal-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -356,7 +366,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
 
           {/* Siphoned energy — clickable to view history */}
           {!isPending && (
-            <Link href={`${base}/my-siphoned-energy`} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-teal-500/5 border border-teal-500/15 hover:bg-teal-500/10 transition-colors">
+            <Link href={`${base}/my-siphoned-energy`} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-teal-500/5 border border-teal-500/15 hover:bg-teal-500/10 transition-all duration-200 hover:shadow-[0_0_12px_rgba(20,184,166,0.15)]">
               <svg className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -368,7 +378,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
 
           {/* Silver balance — clickable to view history */}
           {!isPending && (
-            <Link href={`${base}/my-balance`} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/5 border border-amber-500/15 hover:bg-amber-500/10 transition-colors">
+            <Link href={`${base}/my-balance`} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/5 border border-amber-500/15 hover:bg-amber-500/10 transition-all duration-200 hover:shadow-[0_0_12px_rgba(245,158,11,0.15)]">
               <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -408,7 +418,7 @@ export function GuildNavBar({ guild, membership, totalGuildBalance = 0, totalGui
               <AnimatePresence>
               {menuOpen && (
                 <motion.div variants={dropdown} initial="hidden" animate="visible" exit="exit" className="absolute right-0 top-full w-52 pt-1">
-                <div className="rounded-xl border border-white/[0.08] py-1 backdrop-blur-xl shadow-[0_16px_48px_rgba(0,0,0,0.5)]" style={{ background: 'rgba(17, 17, 24, 0.85)' }}>
+                <div className="rounded-xl border border-purple-500/[0.15] py-1 backdrop-blur-xl shadow-none" style={{ background: 'rgba(15, 15, 40, 0.92)', boxShadow: '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(124, 58, 237, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03)' }}>
                   <div className="px-3 py-2.5 border-b border-border-subtle">
                     {session.user.inGameName ? (
                       <>

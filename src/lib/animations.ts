@@ -7,6 +7,7 @@ export const transitions = {
   smooth: { type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.4 } as Transition,
   quick: { type: 'tween', duration: 0.2, ease: 'easeOut' } as Transition,
   slow: { type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.6 } as Transition,
+  bouncy: { type: 'spring', stiffness: 400, damping: 25 } as Transition,
 }
 
 // ── Base variants ──
@@ -48,14 +49,14 @@ export const staggerContainer: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
+      staggerChildren: 0.08,
       delayChildren: 0.1,
     },
   },
 }
 
 export const staggerItem: Variants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
@@ -133,17 +134,59 @@ export const float = {
   },
 }
 
-// ── Glow pulse ──
+// ── Glow pulse (updated to purple) ──
 
 export const glowPulse = {
   boxShadow: [
-    '0 0 12px rgba(249,115,22,0.15)',
-    '0 0 24px rgba(249,115,22,0.3)',
-    '0 0 12px rgba(249,115,22,0.15)',
+    '0 0 12px rgba(124,58,237,0.2)',
+    '0 0 24px rgba(124,58,237,0.4)',
+    '0 0 12px rgba(124,58,237,0.2)',
   ],
   transition: {
     duration: 2,
     repeat: Infinity,
     ease: 'easeInOut',
+  },
+}
+
+// ── 3D Card tilt ──
+
+export const tilt3D = {
+  rest: {
+    rotateX: 0,
+    rotateY: 0,
+    scale: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 20 },
+  },
+  hover: {
+    scale: 1.02,
+    transition: { type: 'spring', stiffness: 300, damping: 20 },
+  },
+}
+
+// ── Hero text reveal ──
+
+export const heroTextReveal: Variants = {
+  hidden: { opacity: 0, y: 40, filter: 'blur(10px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { ...transitions.slow, duration: 0.8 },
+  },
+}
+
+// ── Neon glow animation ──
+
+export const neonGlow = {
+  textShadow: [
+    '0 0 10px rgba(124,58,237,0.5), 0 0 20px rgba(124,58,237,0.3), 0 0 40px rgba(124,58,237,0.1)',
+    '0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(124,58,237,0.5), 0 0 80px rgba(124,58,237,0.2)',
+    '0 0 10px rgba(124,58,237,0.5), 0 0 20px rgba(124,58,237,0.3), 0 0 40px rgba(124,58,237,0.1)',
+  ],
+  transition: {
+    duration: 2,
+    repeat: Infinity,
+    ease: 'easeInOut' as const,
   },
 }
