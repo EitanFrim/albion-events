@@ -57,10 +57,10 @@ export function NavBar() {
   return (
     <>
       <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial={{ y: -20, opacity: 0, x: '-50%' }}
+        animate={{ y: 0, opacity: 1, x: '-50%' }}
         transition={{ ...transitions.smooth, delay: 0.1 }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl"
+        className="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl"
       >
         <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
           style={{ background: 'rgba(15, 15, 35, 0.7)' }}
