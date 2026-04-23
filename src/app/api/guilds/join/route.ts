@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { setUserIgn } from '@/lib/ign'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -38,12 +39,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ guild, membership: existing, alreadyMember: true })
   }
 
-  // Save IGN on user profile if not already set
-  const trimmedIgn = inGameName.trim()
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { inGameName: trimmedIgn },
-  })
+  // Verify and save IGN — runs Albion lookup + side effects (link energy, apply balance imports)
+  const ignResult = await setUserIgn(session.user.id, inGameName, { region: guild.serverRegion })
+  if (!ignResult.ok) {
+    return NextResponse.json({ error: ignResult.error }, { status: ignResult.status })
+  }
 
   // Create pending membership — officer must verify
   const membership = await prisma.guildMembership.create({

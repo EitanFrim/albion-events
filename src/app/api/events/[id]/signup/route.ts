@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { requireGuildAccess } from '@/lib/guild'
 import { resolveUser } from '@/lib/token-auth'
+import { upsertSignup } from '@/lib/signup'
 import { z } from 'zod'
 
 const signupSchema = z.object({
@@ -17,44 +15,24 @@ async function getEvent(id: string) {
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await resolveUser(req, params.id)
+  // upsertFromToken=true so first-touch token signups can create the User row
+  const user = await resolveUser(req, params.id, { upsertFromToken: true })
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const event = await prisma.event.findUnique({ where: { id: params.id } })
-  if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  if (event.status !== 'PUBLISHED') return NextResponse.json({ error: 'Event is not open for signups' }, { status: 400 })
-
-  // Require active membership (PLAYER+ role) for all events
-  const membership = await prisma.guildMembership.findUnique({
-    where: { userId_guildId: { userId: user.id, guildId: event.guildId } },
-  })
-  if (!membership || membership.status !== 'ACTIVE' || membership.role === 'GUEST') {
-    return NextResponse.json({ error: 'You must be a registered guild member to sign up.' }, { status: 403 })
-  }
 
   const body = await req.json()
   const parsed = signupSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
-  const existing = await prisma.signup.findUnique({
-    where: { eventId_userId: { eventId: params.id, userId: user.id } },
+  const result = await upsertSignup({
+    userId: user.id,
+    eventId: params.id,
+    preferredRoles: parsed.data.preferredRoles,
+    note: parsed.data.note,
+    rejectIfActive: true,
   })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
 
-  if (existing && existing.status === 'ACTIVE') {
-    return NextResponse.json({ error: 'Already signed up. Use PUT to update.' }, { status: 409 })
-  }
-
-  const signup = await prisma.signup.upsert({
-    where: { eventId_userId: { eventId: params.id, userId: user.id } },
-    update: { preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE' },
-    create: {
-      eventId: params.id, userId: user.id,
-      preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE',
-    },
-    include: { user: { select: { id: true, discordName: true, avatarUrl: true } } },
-  })
-
-  return NextResponse.json(signup, { status: 201 })
+  return NextResponse.json(result.signup, { status: 201 })
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -71,17 +49,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const parsed = signupSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
-  const signup = await prisma.signup.upsert({
-    where: { eventId_userId: { eventId: params.id, userId: user.id } },
-    update: { preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE' },
-    create: {
-      eventId: params.id, userId: user.id,
-      preferredRoles: parsed.data.preferredRoles, note: parsed.data.note, status: 'ACTIVE',
-    },
-    include: { user: { select: { id: true, discordName: true, avatarUrl: true } } },
+  const result = await upsertSignup({
+    userId: user.id,
+    eventId: params.id,
+    preferredRoles: parsed.data.preferredRoles,
+    note: parsed.data.note,
   })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
 
-  return NextResponse.json(signup)
+  return NextResponse.json(result.signup)
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {

@@ -3,9 +3,8 @@ import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 import { SignupForm } from '@/components/SignupForm'
 import { RegearButton } from '@/components/RegearButton'
-import { TokenSignupForm } from '@/components/TokenSignupForm'
-import { RoleNoteButton } from '@/components/RoleNoteButton'
 import { InlineIgnSetup } from '@/components/InlineIgnSetup'
+import { PartyCard } from '@/components/PartyCard'
 import { AnimatedPage } from '@/components/motion/AnimatedPage'
 import { EventStatus } from '@prisma/client'
 
@@ -223,60 +222,15 @@ export default async function TokenSignupPage({ params }: Props) {
           {/* Party grid */}
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-3 min-w-max">
-              {event.parties.map((party) => {
-                const cap = party.roleSlots.reduce((a, s) => a + s.capacity, 0)
-                const fill = party.roleSlots.reduce((a, s) => a + s.assignments.length, 0)
-                return (
-                  <div key={party.id} className="flex-shrink-0 w-52 rounded-xl border border-border bg-bg-surface">
-                    <div className="px-3 py-2.5 border-b border-border-subtle flex items-center justify-between rounded-t-xl bg-bg-elevated">
-                      <span className="font-display font-600 text-text-primary text-xs tracking-wide truncate">{party.name}</span>
-                      <span className="text-xs font-mono text-text-muted ml-2 flex-shrink-0">{fill}/{cap}</span>
-                    </div>
-                    <div className="p-2 space-y-0.5">
-                      {party.roleSlots.map((slot, slotIndex) => {
-                        const color = getRoleColor(slot.roleName)
-                        const indent = (slotIndex % 8) * 3
-                        const isFilled = slot.assignments.length >= slot.capacity
-                        return (
-                          <div key={slot.id} style={{ marginLeft: `${indent}px` }}>
-                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
-                              style={{ backgroundColor: color + '18', borderLeft: `2px solid ${color}` }}>
-                              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isFilled ? 'opacity-60' : ''}`} style={{ backgroundColor: color }} />
-                              <span className={`font-mono font-semibold truncate ${isFilled ? 'opacity-60' : ''}`} style={{ color }}>{slot.roleName}</span>
-                              <span className={`font-mono text-text-muted ml-auto flex-shrink-0 text-xs ${isFilled ? 'opacity-60' : ''}`}>
-                                {slot.assignments.length}/{slot.capacity}
-                              </span>
-                              {(slot as any).notes && (
-                                <RoleNoteButton rawNote={(slot as any).notes} roleName={slot.roleName} color={color} />
-                              )}
-                            </div>
-                            {slot.assignments.map(a => {
-                              const hasWithdrawn = withdrawnUserIds.has(a.userId)
-                              const isMe = tokenUser && a.userId === tokenUser.id
-                              return (
-                                <div key={a.id} className={`flex items-center gap-1.5 px-2 py-0.5 ml-3 rounded ${hasWithdrawn ? 'opacity-70' : ''} ${isMe && !hasWithdrawn ? 'bg-accent/10 ring-1 ring-accent/30 -mx-1 px-3' : ''}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${hasWithdrawn ? 'bg-amber-400' : isMe ? 'bg-accent animate-pulse-soft' : 'bg-emerald-400'}`} />
-                                  <span className={`text-xs truncate ${hasWithdrawn ? 'text-amber-300/80 line-through' : isMe ? 'text-accent font-semibold' : 'text-emerald-300/80'}`}>
-                                    {a.user.inGameName || a.user.discordName}
-                                  </span>
-                                  {isMe && !hasWithdrawn && <span className="text-[10px] text-accent/70 font-mono flex-shrink-0">you</span>}
-                                  {hasWithdrawn && <span className="text-xs text-amber-400/60 font-mono flex-shrink-0">withdrew</span>}
-                                </div>
-                              )
-                            })}
-                            {Array.from({ length: slot.capacity - slot.assignments.length }).map((_, i) => (
-                              <div key={i} className="flex items-center gap-1.5 px-2 py-0.5 ml-3">
-                                <span className="w-1.5 h-1.5 rounded-full border border-border-subtle flex-shrink-0" />
-                                <span className="text-xs text-text-muted/40 italic">open</span>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
+              {event.parties.map((party) => (
+                <PartyCard
+                  key={party.id}
+                  party={party}
+                  currentUserId={tokenUser?.id ?? null}
+                  withdrawnUserIds={withdrawnUserIds}
+                  roleColorMap={roleColorMap}
+                />
+              ))}
             </div>
           </div>
 
@@ -294,47 +248,35 @@ export default async function TokenSignupPage({ params }: Props) {
               </div>
             )}
 
-            {/* Already signed up — show edit/withdraw (+ IGN prompt if needed) */}
-            {event.status === 'PUBLISHED' && tokenUser && hasSignedUp ? (
+            {/* PUBLISHED: IGN gate first (if needed), then SignupForm — handles
+                first-time-via-token (no User row), no-signup, and edit/withdraw. */}
+            {event.status === 'PUBLISHED' && needsIgn ? (
               <>
-                {needsIgn && (
-                  <InlineIgnSetup
+                <InlineIgnSetup
+                  eventId={params.id}
+                  token={params.token}
+                  serverRegion={event.guild.serverRegion}
+                />
+                {hasSignedUp && (
+                  <SignupForm
                     eventId={params.id}
-                    token={params.token}
-                    serverRegion={event.guild.serverRegion}
+                    parties={event.parties}
+                    existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
+                    isLocked={false}
+                    authToken={params.token}
+                    roleColors={roleColorMap}
                   />
                 )}
-                <SignupForm
-                  eventId={params.id}
-                  parties={event.parties}
-                  existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
-                  isLocked={false}
-                  authToken={params.token}
-                  roleColors={roleColorMap}
-                />
               </>
-            ) : needsIgn && event.status === 'PUBLISHED' && !hasSignedUp ? (
-              <InlineIgnSetup
-                eventId={params.id}
-                token={params.token}
-                serverRegion={event.guild.serverRegion}
-              />
-            ) : event.status === 'PUBLISHED' && tokenUser && !hasSignedUp ? (
+            ) : event.status === 'PUBLISHED' ? (
               <SignupForm
                 eventId={params.id}
                 parties={event.parties}
-                existingSignup={null}
+                existingSignup={mySignup ? { preferredRoles: mySignup.preferredRoles, note: mySignup.note ?? '' } : null}
                 isLocked={false}
                 authToken={params.token}
                 roleColors={roleColorMap}
-              />
-            ) : event.status === 'PUBLISHED' && isNewUser ? (
-              <TokenSignupForm
-                eventId={params.id}
-                token={params.token}
-                parties={event.parties}
-                discordUsername={signupToken.discordUsername}
-                roleColors={roleColorMap}
+                discordUsername={isNewUser || !hasSignedUp ? signupToken.discordUsername : undefined}
               />
             ) : event.status === 'LOCKED' && tokenUser && mySignup ? (
               <SignupForm

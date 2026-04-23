@@ -14,11 +14,17 @@ interface Props {
   onSignupComplete?: () => void
   authToken?: string
   roleColors?: Record<string, string>
+  /**
+   * When provided, shows "Signing up as @user" — useful for token flows where
+   * the visitor isn't logged in and might forget which Discord account the
+   * link was issued for.
+   */
+  discordUsername?: string
 }
 
 interface GuildRole { id: string; name: string; categoryId: string | null; category: { id: string; name: string; color: string } | null }
 
-export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignupComplete, authToken, roleColors: roleColorsProp }: Props) {
+export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignupComplete, authToken, roleColors: roleColorsProp, discordUsername }: Props) {
   const router = useRouter()
   const allRoles = Array.from(new Set(parties.flatMap(p => p.roleSlots.map(s => s.roleName))))
 
@@ -192,9 +198,16 @@ export function SignupForm({ eventId, parties, existingSignup, isLocked, onSignu
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-600 text-text-primary text-sm">
-          {isSignedUp ? 'Edit Signup' : 'Sign Up'}
-        </h3>
+        <div>
+          <h3 className="font-display font-600 text-text-primary text-sm">
+            {isSignedUp ? 'Edit Signup' : 'Sign Up'}
+          </h3>
+          {discordUsername && !isSignedUp && (
+            <p className="text-xs text-text-muted mt-1">
+              Signing up as <span className="text-accent font-medium">{discordUsername}</span>
+            </p>
+          )}
+        </div>
         {isSignedUp && (
           <button
             type="button"

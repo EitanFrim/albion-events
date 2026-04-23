@@ -4,9 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { verifyAlbionName } from '@/lib/albion'
-import { linkOrphanedEnergyTransactions } from '@/lib/siphoned-energy'
-import { applyPendingBalanceImports } from '@/lib/balance-import'
+import { setUserIgn } from '@/lib/ign'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -36,8 +34,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Name must be 1–64 characters' }, { status: 400 })
   }
 
-  let finalName = parsed.data.inGameName
-
   // Determine which region to verify against:
   // 1. If player is in a guild with a region configured, use that
   // 2. Otherwise, use the region provided directly by the player
@@ -53,42 +49,8 @@ export async function PUT(req: NextRequest) {
     verifyRegion = parsed.data.region
   }
 
-  if (verifyRegion) {
-    const result = await verifyAlbionName(finalName, verifyRegion)
-    if (!result.valid) {
-      return NextResponse.json(
-        { error: `Player "${finalName}" not found in Albion Online. Check the spelling and make sure you're on the correct server region.` },
-        { status: 400 }
-      )
-    }
-    // Use the exact casing from the API
-    if (result.exactName) finalName = result.exactName
-  }
+  const result = await setUserIgn(session.user.id, parsed.data.inGameName, { region: verifyRegion })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
 
-  const user = await prisma.user.update({
-    where: { id: session.user.id },
-    data: { inGameName: finalName },
-  })
-
-  // Link orphaned siphoned energy transactions matching this IGN
-  try {
-    await linkOrphanedEnergyTransactions(session.user.id, finalName)
-  } catch {
-    // Non-critical — don't block profile update
-  }
-
-  // Apply pending balance imports for all guilds the user is in
-  try {
-    const memberships = await prisma.guildMembership.findMany({
-      where: { userId: session.user.id, status: 'ACTIVE' },
-      select: { guildId: true },
-    })
-    for (const m of memberships) {
-      await applyPendingBalanceImports(session.user.id, m.guildId).catch(() => 0)
-    }
-  } catch {
-    // Non-critical — don't block profile update
-  }
-
-  return NextResponse.json({ inGameName: user.inGameName })
+  return NextResponse.json({ inGameName: result.inGameName })
 }
